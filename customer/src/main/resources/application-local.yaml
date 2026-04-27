@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    # ★ driver-class-name 제거 → 자동 감지
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # 개발 중엔 스키마 자동 갱신
+
+app:
+  auth:
+    cookie:
+      secure: false      # HTTP라서 false
+      same-site: Lax
+  jwt:
+    secret: ${JWT_SECRET:dev-only-secret-key-must-be-at-least-256-bits-long-for-hs256}
