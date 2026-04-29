@@ -36,7 +36,7 @@ public class ProductTest {
 
     @Test
     @DisplayName("상품명이 100자 초과면 생성 실패")
-    void createOvernameThrows() {
+    void createOverNameThrows() {
         assertThatThrownBy(() ->
                 Product.create("a".repeat(101), Category.FASHION, 1000, "d", 1L)
         ).isInstanceOf(IllegalArgumentException.class)
@@ -45,16 +45,19 @@ public class ProductTest {
 
     @Test
     @DisplayName("가격이 음수이면 생성 실패")
-    void createPriceMinus() {
+    void createPriceMinusThrows() {
         assertThatThrownBy(() ->
                 Product.create("name", Category.FASHION, -1, "d", 1L)
         ).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("가격");
     }
 
-//    "카테고리가 null이면 생성 실패"
-//    "가격 변경 시 음수면 실패"
-//    "가격 변경 시 정상값이면 변경됨"
-//    "이미지 추가 시 images 컬렉션에 들어간다"
-//    "DELETED 상태에서 markAsSoldOut 호출 시 실패"
+    @Test
+    @DisplayName("카테고리가 null이면 생성 실패")
+    void createCategoryNullThrows() {
+        assertThatThrownBy(() ->
+                Product.create("name", null, 1000, "d", 1L)
+        ).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("카테고리");
+    }
 }

@@ -43,6 +43,7 @@ public class Product {
     ) {
         validateName(name);
         validatePrice(basePrice);
+        validateCategory(category);
         Product product = new Product();
         product.name = name;
         product.category = category;
@@ -51,6 +52,12 @@ public class Product {
         product.sellerId = sellerId;
         product.status = ProductStatus.ON_SALE;
         return product;
+    }
+
+    private static void validateCategory(Category category) {
+        if (category == null) {
+            throw new IllegalArgumentException("카테고리를 선택해주세요.");
+        }
     }
 
     private static void validatePrice(int basePrice) {
