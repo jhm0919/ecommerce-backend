@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 public class Product {
 
     private static final int MAX_NAME_LENGTH = 100;
+    private static final int MIN_PRICE = 0;  // 0원 허용 (사은품/증정품 가능)
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,6 +42,7 @@ public class Product {
             String description, Long sellerId
     ) {
         validateName(name);
+        validatePrice(basePrice);
         Product product = new Product();
         product.name = name;
         product.category = category;
@@ -49,6 +51,12 @@ public class Product {
         product.sellerId = sellerId;
         product.status = ProductStatus.ON_SALE;
         return product;
+    }
+
+    private static void validatePrice(int basePrice) {
+        if (basePrice < MIN_PRICE) {
+            throw new IllegalArgumentException("가격은 0이하일 수 없습니다.");
+        }
     }
 
     private static void validateName(String name) {
