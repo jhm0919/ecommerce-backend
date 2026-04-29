@@ -11,12 +11,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Sku {
 
-    private static final int MIN_SIZE = 0;
+    private static final int MIN_PRICE = 0;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,6 +39,7 @@ public class Sku {
 
         validateOptionSize(inputs);
         validateOptionDuplicate(inputs);
+        validatePrice(additionalPrice);
 
         // 변환: SkuOptionInput → SkuOptionValue
         sku.options = new ArrayList<>();
@@ -47,6 +49,12 @@ public class Sku {
         }
 
         return sku;
+    }
+
+    private static void validatePrice(int additionalPrice) {
+        if (additionalPrice < MIN_PRICE) {
+            throw new IllegalArgumentException("가격은 0이하일 수 없습니다.");
+        }
     }
 
     private static void validateOptionDuplicate(List<SkuOptionInput> inputs) {

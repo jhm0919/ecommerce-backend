@@ -1,5 +1,7 @@
 package com.team23.management.domain.Sku;
 
+import com.team23.management.domain.product.Category;
+import com.team23.management.domain.product.Product;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,4 +53,16 @@ class SkuTest {
                 .hasMessageContaining("옵션");
     }
 
+    @Test
+    @DisplayName("추가 가격이 음수이면 생성 실패")
+    void createPriceMinusThrows() {
+        assertThatThrownBy(() ->
+                Sku.create(1L,
+                        List.of(
+                                new SkuOptionInput("색상", "white"),
+                                new SkuOptionInput("사이즈", "M")
+                        ),
+                        -1)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("가격");
+    }
 }
