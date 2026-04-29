@@ -1,6 +1,6 @@
 package com.team23.management.infrastructure;
 
-import com.team23.management.domain.Stock.Stock;
+import com.team23.management.domain.stock.Stock;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 class StockRepositoryTest {

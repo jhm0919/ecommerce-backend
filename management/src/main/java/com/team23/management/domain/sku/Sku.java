@@ -1,6 +1,5 @@
-package com.team23.management.domain.Sku;
+package com.team23.management.domain.sku;
 
-import com.team23.management.domain.product.Product;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

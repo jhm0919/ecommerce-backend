@@ -1,4 +1,4 @@
-package com.team23.management.domain.Stock;
+package com.team23.management.domain.stock;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

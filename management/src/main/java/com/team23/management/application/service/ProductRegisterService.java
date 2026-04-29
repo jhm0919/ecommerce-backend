@@ -2,8 +2,8 @@ package com.team23.management.application.service;
 
 import com.team23.management.application.command.ProductRegisterCommand;
 import com.team23.management.application.command.SkuCommand;
-import com.team23.management.domain.Sku.Sku;
-import com.team23.management.domain.Stock.Stock;
+import com.team23.management.domain.sku.Sku;
+import com.team23.management.domain.stock.Stock;
 import com.team23.management.domain.product.Product;
 import com.team23.management.infrastructure.ProductRepository;
 import com.team23.management.infrastructure.SkuRepository;

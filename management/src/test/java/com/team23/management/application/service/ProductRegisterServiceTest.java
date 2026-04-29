@@ -2,13 +2,11 @@ package com.team23.management.application.service;
 
 import com.team23.management.application.command.ProductRegisterCommand;
 import com.team23.management.application.command.SkuCommand;
-import com.team23.management.domain.Sku.SkuOptionInput;
+import com.team23.management.domain.sku.SkuOptionInput;
 import com.team23.management.domain.product.Category;
 import com.team23.management.infrastructure.ProductRepository;
 import com.team23.management.infrastructure.SkuRepository;
 import com.team23.management.infrastructure.StockRepository;
-import jakarta.transaction.Transactional;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +17,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 //@Transactional
