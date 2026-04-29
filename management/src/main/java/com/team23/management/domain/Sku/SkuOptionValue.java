@@ -18,12 +18,12 @@ public class SkuOptionValue { // Sku 가 보관하는 옵션 정보 (Entity 후�
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(name = "option_value", nullable = false)
     private String value;
 
-    SkuOptionValue(String name, String value) { // 같은 패키지 내 Sku 만 호출 가능.
+    SkuOptionValue(String name, String optionValue) { // 같은 패키지 내 Sku 만 호출 가능.
         this.name = name;
-        this.value = value;
+        this.value = optionValue;
     }
 
 }

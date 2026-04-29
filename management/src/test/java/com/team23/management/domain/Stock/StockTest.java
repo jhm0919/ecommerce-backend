@@ -31,9 +31,4 @@ class StockTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("수량");
     }
-
-
-//    @DisplayName("decrease 시 quantity가 감소한다")
-//    @DisplayName("재고보다 많이 차감하려 하면 실패")
-//    @DisplayName("increase 시 quantity가 증가한다")
 }
