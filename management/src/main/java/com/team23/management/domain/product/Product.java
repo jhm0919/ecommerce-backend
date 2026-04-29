@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Product {
 
+    private static final int MAX_NAME_LENGTH = 100;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long Id;
@@ -49,9 +51,12 @@ public class Product {
         return product;
     }
 
-    public static void validateName(String name) {
+    private static void validateName(String name) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("상품명은 필수입니다.");
+        }
+        if (name.length() > MAX_NAME_LENGTH) {
+            throw new IllegalArgumentException("상품명은 100자 이하여야 합니다.");
         }
     }
 }

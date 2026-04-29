@@ -10,7 +10,7 @@ public class ProductTest {
 
     @Test
     @DisplayName("상품 생성 시 초기 상태는 ON_SALE이다")
-    void create_initialStatus_isOnSale() {
+    void createInitialStatusIsOnSale() {
         // given & when
         Product product = Product.create(
                 "면 티셔츠",
@@ -27,11 +27,19 @@ public class ProductTest {
 
     @Test
     @DisplayName("상품명이 비어있으면 생성 실패")
-    void create_blankName_throws() {
+    void createBlankNameThrows() {
         assertThatThrownBy(() ->
                 Product.create("  ", Category.FASHION, 1000, "d", 1L)
         ).isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("상품명");
     }
 
+    @Test
+    @DisplayName("상품명이 100자 초과면 생성 실패")
+    void createOvernameThrows() {
+        assertThatThrownBy(() ->
+                Product.create("a".repeat(101), Category.FASHION, 1000, "d", 1L)
+        ).isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("상품명");
+    }
 }
