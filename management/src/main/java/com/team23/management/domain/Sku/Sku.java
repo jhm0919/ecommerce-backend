@@ -13,6 +13,7 @@ import java.util.Set;
 
 
 @Entity
+@Table(name = "skus")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Sku {
@@ -23,13 +24,14 @@ public class Sku {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Getter
+    @Column(nullable = false)
     private Long productId;
 
-    @Getter
-    private List<SkuOptionValue> options;
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "sku_id")
+    private List<SkuOptionValue> options = new ArrayList<>(); // NPE 방지. options.add(...) 하기 전에 List 가 반드시 존재해야.
 
-    @Getter
+    @Column(nullable = false)
     private int additionalPrice;
 
     public static Sku create(Long productId, List<SkuOptionInput> inputs, int additionalPrice) {
