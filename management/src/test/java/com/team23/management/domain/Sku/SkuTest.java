@@ -38,5 +38,17 @@ class SkuTest {
 
     }
 
+    @Test
+    @DisplayName("동일 옵션명이 중복되면 실패")
+    void createOptionDuplicate() {
+        assertThatThrownBy(() ->
+                Sku.create(1L,
+                        List.of(
+                                new SkuOptionInput("색상", "white"),
+                                new SkuOptionInput("색상", "white")
+                        ),
+                        0)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("옵션");
+    }
 
 }

@@ -7,7 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -35,6 +37,7 @@ public class Sku {
         sku.additionalPrice = additionalPrice;
 
         validateOptionSize(inputs);
+        validateOptionDuplicate(inputs);
 
         // 변환: SkuOptionInput → SkuOptionValue
         sku.options = new ArrayList<>();
@@ -44,6 +47,18 @@ public class Sku {
         }
 
         return sku;
+    }
+
+    private static void validateOptionDuplicate(List<SkuOptionInput> inputs) {
+        List<String> names = inputs.stream()
+                .map(SkuOptionInput::name)
+                .toList();
+
+        Set<String> uniqueNames = new HashSet<>(names);
+
+        if (names.size() != uniqueNames.size()) {
+            throw new IllegalArgumentException("동일 옵션명이 중복될 수 없습니다.");
+        }
     }
 
     private static void validateOptionSize(List<SkuOptionInput> inputs) {
