@@ -1,5 +1,6 @@
 package com.team23.customer.security.jwt;
 
+import com.team23.customer.member.domain.MemberRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -38,47 +39,70 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = extractToken(request);
 
-        // 토큰이 없으면 우리 필터가 관여하지 않음 (다른 필터에게 맡김)
         if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 토큰이 있으면 반드시 우리가 처리한다: 성공 or 명시적 거부
         try {
             Claims claims = jwtProvider.parseAndValidate(token);
             String tokenType = claims.get("type", String.class);
 
             if (!ACCESS_TOKEN_TYPE.equals(tokenType)) {
-                // access 토큰이 아닌 경우 (refresh 등) → 명시적 거부
                 log.warn("Token is not an access token: type={}", tokenType);
-                SecurityContextHolder.clearContext();  // ★ 추가
+                SecurityContextHolder.clearContext();
             } else {
-                // 정상 access 토큰 → 인증 설정
                 setAuthentication(claims);
             }
 
         } catch (JwtException e) {
-            // 파싱 실패, 만료, 서명 불일치 등 → 명시적 거부
             log.debug("Invalid JWT: {}", e.getMessage());
-            SecurityContextHolder.clearContext();  // ★ 추가
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
     }
 
     private void setAuthentication(Claims claims) {
+        // ★ role 추출 (옛 토큰 호환을 위해 USER 기본값)
+        MemberRole role = extractRole(claims);
+
         AuthPrincipal principal = new AuthPrincipal(
                 claims.get("memberId", Long.class),
-                claims.getSubject()
+                claims.getSubject(),
+                role  // ★ 추가
         );
+
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
                         principal,
                         null,
-                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                        // ★ role 기반 권한 부여
+                        List.of(new SimpleGrantedAuthority(role.toSpringSecurityRole()))
                 );
+
         SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    /**
+     * JWT claims에서 role을 추출한다.
+     *
+     * <p>role claim이 없거나 알 수 없는 값이면 USER를 기본값으로 사용한다.
+     * (옛 형식의 토큰 호환을 위함)
+     */
+    private MemberRole extractRole(Claims claims) {
+        String roleString = claims.get("role", String.class);
+        if (roleString == null) {
+            log.debug("Token missing role claim, defaulting to USER");
+            return MemberRole.USER;
+        }
+
+        try {
+            return MemberRole.valueOf(roleString);
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown role in token: {}, defaulting to USER", roleString);
+            return MemberRole.USER;
+        }
     }
 
     private String extractToken(HttpServletRequest request) {

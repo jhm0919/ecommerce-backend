@@ -52,7 +52,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 .orElseThrow(() -> new MemberNotFoundException(providerSub));
 
         // 3. 토큰 발급 (AuthService에 위임)  ★ 핵심 변경
-        TokenPair tokens = authService.issueTokens(member.getId(), providerSub);
+        TokenPair tokens = authService.issueTokens(member.getId(), providerSub, member.getRole().name());
 
         // 4. RT를 쿠키로
         cookieIssuer.addRefreshTokenCookie(response, tokens.refreshToken());
