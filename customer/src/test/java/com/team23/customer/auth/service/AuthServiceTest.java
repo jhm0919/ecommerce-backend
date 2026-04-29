@@ -22,6 +22,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,16 +30,14 @@ class AuthServiceTest {
 
     @Mock private JwtProvider jwtProvider;
     @Mock private RefreshTokenRepository refreshTokenRepository;
-    @Mock private MemberRepository memberRepository;        // ★ 추가
+    @Mock private MemberRepository memberRepository;
 
     @InjectMocks private AuthService authService;
 
     private static final Long MEMBER_ID = 1L;
     private static final String PROVIDER_SUB = "google-sub-123";
+    private static final String USER_ROLE = "USER";
 
-    /**
-     * 테스트용 Member 생성 헬퍼.
-     */
     private Member createTestMember() {
         return Member.registerFromOAuth(
                 AuthProvider.GOOGLE,
@@ -58,12 +57,12 @@ class AuthServiceTest {
         @Test
         @DisplayName("AT와 RT를 발급하고 RT는 DB에 저장한다")
         void issueAndSave() {
-            given(jwtProvider.createAccessToken(MEMBER_ID, PROVIDER_SUB))
+            given(jwtProvider.createAccessToken(MEMBER_ID, PROVIDER_SUB, USER_ROLE))
                     .willReturn("mock-access-token");
             given(jwtProvider.getRefreshTokenExpiresAt())
                     .willReturn(LocalDateTime.now().plusDays(14));
 
-            TokenPair result = authService.issueTokens(MEMBER_ID, PROVIDER_SUB);
+            TokenPair result = authService.issueTokens(MEMBER_ID, PROVIDER_SUB, USER_ROLE);
 
             assertThat(result.accessToken()).isEqualTo("mock-access-token");
             assertThat(result.refreshToken()).isNotBlank();
@@ -73,14 +72,28 @@ class AuthServiceTest {
         @Test
         @DisplayName("매번 다른 RT 원본을 생성한다")
         void differentRefreshTokensEachTime() {
-            given(jwtProvider.createAccessToken(any(), any())).willReturn("at");
+            given(jwtProvider.createAccessToken(any(), any(), any())).willReturn("at");
             given(jwtProvider.getRefreshTokenExpiresAt())
                     .willReturn(LocalDateTime.now().plusDays(14));
 
-            TokenPair first = authService.issueTokens(MEMBER_ID, PROVIDER_SUB);
-            TokenPair second = authService.issueTokens(MEMBER_ID, PROVIDER_SUB);
+            TokenPair first = authService.issueTokens(MEMBER_ID, PROVIDER_SUB, USER_ROLE);
+            TokenPair second = authService.issueTokens(MEMBER_ID, PROVIDER_SUB, USER_ROLE);
 
             assertThat(first.refreshToken()).isNotEqualTo(second.refreshToken());
+        }
+
+        @Test
+        @DisplayName("ADMIN role도 정상 발급된다")
+        void issueWithAdminRole() {
+            given(jwtProvider.createAccessToken(MEMBER_ID, PROVIDER_SUB, "ADMIN"))
+                    .willReturn("admin-access-token");
+            given(jwtProvider.getRefreshTokenExpiresAt())
+                    .willReturn(LocalDateTime.now().plusDays(14));
+
+            TokenPair result = authService.issueTokens(MEMBER_ID, PROVIDER_SUB, "ADMIN");
+
+            assertThat(result.accessToken()).isEqualTo("admin-access-token");
+            verify(jwtProvider).createAccessToken(MEMBER_ID, PROVIDER_SUB, "ADMIN");
         }
     }
 
@@ -91,7 +104,34 @@ class AuthServiceTest {
         @Test
         @DisplayName("유효한 RT로 새 토큰 쌍을 받을 수 있다")
         void refreshWithValidToken() {
-            // given
+            String rawRefreshToken = "valid-refresh-token";
+            String tokenHash = TokenHasher.hash(rawRefreshToken);
+
+            RefreshToken existingToken = RefreshToken.issue(
+                    MEMBER_ID, tokenHash, LocalDateTime.now().plusDays(14)
+            );
+            Member member = createTestMember();  // role = USER
+
+            given(refreshTokenRepository.findByTokenHash(tokenHash))
+                    .willReturn(Optional.of(existingToken));
+            given(memberRepository.findById(MEMBER_ID))
+                    .willReturn(Optional.of(member));
+            given(jwtProvider.createAccessToken(MEMBER_ID, PROVIDER_SUB, USER_ROLE))
+                    .willReturn("new-access-token");
+            given(jwtProvider.getRefreshTokenExpiresAt())
+                    .willReturn(LocalDateTime.now().plusDays(14));
+
+            TokenPair result = authService.refreshTokens(rawRefreshToken);
+
+            assertThat(result.accessToken()).isEqualTo("new-access-token");
+            assertThat(result.refreshToken()).isNotEqualTo(rawRefreshToken);
+            assertThat(existingToken.isRevoked()).isTrue();
+            verify(refreshTokenRepository).save(any(RefreshToken.class));
+        }
+
+        @Test
+        @DisplayName("재발급 시 Member의 role이 새 AT에 반영된다")
+        void refreshUsesCurrentMemberRole() {
             String rawRefreshToken = "valid-refresh-token";
             String tokenHash = TokenHasher.hash(rawRefreshToken);
 
@@ -99,24 +139,21 @@ class AuthServiceTest {
                     MEMBER_ID, tokenHash, LocalDateTime.now().plusDays(14)
             );
             Member member = createTestMember();
+            member.promoteToAdmin();  // role을 ADMIN으로 변경
 
             given(refreshTokenRepository.findByTokenHash(tokenHash))
                     .willReturn(Optional.of(existingToken));
-            given(memberRepository.findById(MEMBER_ID))               // ★ 추가
+            given(memberRepository.findById(MEMBER_ID))
                     .willReturn(Optional.of(member));
-            given(jwtProvider.createAccessToken(MEMBER_ID, PROVIDER_SUB))
-                    .willReturn("new-access-token");
+            given(jwtProvider.createAccessToken(MEMBER_ID, PROVIDER_SUB, "ADMIN"))
+                    .willReturn("admin-access-token");
             given(jwtProvider.getRefreshTokenExpiresAt())
                     .willReturn(LocalDateTime.now().plusDays(14));
 
-            // when
-            TokenPair result = authService.refreshTokens(rawRefreshToken);  // ★ 인자 1개
+            TokenPair result = authService.refreshTokens(rawRefreshToken);
 
-            // then
-            assertThat(result.accessToken()).isEqualTo("new-access-token");
-            assertThat(result.refreshToken()).isNotEqualTo(rawRefreshToken);  // 새 RT
-            assertThat(existingToken.isRevoked()).isTrue();  // 기존 RT 무효화
-            verify(refreshTokenRepository).save(any(RefreshToken.class));  // 새 RT 저장
+            assertThat(result.accessToken()).isEqualTo("admin-access-token");
+            verify(jwtProvider).createAccessToken(MEMBER_ID, PROVIDER_SUB, "ADMIN");
         }
 
         @Test
@@ -125,7 +162,7 @@ class AuthServiceTest {
             given(refreshTokenRepository.findByTokenHash(any()))
                     .willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> authService.refreshTokens("unknown"))   // ★ 인자 1개
+            assertThatThrownBy(() -> authService.refreshTokens("unknown"))
                     .isInstanceOf(InvalidRefreshTokenException.class);
         }
 
@@ -140,14 +177,14 @@ class AuthServiceTest {
             given(refreshTokenRepository.findByTokenHash(any()))
                     .willReturn(Optional.of(revokedToken));
 
-            assertThatThrownBy(() -> authService.refreshTokens("token"))     // ★ 인자 1개
+            assertThatThrownBy(() -> authService.refreshTokens("token"))
                     .isInstanceOf(InvalidRefreshTokenException.class);
         }
 
         @Test
         @DisplayName("null/빈 토큰은 거부")
         void rejectBlankToken() {
-            assertThatThrownBy(() -> authService.refreshTokens(null))        // ★ 인자 1개
+            assertThatThrownBy(() -> authService.refreshTokens(null))
                     .isInstanceOf(InvalidRefreshTokenException.class);
 
             assertThatThrownBy(() -> authService.refreshTokens(""))
@@ -158,7 +195,7 @@ class AuthServiceTest {
         }
 
         @Test
-        @DisplayName("RT는 유효하지만 Member가 없으면 거부 (이론적 안전망)")  // ★ 신규
+        @DisplayName("RT는 유효하지만 Member가 없으면 거부 (이론적 안전망)")
         void rejectWhenMemberNotFound() {
             String rawToken = "valid-token";
             RefreshToken existingToken = RefreshToken.issue(
@@ -173,7 +210,6 @@ class AuthServiceTest {
             assertThatThrownBy(() -> authService.refreshTokens(rawToken))
                     .isInstanceOf(InvalidRefreshTokenException.class);
 
-            // 기존 RT는 무효화되지 않아야 함 (Member 없는데 회전 X)
             assertThat(existingToken.isRevoked()).isFalse();
         }
     }

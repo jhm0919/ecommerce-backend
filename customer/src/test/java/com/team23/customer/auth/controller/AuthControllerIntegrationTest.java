@@ -17,10 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -38,11 +35,9 @@ class AuthControllerIntegrationTest {
     @Autowired private AuthService authService;
     @Autowired private MemberRepository memberRepository;
     @Autowired private RefreshTokenRepository refreshTokenRepository;
-    @Autowired private ObjectMapper objectMapper;
 
     private Member testMember;
     private TokenPair initialTokens;
-
 
     @BeforeEach
     void setUp() {
@@ -59,20 +54,9 @@ class AuthControllerIntegrationTest {
         );
         initialTokens = authService.issueTokens(
                 testMember.getId(),
-                testMember.getProviderSub()
+                testMember.getProviderSub(),
+                testMember.getRole().name()  // ★ role 추가
         );
-
-        // ★ 임시 디버그
-        String hash = TokenHasher.hash(initialTokens.refreshToken());
-        System.out.println(">>> Token raw: " + initialTokens.refreshToken().substring(0, 10) + "...");
-        System.out.println(">>> Token hash: " + hash);
-        System.out.println(">>> Member ID: " + testMember.getId());
-
-        boolean found = refreshTokenRepository.findByTokenHash(hash).isPresent();
-        System.out.println(">>> RT in DB after setUp: " + found);
-
-        long allCount = refreshTokenRepository.count();
-        System.out.println(">>> Total RT count: " + allCount);
     }
 
     @Nested
@@ -82,7 +66,7 @@ class AuthControllerIntegrationTest {
         @Test
         @DisplayName("유효한 RT 쿠키로 새 토큰을 받을 수 있다")
         void refreshWithValidCookie() throws Exception {
-            MvcResult result = mockMvc.perform(post("/api/auth/refresh")
+            var result = mockMvc.perform(post("/api/auth/refresh")
                             .cookie(new Cookie(COOKIE_NAME, initialTokens.refreshToken())))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.accessToken").exists())
@@ -91,18 +75,12 @@ class AuthControllerIntegrationTest {
                     .andExpect(cookie().httpOnly(COOKIE_NAME, true))
                     .andReturn();
 
-            // ❌ 제거: AT 비교 (JWT 시간 정밀도로 인해 같을 수 있음)
-            // JsonNode response = objectMapper.readTree(
-            //         result.getResponse().getContentAsString());
-            // String newAccessToken = response.get("accessToken").asText();
-            // assertThat(newAccessToken).isNotEqualTo(initialTokens.accessToken());
-
-            // ✅ 유지: 새 RT는 기존과 달라야 함 (RT는 SecureRandom이라 항상 다름)
+            // 새 RT는 기존과 달라야 함 (회전)
             String newRefreshToken = result.getResponse()
                     .getCookie(COOKIE_NAME).getValue();
             assertThat(newRefreshToken).isNotEqualTo(initialTokens.refreshToken());
 
-            // ✅ 유지: 기존 RT가 DB에서 무효화됨
+            // 기존 RT가 DB에서 무효화됨
             String oldHash = TokenHasher.hash(initialTokens.refreshToken());
             assertThat(refreshTokenRepository.findByTokenHash(oldHash))
                     .hasValueSatisfying(t -> assertThat(t.isRevoked()).isTrue());
