@@ -2,8 +2,10 @@ package com.team23.management.api;
 
 import com.team23.management.api.dto.ProductRegisterRequest;
 import com.team23.management.domain.product.Product;
+import com.team23.management.domain.sku.Sku;
 import com.team23.management.domain.sku.SkuOptionInput;
 import com.team23.management.domain.product.Category;
+import com.team23.management.domain.stock.Stock;
 import com.team23.management.infrastructure.ProductRepository;
 import com.team23.management.infrastructure.SkuRepository;
 import com.team23.management.infrastructure.StockRepository;
@@ -133,5 +135,46 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.category").value("FASHION"));   // 변경 안 한 필드 유지
     }
 
+    @Test
+    @DisplayName("GET /api/seller/products/{id} - 정상 조회")
+    void getDetailNormalProductReturns200() throws Exception {
+        // given
+        Product product = Product.create("면 티셔츠", Category.FASHION, 10000, "면", 1L);
+        productRepository.save(product);
 
+        Sku sku = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "white")), 0);
+        skuRepository.save(sku);
+        stockRepository.save(Stock.create(sku.getId(), 100));
+
+        // when & then
+        mockMvc.perform(get("/api/seller/products/" + product.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(product.getId()))
+                .andExpect(jsonPath("$.name").value("면 티셔츠"))
+                .andExpect(jsonPath("$.skus").isArray())
+                .andExpect(jsonPath("$.skus.length()").value(1))
+                .andExpect(jsonPath("$.skus[0].stock").value(100))
+                .andExpect(jsonPath("$.skus[0].options[0].name").value("색상"));
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 productId → 404")
+    void getDetailNotFoundReturns404() throws Exception {
+        mockMvc.perform(get("/api/seller/products/99999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("DELETED 상품 조회 → 404")
+    void getDetailDeletedProductReturns404() throws Exception {
+        // given
+        Product product = Product.create("삭제됨", Category.FASHION, 10000, "d", 1L);
+        product.delete();
+        productRepository.save(product);
+
+        // when & then
+        mockMvc.perform(get("/api/seller/products/" + product.getId()))
+                .andExpect(status().isNotFound());
+    }
 }

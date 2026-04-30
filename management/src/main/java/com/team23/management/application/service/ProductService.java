@@ -1,10 +1,12 @@
 package com.team23.management.application.service;
 
+import com.team23.management.api.dto.ProductDetailResponse;
 import com.team23.management.application.command.ProductRegisterCommand;
 import com.team23.management.application.command.ProductUpdateCommand;
 import com.team23.management.application.command.SkuCommand;
 import com.team23.management.domain.product.Category;
 import com.team23.management.domain.product.Product;
+import com.team23.management.domain.product.ProductStatus;
 import com.team23.management.domain.sku.Sku;
 import com.team23.management.domain.stock.Stock;
 import com.team23.management.exception.ProductNotFoundException;
@@ -16,6 +18,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -61,6 +68,26 @@ public class ProductService {
     @Transactional(readOnly = true)
     public Page<Product> search(String name, Category category, Pageable pageable) {
         return productRepository.search(name, category, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductDetailResponse getDetail(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        if (product.getStatus() == ProductStatus.DELETED) {
+            throw new ProductNotFoundException(productId);
+        }
+
+        List<Sku> skus = skuRepository.findByProductIdWithOptions(productId);
+
+        // After — IN 절로 해결
+        List<Long> skuIds = skus.stream().map(Sku::getId).toList();
+        List<Stock> stocks = stockRepository.findBySkuIdIn(skuIds);
+        Map<Long, Integer> stockMap = stocks.stream()
+                .collect(Collectors.toMap(Stock::getSkuId, Stock::getQuantity));
+
+        return ProductDetailResponse.from(product, skus, stockMap);
     }
 
     @Transactional

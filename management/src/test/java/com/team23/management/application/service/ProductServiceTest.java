@@ -1,16 +1,19 @@
 package com.team23.management.application.service;
 
+import com.team23.management.api.dto.ProductDetailResponse;
+import com.team23.management.api.dto.ProductUpdateResponse;
 import com.team23.management.application.command.ProductRegisterCommand;
 import com.team23.management.application.command.ProductUpdateCommand;
 import com.team23.management.application.command.SkuCommand;
 import com.team23.management.domain.product.Product;
+import com.team23.management.domain.sku.Sku;
 import com.team23.management.domain.sku.SkuOptionInput;
 import com.team23.management.domain.product.Category;
+import com.team23.management.domain.stock.Stock;
 import com.team23.management.exception.ProductNotFoundException;
 import com.team23.management.infrastructure.ProductRepository;
 import com.team23.management.infrastructure.SkuRepository;
 import com.team23.management.infrastructure.StockRepository;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -153,5 +156,32 @@ class ProductServiceTest {
         ))).isInstanceOf(ProductNotFoundException.class)
                 .hasMessageContaining("상품");
 
+    }
+
+    @Test
+    @DisplayName("정상 상세 조회 — N+1 발생 시점")
+    void getDetailNormalProductReturnsDetail() {
+        // given
+        Product product = Product.create("면 티셔츠", Category.FASHION, 10000, "면", 1L);
+        productRepository.save(product);
+
+        Sku sku1 = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "white")), 0);
+        Sku sku2 = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "black")), 1000);
+        Sku sku3 = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "red")), 500);
+        skuRepository.saveAll(List.of(sku1, sku2, sku3));
+
+        stockRepository.save(Stock.create(sku1.getId(), 100));
+        stockRepository.save(Stock.create(sku2.getId(), 50));
+        stockRepository.save(Stock.create(sku3.getId(), 30));
+
+        // when
+        ProductDetailResponse response = productService.getDetail(product.getId());
+
+        // then
+        assertThat(response.id()).isEqualTo(product.getId());
+        assertThat(response.skus()).hasSize(3);
     }
 }
