@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -78,14 +79,13 @@ public class ProductService {
             throw new ProductNotFoundException(productId);
         }
 
-        List<Sku> skus = skuRepository.findByProductId(productId);
+        List<Sku> skus = skuRepository.findByProductIdWithOptions(productId);
 
-        // *N+1 발생 시키는 코드* — 일부러
-        Map<Long, Integer> stockMap = new HashMap<>();
-        for (Sku sku : skus) {
-            Stock stock = stockRepository.findBySkuId(sku.getId());
-            stockMap.put(sku.getId(), stock.getQuantity());
-        }
+        // After — IN 절로 해결
+        List<Long> skuIds = skus.stream().map(Sku::getId).toList();
+        List<Stock> stocks = stockRepository.findBySkuIdIn(skuIds);
+        Map<Long, Integer> stockMap = stocks.stream()
+                .collect(Collectors.toMap(Stock::getSkuId, Stock::getQuantity));
 
         return ProductDetailResponse.from(product, skus, stockMap);
     }
