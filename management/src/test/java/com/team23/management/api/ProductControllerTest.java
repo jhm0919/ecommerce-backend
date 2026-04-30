@@ -19,8 +19,8 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -106,4 +106,32 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].name").value("면 티셔츠"));
     }
+
+    @Test
+    @DisplayName("PATCH /api/seller/products/{id} - 정상 수정")
+    void update_validRequest_returns200() throws Exception {
+        // given - 상품 등록
+        Product product = Product.create("원래 이름", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        String json = """
+            {
+              "sellerId": 1,
+              "name": "새 이름",
+              "basePrice": 25000
+            }
+            """;
+
+        // when & then
+        mockMvc.perform(patch("/api/seller/products/" + product.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("새 이름"))
+                .andExpect(jsonPath("$.basePrice").value(25000))
+                .andExpect(jsonPath("$.category").value("FASHION"));   // 변경 안 한 필드 유지
+    }
+
+
 }

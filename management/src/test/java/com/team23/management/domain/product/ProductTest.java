@@ -60,4 +60,84 @@ public class ProductTest {
         ).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("카테고리");
     }
+
+    @Test
+    @DisplayName("상품명 수정")
+    void updateNameValidInputChangesName() {
+        //given
+        Product product = Product.create("원래 이름", Category.FASHION, 10000, "d", 1L);
+
+        //when
+        product.updateName("새 이름");
+
+        //then
+        assertThat(product.getName()).isEqualTo("새 이름");
+    }
+
+    @Test
+    @DisplayName("상품명 빈칸일 때 검증")
+    void updateNameBlankThrows() {
+        //given
+        Product product = Product.create("원래 이름", Category.FASHION, 10000, "d", 1L);
+
+        //when
+        //then
+        assertThatThrownBy(() -> product.updateName(""))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("상품명");
+    }
+
+    @Test
+    @DisplayName("상품명 길이가 100자 넘을 때 검증")
+    void updateNameOverLengthThrows() {
+        //given
+        Product product = Product.create("원래 이름", Category.FASHION, 10000, "d", 1L);
+
+        //when
+        //then
+        assertThatThrownBy(() -> product.updateName("a".repeat(101)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("상품명");
+    }
+
+    @Test
+    @DisplayName("상품 상태가 삭제상태일 때 수정 가능여부")
+    void updateStatusDeletedThrows() {
+        //given
+        Product product = Product.create("원래 이름", Category.FASHION, 10000, "d", 1L);
+
+        //when
+        product.delete();
+
+        //then
+        assertThatThrownBy(() -> product.updateName("새 이름"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("삭제된");
+    }
+
+    @Test
+    @DisplayName("가격을 음수로 수정했을 때")
+    void updatePriceMinusThrows() {
+        //given
+        Product product = Product.create("원래 이름", Category.FASHION, 10000, "d", 1L);
+
+        //when
+        //then
+        assertThatThrownBy(() -> product.updatePrice(-1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("가격");
+    }
+
+    @Test
+    @DisplayName("카테고리를 넣지 않았을 때")
+    void updateCategoryNullThrows() {
+        //given
+        Product product = Product.create("원래 이름", Category.FASHION, 10000, "d", 1L);
+
+        //when
+        //then
+        assertThatThrownBy(() -> product.updateCategory(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("카테고리");
+    }
 }
