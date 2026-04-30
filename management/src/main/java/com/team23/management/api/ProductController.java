@@ -48,6 +48,12 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDetailResponse> getDetail(@PathVariable Long id) {
+        ProductDetailResponse response = productService.getDetail(id);
+        return ResponseEntity.ok(response);
+    }
+
     @PatchMapping("/{id}")
     public ResponseEntity<ProductUpdateResponse> update(
             @PathVariable Long id,
