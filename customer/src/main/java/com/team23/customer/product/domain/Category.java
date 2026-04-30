@@ -47,12 +47,21 @@ public class Category {
      * @param slug URL 식별자 (예: "men-tops")
      */
     public static Category create(String name, String slug) {
-        validateName(name);
-        validateSlug(slug);
+        Objects.requireNonNull(name, "name must not be null");
+        Objects.requireNonNull(slug, "slug must not be null");
 
+        // 1. 정제 (Normalize)
+        String normalizedName = name.trim();
+        String normalizedSlug = slug.trim().toLowerCase();
+
+        // 2. 검증 (Validate)
+        validateName(normalizedName);
+        validateSlug(normalizedSlug);
+
+        // 3. 생성 (Construct)
         Category category = new Category();
-        category.name = name.trim();
-        category.slug = slug.trim().toLowerCase();
+        category.name = normalizedName;
+        category.slug = normalizedSlug;
         return category;
     }
 
