@@ -5,7 +5,7 @@ import com.team23.management.domain.product.Category;
 import com.team23.management.domain.product.Product;
 import com.team23.management.domain.product.ProductStatus;
 
-public record ProductDetailResponse(
+public record ProductUpdateResponse(
         Long id,
         String name,
         Category category,
@@ -14,8 +14,8 @@ public record ProductDetailResponse(
         ProductStatus status,
         Long sellerId
 ) {
-    public static ProductDetailResponse from(Product product) {
-        return new ProductDetailResponse(
+    public static ProductUpdateResponse from(Product product) {
+        return new ProductUpdateResponse(
                 product.getId(),
                 product.getName(),
                 product.getCategory(),

@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,11 +49,11 @@ public class ProductController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<ProductDetailResponse> update(
+    public ResponseEntity<ProductUpdateResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody ProductUpdateRequest request
     ) {
         Product updated = productService.update(request.toCommand(id));
-        return ResponseEntity.ok(ProductDetailResponse.from(updated));
+        return ResponseEntity.ok(ProductUpdateResponse.from(updated));
     }
 }

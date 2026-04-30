@@ -1,16 +1,18 @@
 package com.team23.management.application.service;
 
+import com.team23.management.api.dto.ProductUpdateResponse;
 import com.team23.management.application.command.ProductRegisterCommand;
 import com.team23.management.application.command.ProductUpdateCommand;
 import com.team23.management.application.command.SkuCommand;
 import com.team23.management.domain.product.Product;
+import com.team23.management.domain.sku.Sku;
 import com.team23.management.domain.sku.SkuOptionInput;
 import com.team23.management.domain.product.Category;
+import com.team23.management.domain.stock.Stock;
 import com.team23.management.exception.ProductNotFoundException;
 import com.team23.management.infrastructure.ProductRepository;
 import com.team23.management.infrastructure.SkuRepository;
 import com.team23.management.infrastructure.StockRepository;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
