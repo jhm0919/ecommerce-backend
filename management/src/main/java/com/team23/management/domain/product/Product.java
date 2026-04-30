@@ -59,6 +59,32 @@ public class Product {
         this.status = ProductStatus.DELETED;
     }
 
+    public void updateName(String name) {
+        validateNotDeleted();
+        validateName(name);
+        this.name = name;
+    }
+    public void updateCategory(Category category) {
+        validateNotDeleted();
+        validateCategory(category);
+        this.category = category;
+    }
+    public void updatePrice(int basePrice) {
+        validateNotDeleted();
+        validatePrice(basePrice);
+        this.basePrice = basePrice;
+    }
+    public void updateDescription(String description) {
+        validateNotDeleted();
+        this.description = description;
+    }
+
+    private void validateNotDeleted() {
+        if (this.status == ProductStatus.DELETED) {
+            throw new IllegalStateException("삭제된 상품은 수정할 수 없습니다");
+        }
+    }
+
     private static void validateCategory(Category category) {
         if (category == null) {
             throw new IllegalArgumentException("카테고리를 선택해주세요.");
