@@ -1,19 +1,21 @@
 package com.team23.management.application.service;
 
 import com.team23.management.application.command.ProductRegisterCommand;
+import com.team23.management.application.command.ProductUpdateCommand;
 import com.team23.management.application.command.SkuCommand;
 import com.team23.management.domain.product.Category;
 import com.team23.management.domain.product.Product;
 import com.team23.management.domain.sku.Sku;
 import com.team23.management.domain.stock.Stock;
+import com.team23.management.exception.ProductNotFoundException;
 import com.team23.management.infrastructure.ProductRepository;
 import com.team23.management.infrastructure.SkuRepository;
 import com.team23.management.infrastructure.StockRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -55,8 +57,39 @@ public class ProductService {
         return savedProduct.getId();
     }
 
+
+    @Transactional(readOnly = true)
     public Page<Product> search(String name, Category category, Pageable pageable) {
         return productRepository.search(name, category, pageable);
+    }
+
+    @Transactional
+    public Product update(ProductUpdateCommand command) {
+        // 1. 조회
+        Product product = productRepository.findById(command.productId())
+                .orElseThrow(() -> new ProductNotFoundException(command.productId()));
+
+        // 2. 권한 검증
+        if (!product.getSellerId().equals(command.sellerId())) {
+            throw new IllegalArgumentException("본인이 등록한 상품만 수정할 수 있습니다");
+        }
+
+        // 3. 부분 수정 (null 체크)
+        if (command.name() != null) {
+            product.updateName(command.name());
+        }
+        if (command.category() != null) {
+            product.updateCategory(command.category());
+        }
+        if (command.basePrice() != null) {
+            product.updatePrice(command.basePrice());
+        }
+        if (command.description() != null) {
+            product.updateDescription(command.description());
+        }
+
+        // 4. 변경 감지로 자동 UPDATE
+        return product;
     }
 }
 

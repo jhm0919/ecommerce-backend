@@ -1,4 +1,4 @@
-package com.team23.management.api.exception;
+package com.team23.management.exception;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
