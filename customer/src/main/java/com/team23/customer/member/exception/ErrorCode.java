@@ -20,6 +20,10 @@ public enum ErrorCode {
     INSUFFICIENT_STOCK(HttpStatus.BAD_REQUEST, "O002", "재고가 부족합니다"),
     ORDER_ACCESS_DENIED(HttpStatus.NOT_FOUND, "O003", "주문을 찾을 수 없습니다"),  // 의도적 NOT_FOUND
 
+    // Cart
+    CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "C001", "장바구니 항목을 찾을 수 없습니다"),
+    PRODUCT_NOT_PURCHASABLE(HttpStatus.BAD_REQUEST, "C002", "구매할 수 없는 상품입니다"),
+
     // Auth
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "유효하지 않은 Refresh Token입니다"),
 
