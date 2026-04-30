@@ -1,8 +1,6 @@
 package com.team23.management.api;
 
-import com.team23.management.api.dto.ProductListResponse;
-import com.team23.management.api.dto.ProductRegisterRequest;
-import com.team23.management.api.dto.ProductRegisterResponse;
+import com.team23.management.api.dto.*;
 import com.team23.management.application.service.ProductService;
 import com.team23.management.domain.product.Category;
 import com.team23.management.domain.product.Product;
@@ -49,5 +47,14 @@ public class ProductController {
         Page<Product> products = productService.search(name, category, pageable);
         Page<ProductListResponse> response = products.map(ProductListResponse::from);
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<ProductDetailResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductUpdateRequest request
+    ) {
+        Product updated = productService.update(request.toCommand(id));
+        return ResponseEntity.ok(ProductDetailResponse.from(updated));
     }
 }
