@@ -1,0 +1,256 @@
+package com.team23.customer.order.service;
+
+import com.team23.customer.delivery.domain.Delivery;
+import com.team23.customer.delivery.repository.DeliveryRepository;
+import com.team23.customer.order.domain.Order;
+import com.team23.customer.order.dto.CreateOrderRequest;
+import com.team23.customer.order.exception.InsufficientStockException;
+import com.team23.customer.order.exception.OrderAccessDeniedException;
+import com.team23.customer.order.exception.OrderNotFoundException;
+import com.team23.customer.order.repository.OrderRepository;
+import com.team23.customer.product.domain.Category;
+import com.team23.customer.product.domain.Money;
+import com.team23.customer.product.domain.Product;
+import com.team23.customer.product.repository.ProductRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+
+@ExtendWith(MockitoExtension.class)
+class OrderServiceTest {
+
+    @Mock private OrderRepository orderRepository;
+    @Mock private DeliveryRepository deliveryRepository;
+    @Mock private ProductRepository productRepository;
+
+    @InjectMocks private OrderService orderService;
+
+    private Product product;
+
+    @BeforeEach
+    void setUp() {
+        Category category = Category.create("의류", "clothing");
+        product = Product.register(
+                "티셔츠", Money.krw(29900), 100, "설명", "img", category
+        );
+    }
+
+    private CreateOrderRequest createRequest(boolean isGuest) {
+        return new CreateOrderRequest(
+                List.of(new CreateOrderRequest.OrderItemRequest(1L, 2)),
+                new CreateOrderRequest.DeliveryInfoRequest(
+                        "홍길동", "010-1234-5678",
+                        "12345", "서울시 강남구", "101호", "문 앞에"
+                ),
+                isGuest ? "guest@example.com" : null,
+                isGuest ? "010-9999-8888" : null
+        );
+    }
+
+    @Nested
+    @DisplayName("회원 주문 생성")
+    class CreateMemberOrder {
+
+        @Test
+        @DisplayName("정상적으로 주문을 생성한다")
+        void createNormal() {
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+            given(orderRepository.save(any(Order.class)))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            Order result = orderService.createMemberOrder(10L, createRequest(false));
+
+            assertThat(result.getMemberId()).isEqualTo(10L);
+            assertThat(result.isMemberOrder()).isTrue();
+            assertThat(product.getStock()).isEqualTo(98);  // 100 - 2 차감 확인
+            verify(orderRepository).save(any(Order.class));
+            verify(deliveryRepository).save(any(Delivery.class));
+        }
+
+        @Test
+        @DisplayName("재고 부족 시 InsufficientStockException")
+        void rejectInsufficientStock() {
+            // 재고 1개인 상품
+            Product lowStockProduct = Product.register(
+                    "한정상품", Money.krw(10000), 1, "설명", "img",
+                    Category.create("의류", "clothing")
+            );
+            given(productRepository.findById(1L)).willReturn(Optional.of(lowStockProduct));
+
+            CreateOrderRequest request = new CreateOrderRequest(
+                    List.of(new CreateOrderRequest.OrderItemRequest(1L, 5)),  // 5개 요청
+                    new CreateOrderRequest.DeliveryInfoRequest(
+                            "홍", "010-1", "12345", "서울", "101", null
+                    ),
+                    null, null
+            );
+
+            assertThatThrownBy(() -> orderService.createMemberOrder(10L, request))
+                    .isInstanceOf(InsufficientStockException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("비회원 주문 생성")
+    class CreateGuestOrder {
+
+        @Test
+        @DisplayName("정상적으로 비회원 주문 생성")
+        void createNormal() {
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+            given(orderRepository.save(any(Order.class)))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            Order result = orderService.createGuestOrder(createRequest(true));
+
+            assertThat(result.isGuestOrder()).isTrue();
+            assertThat(result.getGuestEmail()).isEqualTo("guest@example.com");
+            assertThat(result.getGuestPhone()).isEqualTo("010-9999-8888");
+        }
+
+        @Test
+        @DisplayName("guestEmail이 없으면 예외")
+        void rejectMissingEmail() {
+            CreateOrderRequest request = new CreateOrderRequest(
+                    List.of(new CreateOrderRequest.OrderItemRequest(1L, 1)),
+                    new CreateOrderRequest.DeliveryInfoRequest(
+                            "홍", "010-1", "12345", "서울", "101", null
+                    ),
+                    null,  // email 없음
+                    "010-9999-8888"
+            );
+
+            assertThatThrownBy(() -> orderService.createGuestOrder(request))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("주문 조회")
+    class FindOrders {
+
+        @Test
+        @DisplayName("자기 주문은 조회 가능")
+        void findOwnOrder() {
+            Order order = Order.createForMember(10L, List.of(
+                    com.team23.customer.order.domain.OrderItem.of(product, 1)
+            ));
+
+            given(orderRepository.findByIdAndMemberIdWithItems(1L, 10L))
+                    .willReturn(Optional.of(order));
+
+            Order result = orderService.findMyOrder(10L, 1L);
+
+            assertThat(result).isEqualTo(order);
+        }
+
+        @Test
+        @DisplayName("다른 회원의 주문은 NotFound로 응답")
+        void rejectOtherMembersOrder() {
+            given(orderRepository.findByIdAndMemberIdWithItems(1L, 10L))
+                    .willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> orderService.findMyOrder(10L, 1L))
+                    .isInstanceOf(OrderNotFoundException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("비회원 조회 보안")
+    class GuestOrderAccess {
+
+        @Test
+        @DisplayName("주문번호 + 이메일 일치 시 조회 가능")
+        void allowsAccessWithMatchingEmail() {
+            Order guestOrder = Order.createForGuest(
+                    "guest@example.com", "010-9999-8888",
+                    List.of(com.team23.customer.order.domain.OrderItem.of(product, 1))
+            );
+
+            given(orderRepository.findByOrderNumberWithItems(any()))
+                    .willReturn(Optional.of(guestOrder));
+
+            Order result = orderService.findGuestOrder("ORD-...", "guest@example.com");
+
+            assertThat(result).isEqualTo(guestOrder);
+        }
+
+        @Test
+        @DisplayName("주문번호 + 전화번호 일치 시 조회 가능")
+        void allowsAccessWithMatchingPhone() {
+            Order guestOrder = Order.createForGuest(
+                    "guest@example.com", "010-9999-8888",
+                    List.of(com.team23.customer.order.domain.OrderItem.of(product, 1))
+            );
+
+            given(orderRepository.findByOrderNumberWithItems(any()))
+                    .willReturn(Optional.of(guestOrder));
+
+            Order result = orderService.findGuestOrder("ORD-...", "010-9999-8888");
+
+            assertThat(result).isEqualTo(guestOrder);
+        }
+
+        @Test
+        @DisplayName("연락처 불일치 시 AccessDenied")
+        void rejectMismatchedContact() {
+            Order guestOrder = Order.createForGuest(
+                    "guest@example.com", "010-9999-8888",
+                    List.of(com.team23.customer.order.domain.OrderItem.of(product, 1))
+            );
+
+            given(orderRepository.findByOrderNumberWithItems(any()))
+                    .willReturn(Optional.of(guestOrder));
+
+            assertThatThrownBy(() ->
+                    orderService.findGuestOrder("ORD-...", "wrong@example.com"))
+                    .isInstanceOf(OrderAccessDeniedException.class);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 주문번호는 NotFound")
+        void rejectUnknownOrderNumber() {
+            given(orderRepository.findByOrderNumberWithItems(any()))
+                    .willReturn(Optional.empty());
+
+            assertThatThrownBy(() ->
+                    orderService.findGuestOrder("UNKNOWN", "anything"))
+                    .isInstanceOf(OrderNotFoundException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("주문 취소")
+    class CancelOrder {
+
+        @Test
+        @DisplayName("자기 주문 취소 시 재고 복구")
+        void cancelRestoresStock() {
+            Order order = Order.createForMember(10L, List.of(
+                    com.team23.customer.order.domain.OrderItem.of(product, 3)
+            ));
+
+            given(orderRepository.findByIdAndMemberIdWithItems(1L, 10L))
+                    .willReturn(Optional.of(order));
+            given(productRepository.findById(any())).willReturn(Optional.of(product));
+
+            orderService.cancelMyOrder(10L, 1L);
+
+            assertThat(product.getStock()).isEqualTo(103);  // 100 + 3 복구
+            assertThat(order.getStatus().toString()).isEqualTo("CANCELLED");
+        }
+    }
+}

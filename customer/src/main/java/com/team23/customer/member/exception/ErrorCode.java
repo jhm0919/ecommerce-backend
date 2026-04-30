@@ -15,6 +15,11 @@ public enum ErrorCode {
     CATEGORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "P002", "카테고리를 찾을 수 없습니다"),
     DUPLICATE_CATEGORY(HttpStatus.CONFLICT, "P003", "이미 존재하는 카테고리입니다"),
 
+    // Order
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "O001", "주문을 찾을 수 없습니다"),
+    INSUFFICIENT_STOCK(HttpStatus.BAD_REQUEST, "O002", "재고가 부족합니다"),
+    ORDER_ACCESS_DENIED(HttpStatus.NOT_FOUND, "O003", "주문을 찾을 수 없습니다"),  // 의도적 NOT_FOUND
+
     // Auth
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "유효하지 않은 Refresh Token입니다"),
 
