@@ -1,16 +1,19 @@
 package com.team23.management.api;
 
+import com.team23.management.api.dto.ProductListResponse;
 import com.team23.management.api.dto.ProductRegisterRequest;
 import com.team23.management.api.dto.ProductRegisterResponse;
 import com.team23.management.application.service.ProductService;
+import com.team23.management.domain.product.Category;
+import com.team23.management.domain.product.Product;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
@@ -35,5 +38,16 @@ public class ProductController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<ProductListResponse>> search(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Category category,
+            Pageable pageable
+    ) {
+        Page<Product> products = productService.search(name, category, pageable);
+        Page<ProductListResponse> response = products.map(ProductListResponse::from);
+        return ResponseEntity.ok(response);
     }
 }
