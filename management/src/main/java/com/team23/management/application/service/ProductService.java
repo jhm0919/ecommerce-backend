@@ -2,19 +2,22 @@ package com.team23.management.application.service;
 
 import com.team23.management.application.command.ProductRegisterCommand;
 import com.team23.management.application.command.SkuCommand;
+import com.team23.management.domain.product.Category;
+import com.team23.management.domain.product.Product;
 import com.team23.management.domain.sku.Sku;
 import com.team23.management.domain.stock.Stock;
-import com.team23.management.domain.product.Product;
 import com.team23.management.infrastructure.ProductRepository;
 import com.team23.management.infrastructure.SkuRepository;
 import com.team23.management.infrastructure.StockRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class ProductRegisterService {
+public class ProductService {
 
     private final ProductRepository productRepository;
     private final SkuRepository skuRepository;
@@ -50,6 +53,10 @@ public class ProductRegisterService {
 
         // === 3. productId 반환 ===
         return savedProduct.getId();
+    }
+
+    public Page<Product> search(String name, Category category, Pageable pageable) {
+        return productRepository.search(name, category, pageable);
     }
 }
 

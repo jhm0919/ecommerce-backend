@@ -55,6 +55,10 @@ public class Product {
         return product;
     }
 
+    public void delete() {
+        this.status = ProductStatus.DELETED;
+    }
+
     private static void validateCategory(Category category) {
         if (category == null) {
             throw new IllegalArgumentException("카테고리를 선택해주세요.");

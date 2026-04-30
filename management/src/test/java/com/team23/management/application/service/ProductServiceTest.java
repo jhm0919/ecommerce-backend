@@ -2,16 +2,20 @@ package com.team23.management.application.service;
 
 import com.team23.management.application.command.ProductRegisterCommand;
 import com.team23.management.application.command.SkuCommand;
+import com.team23.management.domain.product.Product;
 import com.team23.management.domain.sku.SkuOptionInput;
 import com.team23.management.domain.product.Category;
 import com.team23.management.infrastructure.ProductRepository;
 import com.team23.management.infrastructure.SkuRepository;
 import com.team23.management.infrastructure.StockRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 
@@ -20,10 +24,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 //@Transactional
-class ProductRegisterServiceTest {
+class ProductServiceTest {
 
     @Autowired
-    ProductRegisterService productRegisterService;
+    ProductService productService;
     @Autowired
     ProductRepository productRepository;
     @Autowired
@@ -57,7 +61,7 @@ class ProductRegisterServiceTest {
         );
 
         // when
-        Long productId = productRegisterService.register(command);
+        Long productId = productService.register(command);
 
         // then
         assertThat(productRepository.findById(productId)).isPresent();
@@ -82,10 +86,31 @@ class ProductRegisterServiceTest {
         );
 
         // when & then
-        assertThatThrownBy(() -> productRegisterService.register(command))
+        assertThatThrownBy(() -> productService.register(command))
                 .isInstanceOf(IllegalArgumentException.class);
 
         // 그리고 Product 가 *저장 안 됨* 확인
         assertThat(productRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("검색 조건 없이 호출 시 모든 활성 상품 반환")
+    void searchNoConditionReturnsAll() {
+        //given
+        Product p1 = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        Product p2 = Product.create("청바지", Category.FASHION, 30000, "d", 1L);
+        Product p3 = Product.create("삭제됨", Category.FOOD, 5000, "d", 1L);
+        p3.delete();
+
+        productRepository.save(p1);
+        productRepository.save(p2);
+        productRepository.save(p3);
+
+        //when
+        Page<Product> result = productService.search(null, null, PageRequest.of(0, 20));
+
+        //then
+        assertThat(result.getContent()).hasSize(2);
+
     }
 }
