@@ -2,7 +2,7 @@ package com.team23.management.api;
 
 import com.team23.management.api.dto.ProductRegisterRequest;
 import com.team23.management.api.dto.ProductRegisterResponse;
-import com.team23.management.application.service.ProductRegisterService;
+import com.team23.management.application.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,13 +19,13 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class ProductController {
 
-    private final ProductRegisterService productRegisterService;
+    private final ProductService productService;
 
     @PostMapping
     public ResponseEntity<ProductRegisterResponse> register(
             @Valid @RequestBody ProductRegisterRequest request
     ) {
-        Long productId = productRegisterService.register(request.toCommand());
+        Long productId = productService.register(request.toCommand());
 
         ProductRegisterResponse response = new ProductRegisterResponse(
                 productId,
