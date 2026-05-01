@@ -26,21 +26,26 @@ public class ProductController {
     /**
      * 상품 목록 조회.
      *
-     * <p>페이지네이션 + 카테고리 필터 지원.
+     * <p>페이지네이션 + 카테고리 필터 + 검색 지원.
      *
      * <p>예시:
      * <ul>
      *   <li>GET /api/products?page=0&size=20</li>
      *   <li>GET /api/products?categoryId=1&page=0&size=20</li>
+     *   <li>GET /api/products?keyword=티셔츠&page=0&size=20</li>
+     *   <li>GET /api/products?categoryId=1&keyword=티셔츠</li>
      *   <li>GET /api/products?page=0&size=20&sort=createdAt,desc</li>
      * </ul>
      */
     @GetMapping
     public ResponseEntity<Page<ProductSummaryResponse>> list(
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String keyword,
             Pageable pageable
     ) {
-        Page<Product> products = productService.findVisibleProducts(categoryId, pageable);
+        Page<Product> products = productService.findVisibleProducts(
+                categoryId, keyword, pageable
+        );
         Page<ProductSummaryResponse> response = products.map(ProductSummaryResponse::from);
         return ResponseEntity.ok(response);
     }

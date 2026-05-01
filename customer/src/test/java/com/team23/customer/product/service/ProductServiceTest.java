@@ -22,11 +22,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
@@ -55,39 +53,103 @@ class ProductServiceTest {
     class FindVisibleProducts {
 
         @Test
-        @DisplayName("categoryId가 null이면 전체 조회")
-        void allProductsWhenNoCategoryFilter() {
+        @DisplayName("필터 없이 전체 조회")
+        void allProducts() {
             Pageable pageable = PageRequest.of(0, 20);
             Page<Product> mockPage = new PageImpl<>(List.of(createProduct(10)));
 
-            given(productRepository.findVisibleProducts(eq(ProductStatus.DISCONTINUED), eq(pageable)))
+            given(productRepository.findVisibleProducts(
+                    eq(null), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
                     .willReturn(mockPage);
 
-            Page<Product> result = productService.findVisibleProducts(null, pageable);
+            Page<Product> result = productService.findVisibleProducts(null, null, pageable);
 
             assertThat(result.getContent()).hasSize(1);
-            verify(productRepository).findVisibleProducts(ProductStatus.DISCONTINUED, pageable);
-            verify(productRepository, never())
-                    .findVisibleProductsByCategory(any(), any(), any());
+            verify(productRepository).findVisibleProducts(
+                    null, null, ProductStatus.DISCONTINUED, pageable);
         }
 
         @Test
-        @DisplayName("categoryId가 있으면 카테고리별 조회")
+        @DisplayName("카테고리 필터")
         void filterByCategoryId() {
             Pageable pageable = PageRequest.of(0, 20);
             Long categoryId = 1L;
             Page<Product> mockPage = new PageImpl<>(List.of(createProduct(10)));
 
-            given(productRepository.findVisibleProductsByCategory(
-                    eq(categoryId), eq(ProductStatus.DISCONTINUED), eq(pageable)))
+            given(productRepository.findVisibleProducts(
+                    eq(categoryId), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
                     .willReturn(mockPage);
 
-            Page<Product> result = productService.findVisibleProducts(categoryId, pageable);
+            Page<Product> result = productService.findVisibleProducts(categoryId, null, pageable);
 
             assertThat(result.getContent()).hasSize(1);
-            verify(productRepository).findVisibleProductsByCategory(
-                    categoryId, ProductStatus.DISCONTINUED, pageable);
-            verify(productRepository, never()).findVisibleProducts(any(), any());
+            verify(productRepository).findVisibleProducts(
+                    categoryId, null, ProductStatus.DISCONTINUED, pageable);
+        }
+
+        @Test
+        @DisplayName("검색어로 조회")
+        void searchByKeyword() {
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<Product> mockPage = new PageImpl<>(List.of(createProduct(10)));
+
+            given(productRepository.findVisibleProducts(
+                    eq(null), eq("티셔츠"), eq(ProductStatus.DISCONTINUED), eq(pageable)))
+                    .willReturn(mockPage);
+
+            Page<Product> result = productService.findVisibleProducts(null, "티셔츠", pageable);
+
+            assertThat(result.getContent()).hasSize(1);
+            verify(productRepository).findVisibleProducts(
+                    null, "티셔츠", ProductStatus.DISCONTINUED, pageable);
+        }
+
+        @Test
+        @DisplayName("카테고리 + 검색어 조합")
+        void filterByCategoryAndKeyword() {
+            Pageable pageable = PageRequest.of(0, 20);
+            Long categoryId = 1L;
+            Page<Product> mockPage = new PageImpl<>(List.of(createProduct(10)));
+
+            given(productRepository.findVisibleProducts(
+                    eq(categoryId), eq("티셔츠"), eq(ProductStatus.DISCONTINUED), eq(pageable)))
+                    .willReturn(mockPage);
+
+            Page<Product> result = productService.findVisibleProducts(categoryId, "티셔츠", pageable);
+
+            assertThat(result.getContent()).hasSize(1);
+            verify(productRepository).findVisibleProducts(
+                    categoryId, "티셔츠", ProductStatus.DISCONTINUED, pageable);
+        }
+
+        @Test
+        @DisplayName("검색어가 trim된다")
+        void trimKeyword() {
+            Pageable pageable = PageRequest.of(0, 20);
+
+            given(productRepository.findVisibleProducts(
+                    eq(null), eq("티셔츠"), eq(ProductStatus.DISCONTINUED), eq(pageable)))
+                    .willReturn(new PageImpl<>(List.of()));
+
+            productService.findVisibleProducts(null, "  티셔츠  ", pageable);
+
+            verify(productRepository).findVisibleProducts(
+                    null, "티셔츠", ProductStatus.DISCONTINUED, pageable);
+        }
+
+        @Test
+        @DisplayName("빈 검색어는 null로 처리")
+        void emptyKeywordBecomesNull() {
+            Pageable pageable = PageRequest.of(0, 20);
+
+            given(productRepository.findVisibleProducts(
+                    eq(null), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
+                    .willReturn(new PageImpl<>(List.of()));
+
+            productService.findVisibleProducts(null, "   ", pageable);
+
+            verify(productRepository).findVisibleProducts(
+                    null, null, ProductStatus.DISCONTINUED, pageable);
         }
     }
 
@@ -98,7 +160,7 @@ class ProductServiceTest {
         @Test
         @DisplayName("ACTIVE 상품을 조회할 수 있다")
         void findActiveProduct() {
-            Product product = createProduct(10);  // ACTIVE
+            Product product = createProduct(10);
 
             given(productRepository.findByIdWithCategory(1L))
                     .willReturn(Optional.of(product));
@@ -111,7 +173,7 @@ class ProductServiceTest {
         @Test
         @DisplayName("SOLD_OUT 상품도 조회 가능 (사용자에게 노출됨)")
         void findSoldOutProduct() {
-            Product product = createProduct(0);  // SOLD_OUT
+            Product product = createProduct(0);
 
             given(productRepository.findByIdWithCategory(1L))
                     .willReturn(Optional.of(product));
@@ -125,7 +187,7 @@ class ProductServiceTest {
         @DisplayName("DISCONTINUED 상품은 NotFound로 응답")
         void rejectDiscontinuedAsNotFound() {
             Product product = createProduct(10);
-            product.discontinue();  // DISCONTINUED
+            product.discontinue();
 
             given(productRepository.findByIdWithCategory(1L))
                     .willReturn(Optional.of(product));

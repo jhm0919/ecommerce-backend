@@ -11,27 +11,34 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private static final List<ProductStatus> CUSTOMER_VISIBLE = List.of(
+            ProductStatus.ACTIVE,
+            ProductStatus.SOLD_OUT
+    );
 
-    /**
-     * 사용자에게 노출 가능한 상품 목록을 조회한다.
-     * categoryId가 주어지면 해당 카테고리로 필터링.
-     */
     @Transactional(readOnly = true)
-    public Page<Product> findVisibleProducts(Long categoryId, Pageable pageable) {
-        if (categoryId == null) {
-            return productRepository.findVisibleProducts(
-                    ProductStatus.DISCONTINUED, pageable);
-        }
-        return productRepository.findVisibleProductsByCategory(
-                categoryId, ProductStatus.DISCONTINUED, pageable);
-    }
+    public Page<Product> findVisibleProducts(
+            Long categoryId,
+            String keyword,
+            Pageable pageable
+    ) {
+        String normalizedKeyword = normalizeKeyword(keyword);
 
+        return productRepository.findVisibleProducts(
+                categoryId,
+                normalizedKeyword,
+                ProductStatus.DISCONTINUED,
+                pageable
+        );
+    }
     /**
      * 상품 상세 조회.
      * DISCONTINUED 상품은 사용자에게 노출하지 않으므로 NotFound로 응답.
@@ -47,5 +54,18 @@ public class ProductService {
         }
 
         return product;
+    }
+
+    /**
+     * 검색어 정제.
+     * - 공백 제거
+     * - 빈 문자열 → null (검색 안 함)
+     */
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+        String trimmed = keyword.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
