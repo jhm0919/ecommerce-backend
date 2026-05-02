@@ -1,4 +1,4 @@
-package com.team23.management.api.dto;
+package com.team23.management.api.dto.request;
 
 import com.team23.management.application.command.ProductRegisterCommand;
 import com.team23.management.application.command.SkuCommand;

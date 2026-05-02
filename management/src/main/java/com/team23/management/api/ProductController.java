@@ -1,6 +1,11 @@
 package com.team23.management.api;
 
-import com.team23.management.api.dto.*;
+import com.team23.management.api.dto.request.ProductRegisterRequest;
+import com.team23.management.api.dto.request.ProductUpdateRequest;
+import com.team23.management.api.dto.response.ProductDetailResponse;
+import com.team23.management.api.dto.response.ProductListResponse;
+import com.team23.management.api.dto.response.ProductRegisterResponse;
+import com.team23.management.api.dto.response.ProductUpdateResponse;
 import com.team23.management.application.service.ProductService;
 import com.team23.management.domain.product.Category;
 import com.team23.management.domain.product.Product;

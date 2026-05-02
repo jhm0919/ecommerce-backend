@@ -1,7 +1,7 @@
 package com.team23.management.api;
 
-import com.team23.management.api.dto.SkuAddRequest;
-import com.team23.management.api.dto.SkuAddResponse;
+import com.team23.management.api.dto.request.SkuAddRequest;
+import com.team23.management.api.dto.response.SkuAddResponse;
 import com.team23.management.application.service.SkuService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

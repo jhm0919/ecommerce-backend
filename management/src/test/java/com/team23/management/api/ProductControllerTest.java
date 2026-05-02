@@ -1,6 +1,6 @@
 package com.team23.management.api;
 
-import com.team23.management.api.dto.ProductRegisterRequest;
+import com.team23.management.api.dto.request.ProductRegisterRequest;
 import com.team23.management.domain.product.Product;
 import com.team23.management.domain.sku.Sku;
 import com.team23.management.domain.sku.SkuOptionInput;

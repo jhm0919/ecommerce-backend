@@ -1,6 +1,6 @@
 package com.team23.management.application.service;
 
-import com.team23.management.api.dto.SkuAddResponse;
+import com.team23.management.api.dto.response.SkuAddResponse;
 import com.team23.management.application.command.SkuAddCommand;
 import com.team23.management.domain.product.Product;
 import com.team23.management.domain.product.ProductStatus;

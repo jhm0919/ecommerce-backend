@@ -1,6 +1,6 @@
 package com.team23.management.application.service;
 
-import com.team23.management.api.dto.ProductDetailResponse;
+import com.team23.management.api.dto.response.ProductDetailResponse;
 import com.team23.management.application.command.ProductRegisterCommand;
 import com.team23.management.application.command.ProductUpdateCommand;
 import com.team23.management.application.command.SkuCommand;
@@ -19,7 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
