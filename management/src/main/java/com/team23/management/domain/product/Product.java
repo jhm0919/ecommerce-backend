@@ -56,6 +56,9 @@ public class Product {
     }
 
     public void delete() {
+        if (this.status == ProductStatus.DELETED) {
+            throw new IllegalStateException("이미 삭제된 상품입니다.");
+        }
         this.status = ProductStatus.DELETED;
     }
 
