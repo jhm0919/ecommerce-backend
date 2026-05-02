@@ -8,4 +8,6 @@ import java.util.List;
 public interface StockRepository extends JpaRepository<Stock, Long> {
     Stock findBySkuId(Long skuId);                    // 단일 (N+1 발생용)
     List<Stock> findBySkuIdIn(List<Long> skuIds);
+
+    void deleteBySkuId(Long skuId);
 }
