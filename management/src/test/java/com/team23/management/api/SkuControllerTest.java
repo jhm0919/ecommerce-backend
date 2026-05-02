@@ -4,6 +4,7 @@ import com.team23.management.domain.product.Category;
 import com.team23.management.domain.product.Product;
 import com.team23.management.domain.sku.Sku;
 import com.team23.management.domain.sku.SkuOptionInput;
+import com.team23.management.domain.stock.Stock;
 import com.team23.management.infrastructure.ProductRepository;
 import com.team23.management.infrastructure.SkuRepository;
 import com.team23.management.infrastructure.StockRepository;
@@ -189,4 +190,68 @@ class SkuControllerTest {
                         .content(json))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    @DisplayName("DELETE /api/seller/products/{pId}/skus/{sId} - 정상")
+    void delete_success_returns204() throws Exception {
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        Sku sku1 = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "blue")), 0);
+        Sku sku2 = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "red")), 0);
+        skuRepository.saveAll(List.of(sku1, sku2));
+
+        stockRepository.save(Stock.create(sku1.getId(), 0));
+        stockRepository.save(Stock.create(sku2.getId(), 0));
+
+        mockMvc.perform(delete("/api/seller/products/" + product.getId() +
+                        "/skus/" + sku1.getId())
+                        .with(csrf())
+                        .param("sellerId", "1"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("재고 있는 SKU → 400")
+    void delete_stockExists_returns400() throws Exception {
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        Sku sku1 = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "blue")), 0);
+        Sku sku2 = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "red")), 0);
+        skuRepository.saveAll(List.of(sku1, sku2));
+
+        stockRepository.save(Stock.create(sku1.getId(), 100));   // 재고 있음
+        stockRepository.save(Stock.create(sku2.getId(), 0));
+
+        mockMvc.perform(delete("/api/seller/products/" + product.getId() +
+                        "/skus/" + sku1.getId())
+                        .with(csrf())
+                        .param("sellerId", "1"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("마지막 SKU → 400")
+    void delete_lastSku_returns400() throws Exception {
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        Sku sku = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "blue")), 0);
+        skuRepository.save(sku);
+        stockRepository.save(Stock.create(sku.getId(), 0));
+
+        mockMvc.perform(delete("/api/seller/products/" + product.getId() +
+                        "/skus/" + sku.getId())
+                        .with(csrf())
+                        .param("sellerId", "1"))
+                .andExpect(status().isBadRequest());
+    }
+
+
 }
