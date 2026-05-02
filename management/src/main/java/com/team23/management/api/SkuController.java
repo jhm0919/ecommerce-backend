@@ -37,4 +37,14 @@ public class SkuController {
 
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{skuId}")
+    public ResponseEntity<Void> delete(
+            @PathVariable Long productId,
+            @PathVariable Long skuId,
+            @RequestParam Long sellerId
+    ) {
+        skuService.delete(productId, skuId, sellerId);
+        return ResponseEntity.noContent().build();
+    }
 }
