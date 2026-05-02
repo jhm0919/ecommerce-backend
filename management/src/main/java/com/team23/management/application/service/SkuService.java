@@ -1,7 +1,9 @@
 package com.team23.management.application.service;
 
-import com.team23.management.api.dto.SkuAddResponse;
+import com.team23.management.api.dto.response.SkuAddResponse;
+import com.team23.management.api.dto.response.SkuUpdateResponse;
 import com.team23.management.application.command.SkuAddCommand;
+import com.team23.management.application.command.SkuUpdateCommand;
 import com.team23.management.domain.product.Product;
 import com.team23.management.domain.product.ProductStatus;
 import com.team23.management.domain.sku.Sku;
@@ -80,5 +82,36 @@ public class SkuService {
         return options.stream()
                 .map(opt -> opt.name() + "=" + opt.value())
                 .collect(Collectors.toSet());
+    }
+
+    public SkuUpdateResponse update(SkuUpdateCommand command) {
+        // 1. SKU 조회
+        Sku sku = skuRepository.findById(command.skuId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "SKU 를 찾을 수 없습니다: " + command.skuId()));
+
+        // 2. URL 의 productId 와 SKU 의 productId 일치 확인
+        if (!sku.getProductId().equals(command.productId())) {
+            throw new IllegalArgumentException("URL 의 상품 ID 와 SKU 의 상품 ID 가 일치하지 않습니다");
+        }
+
+        // 3. Product 조회 (권한 + 상태 검증용)
+        Product product = productRepository.findById(sku.getProductId())
+                .orElseThrow(() -> new ProductNotFoundException(sku.getProductId()));
+
+        // 4. DELETED 차단
+        if (product.getStatus() == ProductStatus.DELETED) {
+            throw new IllegalStateException("삭제된 상품의 SKU 는 수정할 수 없습니다");
+        }
+
+        // 5. 권한 검증
+        if (!product.getSellerId().equals(command.sellerId())) {
+            throw new IllegalArgumentException("본인 상품의 SKU 만 수정할 수 있습니다");
+        }
+
+        // 6. 변경 감지로 자동 UPDATE
+        sku.updateAdditionalPrice(command.additionalPrice());
+
+        return SkuUpdateResponse.from(sku);
     }
 }

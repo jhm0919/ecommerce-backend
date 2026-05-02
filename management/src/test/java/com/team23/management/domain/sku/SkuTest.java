@@ -61,4 +61,26 @@ class SkuTest {
                         -1)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("가격");
     }
+
+    @Test
+    @DisplayName("추가 가격 정상 변경")
+    void updateAdditionalPriceValidInput() {
+        Sku sku = Sku.create(1L,
+                List.of(new SkuOptionInput("색상", "blue")), 1000);
+
+        sku.updateAdditionalPrice(2000);
+
+        assertThat(sku.getAdditionalPrice()).isEqualTo(2000);
+    }
+
+    @Test
+    @DisplayName("음수 추가 가격 → 예외")
+    void updateAdditionalPriceMinusThrows() {
+        Sku sku = Sku.create(1L,
+                List.of(new SkuOptionInput("색상", "blue")), 1000);
+
+        assertThatThrownBy(() -> sku.updateAdditionalPrice(-100))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("추가 가격");
+    }
 }

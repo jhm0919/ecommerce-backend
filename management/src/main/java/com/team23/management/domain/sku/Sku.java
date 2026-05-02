@@ -52,6 +52,8 @@ public class Sku {
         return sku;
     }
 
+
+
     private static void validatePrice(int additionalPrice) {
         if (additionalPrice < MIN_PRICE) {
             throw new IllegalArgumentException("가격은 0이하일 수 없습니다.");
@@ -77,4 +79,14 @@ public class Sku {
     }
 
 
+    public void updateAdditionalPrice(int newPrice) {
+        validateAdditionalPrice(newPrice);
+        this.additionalPrice = newPrice;
+    }
+
+    private void validateAdditionalPrice(int newPrice) {
+        if (newPrice < 0) {
+            throw new IllegalArgumentException("추가 가격은 0이하일 수 없습니다.");
+        }
+    }
 }

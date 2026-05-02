@@ -1,7 +1,6 @@
 package com.team23.management.application.service;
 
-import com.team23.management.api.dto.ProductDetailResponse;
-import com.team23.management.api.dto.ProductUpdateResponse;
+import com.team23.management.api.dto.response.ProductDetailResponse;
 import com.team23.management.application.command.ProductRegisterCommand;
 import com.team23.management.application.command.ProductUpdateCommand;
 import com.team23.management.application.command.SkuCommand;

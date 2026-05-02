@@ -1,4 +1,4 @@
-package com.team23.management.api.dto;
+package com.team23.management.api.dto.response;
 
 public record SkuAddResponse(
         Long skuId,

@@ -1,4 +1,4 @@
-package com.team23.management.api.dto;
+package com.team23.management.api.dto.response;
 
 import com.team23.management.domain.product.Category;
 import com.team23.management.domain.product.Product;

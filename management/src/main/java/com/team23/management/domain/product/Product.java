@@ -55,13 +55,6 @@ public class Product {
         return product;
     }
 
-    public void delete() {
-        if (this.status == ProductStatus.DELETED) {
-            throw new IllegalStateException("이미 삭제된 상품입니다.");
-        }
-        this.status = ProductStatus.DELETED;
-    }
-
     public void updateName(String name) {
         validateNotDeleted();
         validateName(name);
@@ -107,5 +100,12 @@ public class Product {
         if (name.length() > MAX_NAME_LENGTH) {
             throw new IllegalArgumentException("상품명은 100자 이하여야 합니다.");
         }
+    }
+
+    public void delete() {
+        if (this.status == ProductStatus.DELETED) {
+            throw new IllegalStateException("이미 삭제된 상품입니다.");
+        }
+        this.status = ProductStatus.DELETED;
     }
 }
