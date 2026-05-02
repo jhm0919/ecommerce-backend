@@ -140,4 +140,15 @@ public class ProductTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("카테고리");
     }
+
+    @Test
+    @DisplayName("이미 DELETED 상품 삭제 시도 시 예외")
+    void deleteAlreadyDeletedThrows() {
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        product.delete();   // 1차 — 정상
+
+        assertThatThrownBy(() -> product.delete())   // 2차 — 예외
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("이미 삭제");
+    }
 }
