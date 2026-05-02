@@ -118,5 +118,30 @@ public class ProductService {
         // 4. 변경 감지로 자동 UPDATE
         return product;
     }
+
+    @Transactional
+    public void delete(Long productId, Long sellerId) {
+        // 1. 상품 조회
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        // 2. 이미 DELETED → 404 (없는 것처럼)
+        if (product.getStatus() == ProductStatus.DELETED) {
+            throw new ProductNotFoundException(productId);
+        }
+
+        // 3. 권한 검증
+        if (!product.getSellerId().equals(sellerId)) {
+            throw new IllegalArgumentException("본인이 등록한 상품만 삭제할 수 있습니다");
+        }
+
+        // 4. TODO: Order 도메인 구현 후 결제 완료 주문 검증 추가
+        // if (orderQueryService.hasCompletedOrder(productId)) {
+        //     throw new IllegalStateException("결제 완료된 주문이 있는 상품은 삭제 불가");
+        // }
+
+        // 5. Soft Delete (변경 감지로 자동 UPDATE)
+        product.delete();
+    }
 }
 

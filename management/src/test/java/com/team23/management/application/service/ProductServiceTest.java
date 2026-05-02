@@ -6,6 +6,7 @@ import com.team23.management.application.command.ProductRegisterCommand;
 import com.team23.management.application.command.ProductUpdateCommand;
 import com.team23.management.application.command.SkuCommand;
 import com.team23.management.domain.product.Product;
+import com.team23.management.domain.product.ProductStatus;
 import com.team23.management.domain.sku.Sku;
 import com.team23.management.domain.sku.SkuOptionInput;
 import com.team23.management.domain.product.Category;
@@ -183,5 +184,53 @@ class ProductServiceTest {
         // then
         assertThat(response.id()).isEqualTo(product.getId());
         assertThat(response.skus()).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("정상 삭제 — Soft Delete 동작 확인")
+    void deleteSuccess() {
+        // given
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        // when
+        productService.delete(product.getId(), 1L);
+
+        // then - DB 에서 다시 조회 → 진짜로 DELETED 인가
+        Product deleted = productRepository.findById(product.getId()).orElseThrow();
+        assertThat(deleted.getStatus()).isEqualTo(ProductStatus.DELETED);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 productId → 예외")
+    void deleteNotFoundThrows() {
+        assertThatThrownBy(() -> productService.delete(99999L, 1L))
+                .isInstanceOf(ProductNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("이미 DELETED 상품 → 404 처리 (NotFound 예외)")
+    void deleteAlreadyDeletedThrows() {
+        // given - 상품 등록 + 1차 삭제
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+        productService.delete(product.getId(), 1L);
+
+        // when & then - 2차 삭제 시도
+        assertThatThrownBy(() -> productService.delete(product.getId(), 1L))
+                .isInstanceOf(ProductNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("다른 sellerId → 권한 예외")
+    void deleteWrongSellerThrowsException() {
+        // given
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        // when & then
+        assertThatThrownBy(() -> productService.delete(product.getId(), 999L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("본인");
     }
 }
