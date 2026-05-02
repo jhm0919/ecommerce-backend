@@ -1,7 +1,9 @@
 package com.team23.management.application.service;
 
 import com.team23.management.api.dto.response.SkuAddResponse;
+import com.team23.management.api.dto.response.SkuUpdateResponse;
 import com.team23.management.application.command.SkuAddCommand;
+import com.team23.management.application.command.SkuUpdateCommand;
 import com.team23.management.domain.product.Category;
 import com.team23.management.domain.product.Product;
 import com.team23.management.domain.sku.Sku;
@@ -96,5 +98,31 @@ class SkuServiceTest {
         // then
         assertThatThrownBy(() ->
                 skuService.addSku(command2)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("정상 — 변경 감지로 DB 반영")
+    void update_success() {
+        // given
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        Sku sku = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "blue")), 1000);
+        skuRepository.save(sku);
+
+        SkuUpdateCommand command = new SkuUpdateCommand(
+                product.getId(), sku.getId(), 1L, 2500
+        );
+
+        // when
+        SkuUpdateResponse response = skuService.update(command);
+
+        // then
+        assertThat(response.additionalPrice()).isEqualTo(2500);
+
+        // DB 다시 조회 — 진짜 반영됐는가
+        Sku updated = skuRepository.findById(sku.getId()).orElseThrow();
+        assertThat(updated.getAdditionalPrice()).isEqualTo(2500);
     }
 }
