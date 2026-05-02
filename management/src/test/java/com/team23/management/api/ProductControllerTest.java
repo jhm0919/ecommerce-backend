@@ -177,4 +177,39 @@ class ProductControllerTest {
         mockMvc.perform(get("/api/seller/products/" + product.getId()))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    @DisplayName("DELETE /api/seller/products/{id} - 정상")
+    void deleteSuccessReturns204() throws Exception {
+        // given
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        // when & then
+        mockMvc.perform(delete("/api/seller/products/" + product.getId())
+                        .with(csrf())
+                        .param("sellerId", "1"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 productId → 404")
+    void deleteNotFoundReturns404() throws Exception {
+        mockMvc.perform(delete("/api/seller/products/99999")
+                        .with(csrf())
+                        .param("sellerId", "1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("다른 sellerId → 400")
+    void deleteWrongSellerReturns400() throws Exception {
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        mockMvc.perform(delete("/api/seller/products/" + product.getId())
+                        .with(csrf())
+                        .param("sellerId", "999"))
+                .andExpect(status().isBadRequest());
+    }
 }
