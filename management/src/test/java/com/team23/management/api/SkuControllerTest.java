@@ -139,4 +139,54 @@ class SkuControllerTest {
                         .content(json))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    @DisplayName("PATCH /api/seller/products/{pId}/skus/{sId} - 정상")
+    void updateSuccessReturns200() throws Exception {
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        Sku sku = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "blue")), 1000);
+        skuRepository.save(sku);
+
+        String json = """
+        {
+          "sellerId": 1,
+          "additionalPrice": 2500
+        }
+        """;
+
+        mockMvc.perform(patch("/api/seller/products/" + product.getId() + "/skus/" + sku.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.skuId").value(sku.getId()))
+                .andExpect(jsonPath("$.additionalPrice").value(2500));
+    }
+
+    @Test
+    @DisplayName("없는 skuId → 404 또는 400")
+    void updateSkuNotFound() throws Exception {
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        Sku sku = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "blue")), 1000);
+        skuRepository.save(sku);
+
+        String json = """
+        {
+          "sellerId": 1,
+          "additionalPrice": 2500
+        }
+        """;
+
+        mockMvc.perform(patch("/api/seller/products/" + product.getId() + "/skus/99999")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
 }
