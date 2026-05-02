@@ -102,7 +102,7 @@ class SkuServiceTest {
 
     @Test
     @DisplayName("정상 — 변경 감지로 DB 반영")
-    void update_success() {
+    void updateSuccess() {
         // given
         Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
         productRepository.save(product);
@@ -125,4 +125,70 @@ class SkuServiceTest {
         Sku updated = skuRepository.findById(sku.getId()).orElseThrow();
         assertThat(updated.getAdditionalPrice()).isEqualTo(2500);
     }
+
+    @Test
+    @DisplayName("정상 삭제 — SKU + Stock 함께 사라짐")
+    void deleteSuccess() {
+        // given - Product + SKU 2개 (마지막 SKU 차단 회피) + Stock
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        Sku sku1 = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "blue")), 0);
+        Sku sku2 = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "red")), 0);
+        skuRepository.saveAll(List.of(sku1, sku2));
+
+        Stock stock1 = Stock.create(sku1.getId(), 0);   // 재고 0 (삭제 가능)
+        Stock stock2 = Stock.create(sku2.getId(), 50);
+        stockRepository.saveAll(List.of(stock1, stock2));
+
+        // when
+        skuService.delete(product.getId(), sku1.getId(), 1L);
+
+        // then - SKU 삭제 확인
+        assertThat(skuRepository.findById(sku1.getId())).isEmpty();
+        // Stock 도 삭제 확인
+        // (Stock 의 findBySkuId 가 Optional 이라면)
+        // assertThat(stockRepository.findBySkuId(sku1.getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("재고 > 0 → 예외")
+    void deleteStockExistsThrows() {
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        Sku sku1 = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "blue")), 0);
+        Sku sku2 = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "red")), 0);
+        skuRepository.saveAll(List.of(sku1, sku2));
+
+        stockRepository.save(Stock.create(sku1.getId(), 100));   // 재고 있음
+        stockRepository.save(Stock.create(sku2.getId(), 0));
+
+        assertThatThrownBy(() ->
+                skuService.delete(product.getId(), sku1.getId(), 1L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("재고");
+    }
+
+    @Test
+    @DisplayName("마지막 SKU → 예외")
+    void deleteLastSkuThrows() {
+        Product product = Product.create("티셔츠", Category.FASHION, 10000, "d", 1L);
+        productRepository.save(product);
+
+        Sku sku = Sku.create(product.getId(),
+                List.of(new SkuOptionInput("색상", "blue")), 0);
+        skuRepository.save(sku);
+        stockRepository.save(Stock.create(sku.getId(), 0));
+
+        assertThatThrownBy(() ->
+                skuService.delete(product.getId(), sku.getId(), 1L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("마지막");
+    }
+
 }
