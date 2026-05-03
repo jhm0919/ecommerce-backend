@@ -3,6 +3,8 @@ package com.team23.customer.product.service;
 import com.team23.customer.product.domain.Category;
 import com.team23.customer.product.domain.Money;
 import com.team23.customer.product.domain.Product;
+import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.SkuOption;
 import com.team23.customer.product.dto.ProductCreateRequest;
 import com.team23.customer.product.dto.ProductUpdateRequest;
 import com.team23.customer.product.exception.CategoryNotFoundException;
@@ -17,7 +19,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -36,6 +40,16 @@ class ProductAdminServiceTest {
         return Category.create("남성 상의", "men-tops");
     }
 
+    private Product createProduct() {
+        return Product.register(
+                "베이직 티셔츠",
+                Money.krw(29900),
+                "100% 면 소재",
+                "https://example.com/image.jpg",
+                createCategory()
+        );
+    }
+
     @Nested
     @DisplayName("상품 등록 (register)")
     class Register {
@@ -47,8 +61,7 @@ class ProductAdminServiceTest {
                     "베이직 티셔츠",
                     new BigDecimal("29900"),
                     "KRW",
-                    10,
-                    "100% 면 소재",
+                    "100% 면 소재",        // ★ stock 제거
                     "https://example.com/image.jpg",
                     1L
             );
@@ -61,7 +74,7 @@ class ProductAdminServiceTest {
             Product result = productAdminService.register(request);
 
             assertThat(result.getName()).isEqualTo("베이직 티셔츠");
-            assertThat(result.getStock()).isEqualTo(10);
+            assertThat(result.getStatus().name()).isEqualTo("ACTIVE");  // ★ stock 대신 status
             assertThat(result.getCategory()).isEqualTo(category);
         }
 
@@ -72,8 +85,7 @@ class ProductAdminServiceTest {
                     "베이직 티셔츠",
                     new BigDecimal("29900"),
                     "KRW",
-                    10,
-                    "설명",
+                    "설명",               // ★ stock 제거
                     "https://...",
                     999L
             );
@@ -92,14 +104,7 @@ class ProductAdminServiceTest {
         @Test
         @DisplayName("이름만 수정할 수 있다")
         void updateNameOnly() {
-            Product product = Product.register(
-                    "원래 이름",
-                    Money.krw(29900),
-                    10,
-                    "설명",
-                    "img",
-                    createCategory()
-            );
+            Product product = createProduct();  // ★ stock 제거
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
@@ -115,9 +120,7 @@ class ProductAdminServiceTest {
         @Test
         @DisplayName("price만 있고 currency 없으면 예외")
         void rejectPriceWithoutCurrency() {
-            Product product = Product.register(
-                    "이름", Money.krw(29900), 10, "설명", "img", createCategory()
-            );
+            Product product = createProduct();  // ★ stock 제거
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
@@ -144,22 +147,54 @@ class ProductAdminServiceTest {
         }
     }
 
+    // ★ IncreaseStock 섹션 제거 → increaseSkuStock으로 대체
+
     @Nested
-    @DisplayName("재고 증가 (increaseStock)")
-    class IncreaseStock {
+    @DisplayName("SKU 재고 증가 (increaseSkuStock)")
+    class IncreaseSkuStock {
 
         @Test
-        @DisplayName("재고를 증가시킬 수 있다")
-        void increaseStockNormal() {
-            Product product = Product.register(
-                    "이름", Money.krw(29900), 10, "설명", "img", createCategory()
-            );
+        @DisplayName("SKU 재고를 증가시킬 수 있다")
+        void increaseSkuStockNormal() {
+            Product product = createProduct();
+            setId(product, 1L);
+            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+            setId(sku, 100L);
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            Product result = productAdminService.increaseStock(1L, 5);
+            productAdminService.increaseSkuStock(1L, 100L, 5);
 
-            assertThat(result.getStock()).isEqualTo(15);
+            assertThat(sku.getStock()).isEqualTo(15);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 상품 ID면 예외")
+        void rejectUnknownProduct() {
+            given(productRepository.findById(999L)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> productAdminService.increaseSkuStock(999L, 100L, 5))
+                    .isInstanceOf(ProductNotFoundException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("SKU 재고 감소 (decreaseSkuStock)")
+    class DecreaseSkuStock {
+
+        @Test
+        @DisplayName("SKU 재고를 감소시킬 수 있다")
+        void decreaseSkuStockNormal() {
+            Product product = createProduct();
+            setId(product, 1L);
+            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+            setId(sku, 100L);
+
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+
+            productAdminService.decreaseSkuStock(1L, 100L, 3);
+
+            assertThat(sku.getStock()).isEqualTo(7);
         }
     }
 
@@ -170,15 +205,25 @@ class ProductAdminServiceTest {
         @Test
         @DisplayName("상품을 단종 처리할 수 있다")
         void discontinueNormal() {
-            Product product = Product.register(
-                    "이름", Money.krw(29900), 10, "설명", "img", createCategory()
-            );
+            Product product = createProduct();  // ★ stock 제거
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
             productAdminService.discontinue(1L);
 
             assertThat(product.getStatus().name()).isEqualTo("DISCONTINUED");
+        }
+    }
+
+    // ─── 테스트 헬퍼 ───
+
+    private static void setId(Object entity, Long id) {
+        try {
+            Field idField = entity.getClass().getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(entity, id);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }

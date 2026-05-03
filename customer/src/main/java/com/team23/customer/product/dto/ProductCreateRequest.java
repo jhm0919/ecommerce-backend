@@ -20,10 +20,6 @@ public record ProductCreateRequest(
         @Size(min = 3, max = 3, message = "통화 코드는 3자입니다")
         String currency,
 
-        @NotNull(message = "재고는 필수입니다")
-        @Min(value = 0, message = "재고는 0 이상이어야 합니다")
-        Integer stock,
-
         @Size(max = 4000, message = "설명은 4000자를 초과할 수 없습니다")
         String description,
 

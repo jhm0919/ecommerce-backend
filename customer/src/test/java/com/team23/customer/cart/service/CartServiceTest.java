@@ -7,6 +7,8 @@ import com.team23.customer.cart.repository.CartRepository;
 import com.team23.customer.product.domain.Category;
 import com.team23.customer.product.domain.Money;
 import com.team23.customer.product.domain.Product;
+import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.SkuOption;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,8 +27,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class CartServiceTest {
@@ -38,16 +40,20 @@ class CartServiceTest {
 
     private static final Long MEMBER_ID = 1L;
     private static final Long PRODUCT_ID = 100L;
+    private static final Long SKU_ID = 200L;
 
     private Product product;
+    private SKU sku;
 
     @BeforeEach
     void setUp() {
         Category category = Category.create("의류", "clothing");
         product = Product.register(
-                "티셔츠", Money.krw(29900), 100, "설명", "img", category
+                "티셔츠", Money.krw(29900), "설명", "img", category
         );
         setId(product, PRODUCT_ID);
+        sku = product.addSku(List.of(new SkuOption("색상", "검정")), 50);
+        setId(sku, SKU_ID);
     }
 
     @Nested
@@ -97,24 +103,24 @@ class CartServiceTest {
                     .willReturn(Optional.of(cart));
             given(productRepository.findAllById(any())).willReturn(List.of(product));
 
-            CartService.CartView view = cartService.addItem(MEMBER_ID, PRODUCT_ID, 2);
+            CartService.CartView view = cartService.addItem(MEMBER_ID, PRODUCT_ID, SKU_ID, 2);
 
             assertThat(view.cart().getItemCount()).isEqualTo(1);
             assertThat(view.cart().getTotalQuantity()).isEqualTo(2);
         }
 
         @Test
-        @DisplayName("같은 상품 다시 추가 시 합산")
-        void mergeSameProduct() {
+        @DisplayName("같은 SKU 다시 추가 시 합산")
+        void mergeSameSku() {
             Cart cart = Cart.createFor(MEMBER_ID);
-            cart.addItem(product, 2);  // 미리 2개 담음
+            cart.addItem(product, sku, 2);  // 미리 2개 담음
 
             given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
             given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
                     .willReturn(Optional.of(cart));
             given(productRepository.findAllById(any())).willReturn(List.of(product));
 
-            CartService.CartView view = cartService.addItem(MEMBER_ID, PRODUCT_ID, 3);
+            CartService.CartView view = cartService.addItem(MEMBER_ID, PRODUCT_ID, SKU_ID, 3);
 
             assertThat(view.cart().getItemCount()).isEqualTo(1);
             assertThat(view.cart().getTotalQuantity()).isEqualTo(5);  // 2 + 3
@@ -125,8 +131,17 @@ class CartServiceTest {
         void rejectUnknownProduct() {
             given(productRepository.findById(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, 999L, 1))
+            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, 999L, SKU_ID, 1))
                     .isInstanceOf(ProductNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 SKU ID는 예외")  // ★ 새 테스트
+        void rejectUnknownSku() {
+            given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
+
+            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, PRODUCT_ID, 999L, 1))
+                    .isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test
@@ -136,7 +151,7 @@ class CartServiceTest {
 
             given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
 
-            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, PRODUCT_ID, 1))
+            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, PRODUCT_ID, SKU_ID, 1))
                     .isInstanceOf(ProductNotPurchasableException.class);
         }
 
@@ -150,7 +165,7 @@ class CartServiceTest {
                     .willAnswer(inv -> inv.getArgument(0));
             given(productRepository.findAllById(any())).willReturn(List.of(product));
 
-            CartService.CartView view = cartService.addItem(MEMBER_ID, PRODUCT_ID, 1);
+            CartService.CartView view = cartService.addItem(MEMBER_ID, PRODUCT_ID, SKU_ID, 1);
 
             assertThat(view.cart().getItemCount()).isEqualTo(1);
             verify(cartRepository).save(any(Cart.class));
@@ -165,8 +180,7 @@ class CartServiceTest {
         @DisplayName("정상적으로 수량 변경")
         void changeNormal() {
             Cart cart = Cart.createFor(MEMBER_ID);
-            cart.addItem(product, 2);
-            // CartItem ID 설정 (DB 저장 시뮬레이션)
+            cart.addItem(product, sku, 2);
             setItemId(cart.getItems().get(0), 10L);
 
             given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
@@ -199,7 +213,7 @@ class CartServiceTest {
         @DisplayName("정상적으로 항목 삭제")
         void removeNormal() {
             Cart cart = Cart.createFor(MEMBER_ID);
-            cart.addItem(product, 2);
+            cart.addItem(product, sku, 2);
             setItemId(cart.getItems().get(0), 10L);
 
             given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
@@ -219,7 +233,7 @@ class CartServiceTest {
         @DisplayName("카트가 있으면 비움")
         void clearExisting() {
             Cart cart = Cart.createFor(MEMBER_ID);
-            cart.addItem(product, 2);
+            cart.addItem(product, sku, 2);
 
             given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
                     .willReturn(Optional.of(cart));

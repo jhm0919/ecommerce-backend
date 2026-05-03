@@ -1,6 +1,7 @@
 package com.team23.customer.cart.domain;
 
 import com.team23.customer.product.domain.Product;
+import com.team23.customer.product.domain.SKU;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -15,11 +16,13 @@ import java.util.Objects;
  *
  * <p>가격 정보는 보관하지 않는다 (조회 시 현재 Product 가격 사용).
  * 이름과 이미지는 스냅샷으로 보관 (단종된 상품도 표시 가능).
+ * SKU 옵션 정보는 보관하지 않는다 (조회 시 SKU 참조).
  */
 @Entity
 @Table(name = "cart_items", indexes = {
         @Index(name = "idx_cart_item_cart", columnList = "cart_id"),
-        @Index(name = "idx_cart_item_product", columnList = "product_id")
+        @Index(name = "idx_cart_item_product", columnList = "product_id"),
+        @Index(name = "idx_cart_item_sku", columnList = "sku_id")  // ★ 인덱스 추가
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -40,6 +43,9 @@ public class CartItem {
     @Column(name = "product_id", nullable = false, updatable = false)
     private Long productId;
 
+    @Column(name = "sku_id", nullable = false, updatable = false)
+    private Long skuId;  // ★ product_id 바로 아래로 이동 (논리적 그룹)
+
     @Column(name = "product_name", nullable = false, length = MAX_NAME_LENGTH)
     private String productName;
 
@@ -54,14 +60,19 @@ public class CartItem {
     // ─────────────────────────────────────
 
     /**
-     * Product와 수량으로부터 CartItem을 생성한다.
+     * Product, SKU, 수량으로부터 CartItem을 생성한다.
+     *
+     * <p>SKU 옵션 정보는 저장하지 않는다.
+     * 조회 시 skuId로 SKU를 참조해 옵션을 표시한다.
      */
-    static CartItem of(Product product, int quantity) {
+    static CartItem of(Product product, SKU sku, int quantity) {
         Objects.requireNonNull(product, "product must not be null");
+        Objects.requireNonNull(sku, "sku must not be null");
         validateQuantity(quantity);
 
         CartItem item = new CartItem();
         item.productId = product.getId();
+        item.skuId = sku.getId();            // ★ 설정
         item.productName = product.getName();
         item.productImageUrl = product.getMainImageUrl();
         item.quantity = quantity;
@@ -69,32 +80,34 @@ public class CartItem {
     }
 
     // ─────────────────────────────────────
-    // 비즈니스 메서드 (package-private)
+    // 질의 메서드
     // ─────────────────────────────────────
 
     /**
-     * 수량을 증가시킨다.
-     * Cart.addItem에서만 호출되어야 한다.
+     * 같은 SKU인지 확인.
+     * Cart.addItem의 합산 조건으로 사용된다.
+     *
+     * <p>같은 Product라도 옵션(SKU)이 다르면 별도 항목으로 관리된다.
      */
+    public boolean isSameSku(Long skuId) {
+        return this.skuId.equals(skuId);
+    }
+
+    // ─────────────────────────────────────
+    // 비즈니스 메서드 (package-private)
+    // ─────────────────────────────────────
+
     void increaseQuantity(int delta) {
         int newQuantity = this.quantity + delta;
         validateQuantity(newQuantity);
         this.quantity = newQuantity;
     }
 
-    /**
-     * 수량을 변경한다 (덮어쓰기).
-     * Cart.changeItemQuantity에서만 호출되어야 한다.
-     */
     void changeQuantity(int newQuantity) {
         validateQuantity(newQuantity);
         this.quantity = newQuantity;
     }
 
-    /**
-     * Cart와의 관계를 설정한다.
-     * Cart.addItem에서만 호출되어야 한다.
-     */
     void assignToCart(Cart cart) {
         this.cart = cart;
     }

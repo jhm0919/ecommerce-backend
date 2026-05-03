@@ -1,8 +1,6 @@
 package com.team23.customer.product.service;
 
-import com.team23.customer.product.domain.Category;
-import com.team23.customer.product.domain.Money;
-import com.team23.customer.product.domain.Product;
+import com.team23.customer.product.domain.*;
 import com.team23.customer.product.dto.ProductCreateRequest;
 import com.team23.customer.product.dto.ProductUpdateRequest;
 import com.team23.customer.product.exception.CategoryNotFoundException;
@@ -14,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -24,6 +24,7 @@ public class ProductAdminService {
 
     /**
      * 새 상품을 등록한다.
+     * 재고는 SKU 추가 후 SKU 단위로 관리된다.
      */
     @Transactional
     public Product register(ProductCreateRequest request) {
@@ -35,8 +36,7 @@ public class ProductAdminService {
         Product product = Product.register(
                 request.name(),
                 price,
-                request.stock(),
-                request.description(),
+                request.description(),  // ★ stock 제거
                 request.mainImageUrl(),
                 category
         );
@@ -54,10 +54,8 @@ public class ProductAdminService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
-        // 1. 기본 정보 (name, description, image)
         product.updateInfo(request.name(), request.description(), request.mainImageUrl());
 
-        // 2. 가격 (price와 currency 둘 다 있으면 변경)
         if (request.price() != null && request.currency() != null) {
             Money newPrice = new Money(request.price(), request.currency());
             product.changePrice(newPrice);
@@ -66,7 +64,6 @@ public class ProductAdminService {
                     "price and currency must be provided together");
         }
 
-        // 3. 카테고리 변경
         if (request.categoryId() != null) {
             Category newCategory = categoryRepository.findById(request.categoryId())
                     .orElseThrow(() -> new CategoryNotFoundException(request.categoryId()));
@@ -77,19 +74,8 @@ public class ProductAdminService {
         return product;
     }
 
-    /**
-     * 상품 재고를 증가시킨다 (입고).
-     */
-    @Transactional
-    public Product increaseStock(Long productId, int quantity) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
-
-        product.increaseStock(quantity);
-        log.info("Stock increased: id={}, quantity={}, newStock={}",
-                productId, quantity, product.getStock());
-        return product;
-    }
+    // ★ increaseStock(Long, int) 메서드 제거
+    // → 재고는 SKU 단위로 관리 (increaseSkuStock 사용)
 
     /**
      * 상품을 단종 처리한다 (Soft Delete).
@@ -101,5 +87,56 @@ public class ProductAdminService {
 
         product.discontinue();
         log.info("Product discontinued: id={}", productId);
+    }
+
+    /**
+     * 상품에 SKU를 추가한다.
+     */
+    @Transactional
+    public SKU addSku(Long productId, List<SkuOption> options, int initialStock) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        SKU sku = product.addSku(options, initialStock);
+        log.info("SKU added: productId={}, skuCode={}", productId, sku.getSkuCode());
+        return sku;
+    }
+
+    /**
+     * SKU 재고를 증가시킨다 (입고).
+     */
+    @Transactional
+    public void increaseSkuStock(Long productId, Long skuId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        product.increaseSkuStock(skuId, quantity);
+        log.info("SKU stock increased: productId={}, skuId={}, quantity={}",
+                productId, skuId, quantity);
+    }
+
+    /**
+     * SKU 재고를 감소시킨다 (수동 조정).
+     */
+    @Transactional
+    public void decreaseSkuStock(Long productId, Long skuId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        product.decreaseSkuStock(skuId, quantity);
+        log.info("SKU stock decreased: productId={}, skuId={}, quantity={}",
+                productId, skuId, quantity);
+    }
+
+    /**
+     * SKU를 제거한다 (재고 0인 경우만).
+     */
+    @Transactional
+    public void removeSku(Long productId, Long skuId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        product.removeSku(skuId);
+        log.info("SKU removed: productId={}, skuId={}", productId, skuId);
     }
 }

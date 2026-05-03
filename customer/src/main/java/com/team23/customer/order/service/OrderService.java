@@ -12,6 +12,7 @@ import com.team23.customer.order.exception.OrderAccessDeniedException;
 import com.team23.customer.order.exception.OrderNotFoundException;
 import com.team23.customer.order.repository.OrderRepository;
 import com.team23.customer.product.domain.Product;
+import com.team23.customer.product.domain.SKU;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -55,9 +56,6 @@ public class OrderService {
         return order;
     }
 
-    /**
-     * 비회원 주문 생성.
-     */
     @Transactional
     public Order createGuestOrder(CreateOrderRequest request) {
         validateGuestInfo(request);
@@ -144,11 +142,13 @@ public class OrderService {
         Order order = orderRepository.findByIdAndMemberIdWithItems(orderId, memberId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        // 재고 복구
+        // 재고 복구 — SKU 단위로
         for (OrderItem item : order.getItems()) {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new ProductNotFoundException(item.getProductId()));
-            product.increaseStock(item.getQuantity());
+
+            // ★ 변경: product.increaseStock → product.increaseSkuStock
+            product.increaseSkuStock(item.getSkuId(), item.getQuantity());
         }
 
         order.cancel();
@@ -157,31 +157,38 @@ public class OrderService {
         return order;
     }
 
-    // ─────────────────────────────────────
-    // 헬퍼 메서드 (private)
-    // ─────────────────────────────────────
+    // ─── 헬퍼 (큰 변경!) ───
 
     /**
-     * 요청에서 OrderItem 목록을 만들고 재고를 차감한다.
-     * 재고 부족 시 예외 발생 → 트랜잭션 롤백.
+     * 요청에서 OrderItem 목록을 만들고 SKU 재고를 차감한다.
+     * 재고 부족 시 예외 → 트랜잭션 롤백.
      */
     private List<OrderItem> prepareItemsAndDecreaseStock(
             List<CreateOrderRequest.OrderItemRequest> requests
     ) {
         List<OrderItem> items = new ArrayList<>();
         for (CreateOrderRequest.OrderItemRequest req : requests) {
+            // 1. Product 조회
             Product product = productRepository.findById(req.productId())
                     .orElseThrow(() -> new ProductNotFoundException(req.productId()));
 
+            // 2. SKU 조회 (Product의 SKU여야 함 — 보안)
+            SKU sku = product.findSkuById(req.skuId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "SKU not found in product: productId=" + req.productId() +
+                                    ", skuId=" + req.skuId()));
+
+            // 3. 재고 차감 (SKU 단위)
             try {
-                product.decreaseStock(req.quantity());
+                product.decreaseSkuStock(req.skuId(), req.quantity());
             } catch (IllegalStateException e) {
-                log.warn("Stock decrease failed: productId={}, quantity={}, current={}",
-                        req.productId(), req.quantity(), product.getStock());
+                log.warn("Stock decrease failed: productId={}, skuId={}, quantity={}",
+                        req.productId(), req.skuId(), req.quantity());
                 throw new InsufficientStockException();
             }
 
-            items.add(OrderItem.of(product, req.quantity()));
+            // 4. OrderItem 생성 (Product + SKU + quantity)
+            items.add(OrderItem.of(product, sku, req.quantity()));
         }
         return items;
     }

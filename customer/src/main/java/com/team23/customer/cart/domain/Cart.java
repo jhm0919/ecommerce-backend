@@ -1,6 +1,7 @@
 package com.team23.customer.cart.domain;
 
 import com.team23.customer.product.domain.Product;
+import com.team23.customer.product.domain.SKU;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,6 +23,7 @@ import java.util.Optional;
  * 비회원은 클라이언트의 LocalStorage에서 관리되며 서버에 저장되지 않는다.
  *
  * <p>장바구니 항목의 가격 정보는 보관하지 않으며, 조회 시점에 Product의 현재 가격을 사용한다.
+ * SKU 옵션 정보는 보관하지 않으며, 조회 시 skuId로 SKU를 참조한다.
  */
 @Entity
 @Table(name = "carts", indexes = {
@@ -54,9 +56,6 @@ public class Cart {
     // 정적 팩토리
     // ─────────────────────────────────────
 
-    /**
-     * 회원의 빈 장바구니를 생성한다.
-     */
     public static Cart createFor(Long memberId) {
         Objects.requireNonNull(memberId, "memberId must not be null");
 
@@ -71,17 +70,19 @@ public class Cart {
 
     /**
      * 장바구니에 상품을 추가한다.
-     * 같은 상품이 이미 있으면 수량을 증가시킨다.
+     * 같은 SKU가 이미 있으면 수량을 증가시킨다.
+     * 같은 Product라도 SKU(옵션)가 다르면 별도 항목으로 추가된다.
      */
-    public void addItem(Product product, int quantity) {
+    public void addItem(Product product, SKU sku, int quantity) {  // ★ SKU 추가
         Objects.requireNonNull(product, "product must not be null");
+        Objects.requireNonNull(sku, "sku must not be null");
 
-        Optional<CartItem> existing = findItemByProductId(product.getId());
+        Optional<CartItem> existing = findItemBySkuId(sku.getId());  // ★ skuId 기준
 
         if (existing.isPresent()) {
             existing.get().increaseQuantity(quantity);
         } else {
-            CartItem newItem = CartItem.of(product, quantity);
+            CartItem newItem = CartItem.of(product, sku, quantity);  // ★ SKU 전달
             newItem.assignToCart(this);
             this.items.add(newItem);
         }
@@ -89,7 +90,6 @@ public class Cart {
 
     /**
      * 특정 항목의 수량을 변경한다.
-     * 항목 ID 기준 (productId 아님 — 한 카트에 같은 상품 두 항목 가능성 차단되어 있지만 명시적으로).
      */
     public void changeItemQuantity(Long itemId, int newQuantity) {
         CartItem item = findItemById(itemId)
@@ -119,33 +119,20 @@ public class Cart {
     // 질의 메서드
     // ─────────────────────────────────────
 
-    /**
-     * 장바구니가 비어 있는지 확인.
-     */
     public boolean isEmpty() {
         return items.isEmpty();
     }
 
-    /**
-     * 장바구니의 총 항목 종류 수.
-     * (수량 합계가 아니라 종류 수)
-     */
     public int getItemCount() {
         return items.size();
     }
 
-    /**
-     * 장바구니의 총 수량 합계.
-     */
     public int getTotalQuantity() {
         return items.stream()
                 .mapToInt(CartItem::getQuantity)
                 .sum();
     }
 
-    /**
-     * 외부에 노출할 항목 목록 (불변).
-     */
     public List<CartItem> getItems() {
         return List.copyOf(items);
     }
@@ -154,9 +141,9 @@ public class Cart {
     // 헬퍼 메서드 (private)
     // ─────────────────────────────────────
 
-    private Optional<CartItem> findItemByProductId(Long productId) {
+    private Optional<CartItem> findItemBySkuId(Long skuId) {  // ★ productId → skuId
         return items.stream()
-                .filter(item -> item.getProductId().equals(productId))
+                .filter(item -> item.isSameSku(skuId))
                 .findFirst();
     }
 

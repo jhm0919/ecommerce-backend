@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -14,26 +15,36 @@ class OrderTest {
 
     private Product product1;
     private Product product2;
+    private SKU sku1;
+    private SKU sku2;
 
     @BeforeEach
     void setUp() {
         Category category = Category.create("의류", "clothing");
+
         product1 = Product.register(
-                "티셔츠", Money.krw(29900), 100, "설명", "img1", category
+                "티셔츠", Money.krw(29900), "설명", "img1", category
         );
+        setId(product1, 1L);
+        sku1 = product1.addSku(List.of(new SkuOption("색상", "검정")), 50);
+        setId(sku1, 100L);
+
         product2 = Product.register(
-                "바지", Money.krw(49900), 50, "설명", "img2", category
+                "바지", Money.krw(49900), "설명", "img2", category
         );
+        setId(product2, 2L);
+        sku2 = product2.addSku(List.of(new SkuOption("색상", "회색")), 30);
+        setId(sku2, 200L);
     }
 
     private List<OrderItem> singleItem() {
-        return List.of(OrderItem.of(product1, 2));
+        return List.of(OrderItem.of(product1, sku1, 2));
     }
 
     private List<OrderItem> multipleItems() {
         return List.of(
-                OrderItem.of(product1, 2),
-                OrderItem.of(product2, 1)
+                OrderItem.of(product1, sku1, 2),
+                OrderItem.of(product2, sku2, 1)
         );
     }
 
@@ -198,8 +209,20 @@ class OrderTest {
 
             List<OrderItem> items = order.getItems();
 
-            assertThatThrownBy(() -> items.add(OrderItem.of(product1, 1)))
+            assertThatThrownBy(() -> items.add(OrderItem.of(product1, sku1, 1)))
                     .isInstanceOf(UnsupportedOperationException.class);
+        }
+    }
+
+    // ─── 테스트 헬퍼 ───
+
+    private static void setId(Object entity, Long id) {
+        try {
+            Field idField = entity.getClass().getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(entity, id);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }

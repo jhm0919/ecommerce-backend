@@ -6,6 +6,11 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import com.team23.customer.product.domain.SKU;       // ★ 추가
+import com.team23.customer.product.domain.SkuOption; // ★ 추가
+
+import java.util.ArrayList;  // ★ 추가
+import java.util.List;        // ★ 추가
 
 import java.util.Objects;
 
@@ -25,7 +30,8 @@ import java.util.Objects;
 @Entity
 @Table(name = "order_items", indexes = {
         @Index(name = "idx_order_item_order", columnList = "order_id"),
-        @Index(name = "idx_order_item_product", columnList = "product_id")
+        @Index(name = "idx_order_item_product", columnList = "product_id"),
+        @Index(name = "idx_order_item_sku", columnList = "sku_id")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -48,6 +54,9 @@ public class OrderItem {
     @Column(name = "product_name", nullable = false, updatable = false, length = MAX_NAME_LENGTH)
     private String productName;
 
+    @Column(name = "product_image_url", updatable = false, length = MAX_IMAGE_URL_LENGTH)
+    private String productImageUrl;
+
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "amount", column = @Column(name = "price_amount", nullable = false, updatable = false, precision = 19, scale = 2)),
@@ -55,11 +64,25 @@ public class OrderItem {
     })
     private Money priceAtOrder;
 
-    @Column(name = "product_image_url", updatable = false, length = MAX_IMAGE_URL_LENGTH)
-    private String productImageUrl;
-
     @Column(nullable = false, updatable = false)
     private int quantity;
+
+    // ─── SKU 정보 (스냅샷) ───
+
+    @Column(name = "sku_id", nullable = false, updatable = false)
+    private Long skuId;
+
+    @Column(name = "sku_code", nullable = false, updatable = false)
+    private String skuCode;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "order_item_sku_options",
+            joinColumns = @JoinColumn(name = "order_item_id")
+    )
+    @OrderColumn(name = "option_order")
+    private List<SkuOption> skuOptions = new ArrayList<>();
+
 
     // ─────────────────────────────────────
     // 정적 팩토리
@@ -69,17 +92,35 @@ public class OrderItem {
      * Product와 수량으로부터 OrderItem을 생성한다.
      * 상품 정보를 스냅샷으로 복사한다.
      */
-    public static OrderItem of(Product product, int quantity) {
+    /**
+     * Product와 SKU로부터 OrderItem 생성.
+     *
+     * <p>주의: SKU가 Product에 속한 것인지 호출자가 검증해야 한다.
+     * 일반적으로 Product에서 SKU를 조회한 후 호출.
+     */
+    public static OrderItem of(Product product, SKU sku, int quantity) {
         Objects.requireNonNull(product, "product must not be null");
-        validateQuantity(quantity);
+        Objects.requireNonNull(sku, "sku must not be null");
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("quantity must be positive: " + quantity);
+        }
 
         OrderItem item = new OrderItem();
         item.productId = product.getId();
         item.productName = product.getName();
-        item.priceAtOrder = product.getPrice();
         item.productImageUrl = product.getMainImageUrl();
+
+        item.skuId = sku.getId();
+        item.skuCode = sku.getSkuCode();
+        item.skuOptions = new ArrayList<>(sku.getOptions());
+
+        item.priceAtOrder = product.getPrice();
         item.quantity = quantity;
         return item;
+    }
+
+    public List<SkuOption> getSkuOptions() {
+        return List.copyOf(skuOptions);
     }
 
     // ─────────────────────────────────────

@@ -42,6 +42,7 @@ public class CartController {
         CartService.CartView view = cartService.addItem(
                 principal.memberId(),
                 request.productId(),
+                request.skuId(),
                 request.quantity()
         );
         return ResponseEntity.ok(CartResponse.from(view.cart(), view.productMap()));

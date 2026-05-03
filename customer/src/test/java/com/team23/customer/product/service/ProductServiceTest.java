@@ -4,6 +4,8 @@ import com.team23.customer.product.domain.Category;
 import com.team23.customer.product.domain.Money;
 import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.ProductStatus;
+import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.SkuOption;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,11 +40,10 @@ class ProductServiceTest {
         return Category.create("남성 상의", "men-tops");
     }
 
-    private Product createProduct(int stock) {
+    private Product createProduct() {  // ★ stock 매개변수 제거
         return Product.register(
                 "베이직 티셔츠",
                 Money.krw(29900),
-                stock,
                 "100% 면 소재",
                 "https://example.com/image.jpg",
                 createCategory()
@@ -56,7 +58,7 @@ class ProductServiceTest {
         @DisplayName("필터 없이 전체 조회")
         void allProducts() {
             Pageable pageable = PageRequest.of(0, 20);
-            Page<Product> mockPage = new PageImpl<>(List.of(createProduct(10)));
+            Page<Product> mockPage = new PageImpl<>(List.of(createProduct()));
 
             given(productRepository.findVisibleProducts(
                     eq(null), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
@@ -74,11 +76,10 @@ class ProductServiceTest {
         void filterByCategoryId() {
             Pageable pageable = PageRequest.of(0, 20);
             Long categoryId = 1L;
-            Page<Product> mockPage = new PageImpl<>(List.of(createProduct(10)));
 
             given(productRepository.findVisibleProducts(
                     eq(categoryId), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
-                    .willReturn(mockPage);
+                    .willReturn(new PageImpl<>(List.of(createProduct())));
 
             Page<Product> result = productService.findVisibleProducts(categoryId, null, pageable);
 
@@ -91,11 +92,10 @@ class ProductServiceTest {
         @DisplayName("검색어로 조회")
         void searchByKeyword() {
             Pageable pageable = PageRequest.of(0, 20);
-            Page<Product> mockPage = new PageImpl<>(List.of(createProduct(10)));
 
             given(productRepository.findVisibleProducts(
                     eq(null), eq("티셔츠"), eq(ProductStatus.DISCONTINUED), eq(pageable)))
-                    .willReturn(mockPage);
+                    .willReturn(new PageImpl<>(List.of(createProduct())));
 
             Page<Product> result = productService.findVisibleProducts(null, "티셔츠", pageable);
 
@@ -109,11 +109,10 @@ class ProductServiceTest {
         void filterByCategoryAndKeyword() {
             Pageable pageable = PageRequest.of(0, 20);
             Long categoryId = 1L;
-            Page<Product> mockPage = new PageImpl<>(List.of(createProduct(10)));
 
             given(productRepository.findVisibleProducts(
                     eq(categoryId), eq("티셔츠"), eq(ProductStatus.DISCONTINUED), eq(pageable)))
-                    .willReturn(mockPage);
+                    .willReturn(new PageImpl<>(List.of(createProduct())));
 
             Page<Product> result = productService.findVisibleProducts(categoryId, "티셔츠", pageable);
 
@@ -160,7 +159,7 @@ class ProductServiceTest {
         @Test
         @DisplayName("ACTIVE 상품을 조회할 수 있다")
         void findActiveProduct() {
-            Product product = createProduct(10);
+            Product product = createProduct();
 
             given(productRepository.findByIdWithCategory(1L))
                     .willReturn(Optional.of(product));
@@ -173,7 +172,12 @@ class ProductServiceTest {
         @Test
         @DisplayName("SOLD_OUT 상품도 조회 가능 (사용자에게 노출됨)")
         void findSoldOutProduct() {
-            Product product = createProduct(0);
+            Product product = createProduct();
+            setId(product, 1L);
+            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 1);
+            setId(sku, 100L);
+            product.decreaseSkuStock(100L, 1);  // 모든 SKU 재고 0 → SOLD_OUT
+            assertThat(product.getStatus()).isEqualTo(ProductStatus.SOLD_OUT);
 
             given(productRepository.findByIdWithCategory(1L))
                     .willReturn(Optional.of(product));
@@ -186,7 +190,7 @@ class ProductServiceTest {
         @Test
         @DisplayName("DISCONTINUED 상품은 NotFound로 응답")
         void rejectDiscontinuedAsNotFound() {
-            Product product = createProduct(10);
+            Product product = createProduct();
             product.discontinue();
 
             given(productRepository.findByIdWithCategory(1L))
@@ -204,6 +208,18 @@ class ProductServiceTest {
 
             assertThatThrownBy(() -> productService.findById(999L))
                     .isInstanceOf(ProductNotFoundException.class);
+        }
+    }
+
+    // ─── 테스트 헬퍼 ───
+
+    private static void setId(Object entity, Long id) {
+        try {
+            Field idField = entity.getClass().getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(entity, id);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }
