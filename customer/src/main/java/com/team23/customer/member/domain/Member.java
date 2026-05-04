@@ -176,6 +176,22 @@ public class Member {
     }
 
     /**
+     * 관리자에 의한 회원 삭제 (Soft Delete).
+     * ACTIVE 회원은 삭제 불가 — 정지 처리 후 삭제 필요.
+     * 이미 WITHDRAWN이면 무동작 (멱등).
+     */
+    public void deleteByAdmin() {
+        if (this.status == MemberStatus.ACTIVE) {
+            throw new IllegalStateException(
+                    "Cannot delete ACTIVE member. Suspend first.");
+        }
+        if (this.status == MemberStatus.WITHDRAWN) {
+            return;  // 이미 삭제됨 — 멱등
+        }
+        this.status = MemberStatus.WITHDRAWN;
+    }
+
+    /**
      * 관리자 권한으로 승격.
      */
     public void promoteToAdmin() {
