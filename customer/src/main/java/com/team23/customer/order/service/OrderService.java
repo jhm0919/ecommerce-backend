@@ -13,10 +13,12 @@ import com.team23.customer.order.exception.OrderNotFoundException;
 import com.team23.customer.order.repository.OrderRepository;
 import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.SkuSoldOutEvent;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final DeliveryRepository deliveryRepository;
     private final ProductRepository productRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     // ─────────────────────────────────────
     // 주문 생성
@@ -185,6 +188,11 @@ public class OrderService {
                 log.warn("Stock decrease failed: productId={}, skuId={}, quantity={}",
                         req.productId(), req.skuId(), req.quantity());
                 throw new InsufficientStockException();
+            }
+
+            // ★ 재고 0이면 이벤트 발행
+            if (sku.getStock() == 0) {
+                eventPublisher.publishEvent(SkuSoldOutEvent.of(product, sku));
             }
 
             // 4. OrderItem 생성 (Product + SKU + quantity)

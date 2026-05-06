@@ -1,10 +1,6 @@
 package com.team23.customer.product.service;
 
-import com.team23.customer.product.domain.Category;
-import com.team23.customer.product.domain.Money;
-import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.domain.SKU;
-import com.team23.customer.product.domain.SkuOption;
+import com.team23.customer.product.domain.*;
 import com.team23.customer.product.dto.ProductCreateRequest;
 import com.team23.customer.product.dto.ProductUpdateRequest;
 import com.team23.customer.product.exception.CategoryNotFoundException;
@@ -18,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -27,12 +24,15 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;   // ★ 수정
+import static org.mockito.Mockito.verify;  // ★ 수정
 
 @ExtendWith(MockitoExtension.class)
 class ProductAdminServiceTest {
 
     @Mock private ProductRepository productRepository;
     @Mock private CategoryRepository categoryRepository;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks private ProductAdminService productAdminService;
 
@@ -212,6 +212,41 @@ class ProductAdminServiceTest {
             productAdminService.discontinue(1L);
 
             assertThat(product.getStatus().name()).isEqualTo("DISCONTINUED");
+        }
+    }
+
+    @Nested
+    @DisplayName("SKU 재고 감소 (이벤트 발행)")
+    class DecreaseSkuStockEvent {
+
+        @Test
+        @DisplayName("재고 0이면 품절 이벤트 발행")
+        void publishEventWhenSoldOut() {
+            Product product = createProduct();
+            setId(product, 1L);
+            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 3);
+            setId(sku, 100L);
+
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+
+            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 3→0
+
+            verify(eventPublisher).publishEvent(any(SkuSoldOutEvent.class));
+        }
+
+        @Test
+        @DisplayName("재고 남으면 이벤트 발행 안 함")
+        void noEventWhenStockRemains() {
+            Product product = createProduct();
+            setId(product, 1L);
+            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+            setId(sku, 100L);
+
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+
+            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
+
+            verify(eventPublisher, never()).publishEvent(any());
         }
     }
 

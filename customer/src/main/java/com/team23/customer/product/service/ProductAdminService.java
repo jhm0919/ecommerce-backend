@@ -9,6 +9,7 @@ import com.team23.customer.product.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ public class ProductAdminService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 새 상품을 등록한다.
@@ -126,6 +128,13 @@ public class ProductAdminService {
         product.decreaseSkuStock(skuId, quantity);
         log.info("SKU stock decreased: productId={}, skuId={}, quantity={}",
                 productId, skuId, quantity);
+
+        // ★ 재고 0이면 이벤트 발행
+        product.findSkuById(skuId).ifPresent(sku -> {
+            if (sku.getStock() == 0) {
+                eventPublisher.publishEvent(SkuSoldOutEvent.of(product, sku));
+            }
+        });
     }
 
     /**
