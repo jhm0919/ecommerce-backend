@@ -6,6 +6,7 @@ import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
 import com.team23.customer.stock.domain.ReceiveHistory;
+import com.team23.customer.stock.dto.ReceiveAdjustRequest;
 import com.team23.customer.stock.repository.ReceiveHistoryRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
@@ -15,8 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -42,6 +45,8 @@ class StockControllerTest {
     ProductRepository productRepository;
     @Autowired
     EntityManager em;
+    @Autowired
+    ObjectMapper objectMapper;
     @Autowired
     PurchaseOrderRepository purchaseOrderRepository;
 
@@ -166,6 +171,78 @@ class StockControllerTest {
 
         // when & then
         mockMvc.perform(patch("/api/seller/stocks/receive/" + history.getId() + "/cancel")
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void adjustSuccessReturns200() throws Exception {
+        ReceiveHistory history = receiveHistoryRepository.save(
+                ReceiveHistory.of(skuId, 1L, 100, 200));
+
+        ReceiveAdjustRequest request = new ReceiveAdjustRequest(80, "수량 상이");
+
+        mockMvc.perform(patch("/api/seller/stocks/receive/" + history.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.originalQuantity").value(100))
+                .andExpect(jsonPath("$.adjustedQuantity").value(80))
+                .andExpect(jsonPath("$.reason").value("수량 상이"));
+    }
+
+    @Test
+    void adjustNotFoundReturns404() throws Exception {
+        ReceiveAdjustRequest request = new ReceiveAdjustRequest(80, "수량 상이");
+
+        mockMvc.perform(patch("/api/seller/stocks/receive/99999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void adjustCancelledHistoryReturns400() throws Exception {
+        ReceiveHistory history = receiveHistoryRepository.save(
+                ReceiveHistory.of(skuId, 1L, 100, 200));
+        history.cancel();
+        receiveHistoryRepository.saveAndFlush(history);
+
+        ReceiveAdjustRequest request = new ReceiveAdjustRequest(80, "수량 상이");
+
+        mockMvc.perform(patch("/api/seller/stocks/receive/" + history.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void adjustZeroQuantityReturns400() throws Exception {
+        ReceiveHistory history = receiveHistoryRepository.save(
+                ReceiveHistory.of(skuId, 1L, 100, 200));
+
+        ReceiveAdjustRequest request = new ReceiveAdjustRequest(0, "수량 상이");
+
+        mockMvc.perform(patch("/api/seller/stocks/receive/" + history.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void adjustBlankReasonReturns400() throws Exception {
+        ReceiveHistory history = receiveHistoryRepository.save(
+                ReceiveHistory.of(skuId, 1L, 100, 200));
+
+        ReceiveAdjustRequest request = new ReceiveAdjustRequest(80, "");
+
+        mockMvc.perform(patch("/api/seller/stocks/receive/" + history.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
                 .andExpect(status().isBadRequest());
     }
