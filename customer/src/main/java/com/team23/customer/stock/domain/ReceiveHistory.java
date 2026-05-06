@@ -43,6 +43,12 @@ public class ReceiveHistory {
     @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
+    private boolean cancelled = false;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
     // ─────────────────────────────────────
     // 정적 팩토리
     // ─────────────────────────────────────
@@ -60,4 +66,13 @@ public class ReceiveHistory {
         history.stockAfter = stockAfter;
         return history;
     }
+
+    public void cancel() {
+        if (this.cancelled) {
+            throw new IllegalStateException("이미 취소된 입고 내역입니다");
+        }
+        this.cancelled = true;
+        this.cancelledAt = LocalDateTime.now();
+    }
+
 }
