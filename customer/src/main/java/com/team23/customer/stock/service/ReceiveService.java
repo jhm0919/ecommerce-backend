@@ -11,6 +11,7 @@ import com.team23.customer.purchaseorder.dto.ReceiveCancelResponse;
 import com.team23.customer.purchaseorder.exception.PurchaseOrderException;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
 import com.team23.customer.stock.domain.ReceiveHistory;
+import com.team23.customer.stock.dto.ReceiveAdjustResponse;
 import com.team23.customer.stock.dto.ReceiveStockResponse;
 import com.team23.customer.stock.dto.ReceiveHistoryResponse;
 import com.team23.customer.stock.repository.ReceiveHistoryRepository;
@@ -139,6 +140,59 @@ public class ReceiveService {
                 history.getReceivedQuantity(),
                 sku.getStock(),
                 po.getStatus()
+        );
+    }
+
+    public ReceiveAdjustResponse adjust(
+            Long receiveHistoryId, int newQuantity, String reason
+    ) {
+        // 1. 입고 이력 조회
+        ReceiveHistory history = receiveHistoryRepository
+                .findById(receiveHistoryId)
+                .orElseThrow(() -> new PurchaseOrderException(
+                        ErrorCode.RECEIVE_HISTORY_NOT_FOUND,
+                        "id=" + receiveHistoryId));
+
+        // 2. 취소된 이력 수정 불가
+        if (history.isCancelled()) {
+            throw new PurchaseOrderException(ErrorCode.ALREADY_CANCELLED);
+        }
+
+        // 3. 차이 계산
+        int originalQuantity = history.getCurrentQuantity();
+        int diff = newQuantity - originalQuantity;   // 양수: 증가 / 음수: 차감
+
+        // 4. 감소 방향 — 재고 부족 검증
+        SKU sku = skuRepository.findById(history.getSkuId())
+                .orElseThrow(() -> new PurchaseOrderException(
+                        ErrorCode.SKU_NOT_FOUND));
+
+        if (diff < 0 && sku.getStock() < Math.abs(diff)) {
+            throw new PurchaseOrderException(
+                    ErrorCode.INSUFFICIENT_STOCK_FOR_CANCEL,
+                    "현재 재고: " + sku.getStock() +
+                            ", 차감 필요: " + Math.abs(diff));
+        }
+
+        // 5. 재고 증감
+        Product product = sku.getProduct();
+        if (diff > 0) { // 재고 증가
+            product.increaseSkuStock(history.getSkuId(), diff);
+        } else if (diff < 0) { // 재고 차감 (부족 검증 필요)
+            product.decreaseSkuStock(history.getSkuId(), Math.abs(diff));
+        }
+        // diff == 0 → 같은 수량 수정 (사유만 변경)
+
+        // 6. 이력 수정
+        history.adjust(newQuantity, reason);
+
+        return new ReceiveAdjustResponse(
+                history.getId(),
+                history.getSkuId(),
+                originalQuantity,
+                newQuantity,
+                sku.getStock(),
+                reason
         );
     }
 }
