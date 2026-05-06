@@ -7,6 +7,7 @@ import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.product.repository.SkuRepository;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
 import com.team23.customer.purchaseorder.domain.PurchaseOrderStatus;
+import com.team23.customer.purchaseorder.dto.ReceiveCancelResponse;
 import com.team23.customer.purchaseorder.exception.PurchaseOrderException;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
 import com.team23.customer.stock.domain.ReceiveHistory;
@@ -87,10 +88,57 @@ public class ReceiveService {
             Pageable pageable
     ) {
         LocalDateTime fromDt = (from != null) ? from.atStartOfDay() : null;
-        LocalDateTime toDt   = (to != null) ? to.atTime(23, 59, 59) : null;
+        LocalDateTime toDt = (to != null) ? to.atTime(23, 59, 59) : null;
 
         return receiveHistoryRepository
                 .search(skuId, fromDt, toDt, pageable)
                 .map(ReceiveHistoryResponse::from);
+    }
+
+    public ReceiveCancelResponse cancel(Long receiveHistoryId) {
+        // 1. 입고 이력 조회
+        ReceiveHistory history = receiveHistoryRepository.findById(receiveHistoryId)
+                .orElseThrow(() -> new PurchaseOrderException(
+                        ErrorCode.RECEIVE_HISTORY_NOT_FOUND,
+                        "id=" + receiveHistoryId));
+
+        // 2. 이미 취소 검증
+        if (history.isCancelled()) {
+            throw new PurchaseOrderException(ErrorCode.ALREADY_CANCELLED);
+        }
+
+        // 3. SKU 조회
+        SKU sku = skuRepository.findById(history.getSkuId())
+                .orElseThrow(() -> new PurchaseOrderException(
+                        ErrorCode.SKU_NOT_FOUND));
+
+        // 4. 재고 부족 검증 (취소할 수량 > 현재 재고)
+        if (sku.getStock() < history.getReceivedQuantity()) {
+            throw new PurchaseOrderException(
+                    ErrorCode.INSUFFICIENT_STOCK_FOR_CANCEL,
+                    "현재 재고: " + sku.getStock() +
+                            ", 취소 수량: " + history.getReceivedQuantity());
+        }
+
+        // 5. 재고 차감
+        Product product = sku.getProduct();
+        product.decreaseSkuStock(history.getSkuId(), history.getReceivedQuantity());
+
+        // 6. 발주 상태 → REQUESTED 복구
+        PurchaseOrder po = purchaseOrderRepository
+                .findById(history.getPurchaseOrderId())
+                .orElseThrow();
+        po.reopen();
+
+        // 7. 이력 취소 처리
+        history.cancel();
+
+        return new ReceiveCancelResponse(
+                history.getId(),
+                history.getSkuId(),
+                history.getReceivedQuantity(),
+                sku.getStock(),
+                po.getStatus()
+        );
     }
 }
