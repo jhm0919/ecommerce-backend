@@ -6,7 +6,7 @@ import com.team23.customer.product.domain.ProductStatus;
 import com.team23.customer.product.domain.SKU;
 import com.team23.customer.product.repository.SkuRepository;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
-import com.team23.customer.purchaseorder.dto.PurchaseOrderRequest;
+import com.team23.customer.purchaseorder.dto.CreatePurchaseOrderRequest;
 import com.team23.customer.purchaseorder.exception.PurchaseOrderException;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class PurchaseOrderService {
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final SkuRepository skuRepository;
 
-    public PurchaseOrder create(PurchaseOrderRequest request) {
+    public PurchaseOrder create(CreatePurchaseOrderRequest request) {
         // 1. SKU 조회 + 존재 검증
         SKU sku = skuRepository.findById(request.skuId())
                 .orElseThrow(() -> new PurchaseOrderException(ErrorCode.SKU_NOT_FOUND, "skuId=" + request.skuId()));
