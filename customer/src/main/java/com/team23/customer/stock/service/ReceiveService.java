@@ -9,22 +9,28 @@ import com.team23.customer.purchaseorder.domain.PurchaseOrder;
 import com.team23.customer.purchaseorder.domain.PurchaseOrderStatus;
 import com.team23.customer.purchaseorder.exception.PurchaseOrderException;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
-import com.team23.customer.stock.domain.StockHistory;
+import com.team23.customer.stock.domain.ReceiveHistory;
 import com.team23.customer.stock.dto.ReceiveStockResponse;
-import com.team23.customer.stock.repository.StockHistoryRepository;
+import com.team23.customer.stock.dto.ReceiveHistoryResponse;
+import com.team23.customer.stock.repository.ReceiveHistoryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ReceiveStockService {
+public class ReceiveService {
 
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final SkuRepository skuRepository;
     private final ProductRepository productRepository;
-    private final StockHistoryRepository stockHistoryRepository;
+    private final ReceiveHistoryRepository receiveHistoryRepository;
 
     public ReceiveStockResponse receive(Long purchaseOrderId, int receivedQuantity) {
         // 1. 발주 조회
@@ -55,13 +61,13 @@ public class ReceiveStockService {
 
         // 6. 재고 이력 기록
         int currentStock = sku.getStock();
-        StockHistory history = StockHistory.of(
+        ReceiveHistory history = ReceiveHistory.of(
                 po.getSkuId(),
                 purchaseOrderId,
                 receivedQuantity,
                 currentStock
         );
-        stockHistoryRepository.save(history);
+        receiveHistoryRepository.save(history);
 
         return new ReceiveStockResponse(
                 po.getId(),
@@ -73,4 +79,18 @@ public class ReceiveStockService {
 
     }
 
+    @Transactional(readOnly = true)
+    public Page<ReceiveHistoryResponse> search(
+            Long skuId,
+            LocalDate from,
+            LocalDate to,
+            Pageable pageable
+    ) {
+        LocalDateTime fromDt = (from != null) ? from.atStartOfDay() : null;
+        LocalDateTime toDt   = (to != null) ? to.atTime(23, 59, 59) : null;
+
+        return receiveHistoryRepository
+                .search(skuId, fromDt, toDt, pageable)
+                .map(ReceiveHistoryResponse::from);
+    }
 }

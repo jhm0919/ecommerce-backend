@@ -14,14 +14,14 @@ import java.time.LocalDateTime;
  * 입고 처리 시 생성되며 재고 변동 내역을 추적한다.
  */
 @Entity
-@Table(name = "stock_histories", indexes = {
+@Table(name = "receive_histories", indexes = {
         @Index(name = "idx_sh_sku", columnList = "sku_id"),
         @Index(name = "idx_sh_created_at", columnList = "created_at")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
-public class StockHistory {
+public class ReceiveHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,13 +47,13 @@ public class StockHistory {
     // 정적 팩토리
     // ─────────────────────────────────────
 
-    public static StockHistory of(
+    public static ReceiveHistory of(
             Long skuId,
             Long purchaseOrderId,
             int receivedQuantity,
             int stockAfter
     ) {
-        StockHistory history = new StockHistory();
+        ReceiveHistory history = new ReceiveHistory();
         history.skuId = skuId;
         history.purchaseOrderId = purchaseOrderId;
         history.receivedQuantity = receivedQuantity;
