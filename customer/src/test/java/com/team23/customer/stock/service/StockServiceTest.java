@@ -9,6 +9,7 @@ import com.team23.customer.purchaseorder.exception.PurchaseOrderException;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
 import com.team23.customer.stock.domain.StockHistory;
 import com.team23.customer.stock.dto.ReceiveStockResponse;
+import com.team23.customer.stock.dto.StockHistoryResponse;
 import com.team23.customer.stock.repository.StockHistoryRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
@@ -17,6 +18,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -110,5 +113,21 @@ class StockServiceTest {
         assertThatThrownBy(() ->
                 stockService.receive(99999L, 50)
         ).isInstanceOf(PurchaseOrderException.class);
+    }
+
+    @Test
+    @DisplayName("전체 조회")
+    void searchAll() {
+        // given
+        stockHistoryRepository.save(StockHistory.of(1L, 1L, 100, 200));
+        stockHistoryRepository.save(StockHistory.of(2L, 2L, 50,  150));
+
+        // when
+        Page<StockHistoryResponse> result =
+                stockService.search(null, null, null,
+                        PageRequest.of(0, 20));
+
+        // then
+        assertThat(result.getTotalElements()).isEqualTo(2);
     }
 }
