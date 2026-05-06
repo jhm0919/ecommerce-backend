@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ReceiveStockService {
+public class StockService {
 
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final SkuRepository skuRepository;

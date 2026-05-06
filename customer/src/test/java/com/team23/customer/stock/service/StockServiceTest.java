@@ -11,7 +11,6 @@ import com.team23.customer.stock.domain.StockHistory;
 import com.team23.customer.stock.dto.ReceiveStockResponse;
 import com.team23.customer.stock.repository.StockHistoryRepository;
 import jakarta.persistence.EntityManager;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,8 +28,9 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
-class ReceiveStockServiceTest {
-    @Autowired ReceiveStockService receiveStockService;
+class StockServiceTest {
+    @Autowired
+    StockService stockService;
     @Autowired PurchaseOrderRepository purchaseOrderRepository;
     @Autowired StockHistoryRepository stockHistoryRepository;
     @Autowired CategoryRepository categoryRepository;
@@ -75,7 +75,7 @@ class ReceiveStockServiceTest {
 
         // when
         ReceiveStockResponse response =
-                receiveStockService.receive(po.getId(), 50);
+                stockService.receive(po.getId(), 50);
 
         // then
         assertThat(response.status()).isEqualTo(PurchaseOrderStatus.RECEIVED);
@@ -97,10 +97,10 @@ class ReceiveStockServiceTest {
                 PurchaseOrder.create(skuId, 50, "공급사A", null,
                         LocalDate.now().plusDays(7))
         );
-        receiveStockService.receive(po.getId(), 50);   // 1차
+        stockService.receive(po.getId(), 50);   // 1차
 
         assertThatThrownBy(() ->
-                receiveStockService.receive(po.getId(), 50)   // 2차
+                stockService.receive(po.getId(), 50)   // 2차
         ).isInstanceOf(PurchaseOrderException.class);
     }
 
@@ -108,7 +108,7 @@ class ReceiveStockServiceTest {
     @DisplayName("없는 purchaseOrderId → 예외")
     void receiveNotFoundThrowsException() {
         assertThatThrownBy(() ->
-                receiveStockService.receive(99999L, 50)
+                stockService.receive(99999L, 50)
         ).isInstanceOf(PurchaseOrderException.class);
     }
 }
