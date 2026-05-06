@@ -30,8 +30,13 @@ public enum ErrorCode {
 
     // Common
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "C001", "잘못된 입력입니다"),
-    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C999", "서버 오류가 발생했습니다");
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C999", "서버 오류가 발생했습니다"),
 
+    // Purchase Order
+    SKU_NOT_FOUND(HttpStatus.NOT_FOUND, "SK001", "SKU를 찾을 수 없습니다"),
+    PRODUCT_DISCONTINUED(HttpStatus.BAD_REQUEST, "SK002", "단종된 상품의 SKU에는 발주할 수 없습니다"),
+    INVALID_PURCHASE_QUANTITY(HttpStatus.BAD_REQUEST, "PO001", "발주 수량은 1 이상이어야 합니다"),
+    PURCHASE_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "PO002", "발주서를 찾을 수 없습니다");
 
     private final HttpStatus status;
     private final String code;
