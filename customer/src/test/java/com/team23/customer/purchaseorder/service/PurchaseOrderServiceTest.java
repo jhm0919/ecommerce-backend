@@ -6,6 +6,7 @@ import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.product.repository.SkuRepository;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
 import com.team23.customer.purchaseorder.domain.PurchaseOrderStatus;
+import com.team23.customer.purchaseorder.dto.PurchaseOrderListResponse;
 import com.team23.customer.purchaseorder.exception.PurchaseOrderException;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
 import jakarta.persistence.EntityManager;
@@ -15,6 +16,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +39,7 @@ class PurchaseOrderServiceTest {
     @Autowired
     ProductRepository productRepository;
     @Autowired
-    private CategoryRepository categoryRepository;
+    CategoryRepository categoryRepository;
     @Autowired
     EntityManager em;
 
@@ -92,4 +95,62 @@ class PurchaseOrderServiceTest {
         ).isInstanceOf(PurchaseOrderException.class);
     }
 
+    @Test
+    @DisplayName("전체 조회 — 페이지네이션")
+    @Transactional
+    void searchAll() {
+        // given - 발주 3개 직접 저장
+        purchaseOrderRepository.save(PurchaseOrder.create(
+                1L, 100, "공급사A", null, LocalDate.now().plusDays(7)));
+        purchaseOrderRepository.save(PurchaseOrder.create(
+                1L, 50,  "공급사B", null, LocalDate.now().plusDays(14)));
+
+        // when
+        Page<PurchaseOrderListResponse> result =
+                purchaseOrderService.search(null, null, null,
+                        PageRequest.of(0, 20));
+
+        // then
+        assertThat(result.getTotalElements()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("상태 필터 — REQUESTED 만")
+    @Transactional
+    void searchByStatus() {
+        purchaseOrderRepository.save(PurchaseOrder.create(
+                1L, 100, "공급사A", null, LocalDate.now().plusDays(7)));
+        PurchaseOrder cancelled = PurchaseOrder.create(
+                2L, 50, "공급사B", null, LocalDate.now().plusDays(14));
+        cancelled.cancel();
+        purchaseOrderRepository.save(cancelled);
+
+        Page<PurchaseOrderListResponse> result =
+                purchaseOrderService.search(
+                        PurchaseOrderStatus.REQUESTED, null, null,
+                        PageRequest.of(0, 20));
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().get(0).status())
+                .isEqualTo(PurchaseOrderStatus.REQUESTED);
+    }
+
+    @Test
+    @DisplayName("기간 필터")
+    @Transactional
+    void searchByDateRange() {
+        // given - 발주 3개 직접 저장
+        purchaseOrderRepository.save(PurchaseOrder.create(
+                1L, 100, "공급사A", null, LocalDate.now().plusDays(7)));
+        purchaseOrderRepository.save(PurchaseOrder.create(
+                1L, 50,  "공급사B", null, LocalDate.now().plusDays(14)));
+
+        // when
+        Page<PurchaseOrderListResponse> result =
+                purchaseOrderService.search(null, LocalDate.now(), LocalDate.now(),
+                        PageRequest.of(0, 20));
+
+        // then
+        assertThat(result.getTotalElements()).isEqualTo(2);
+    }
 }
