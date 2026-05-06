@@ -131,4 +131,79 @@ class ReceiveServiceTest {
         // then
         assertThat(result.getTotalElements()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("SKU 필터")
+    void searchBySkuId() {
+        // given
+        receiveHistoryRepository.save(ReceiveHistory.of(1L, 1L, 100, 200));
+        receiveHistoryRepository.save(ReceiveHistory.of(2L, 2L, 50,  150));
+
+        // when
+        Page<ReceiveHistoryResponse> result =
+                receiveService.search(1L, null, null,
+                        PageRequest.of(0, 20));
+
+        // then
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().get(0).skuId()).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("기간 필터 — 오늘")
+    void searchByDateRange() {
+        // given
+        receiveHistoryRepository.save(ReceiveHistory.of(1L, 1L, 100, 200));
+
+        // when
+        Page<ReceiveHistoryResponse> result =
+                receiveService.search(
+                        null,
+                        LocalDate.now(),
+                        LocalDate.now(),
+                        PageRequest.of(0, 20)
+                );
+
+        // then
+        assertThat(result.getTotalElements()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("기간 필터 — 범위 밖 → 결과 없음")
+    void searchOutOfRange() {
+        // given
+        receiveHistoryRepository.save(ReceiveHistory.of(1L, 1L, 100, 200));
+
+        // when
+        Page<ReceiveHistoryResponse> result =
+                receiveService.search(
+                        null,
+                        LocalDate.now().minusDays(2),
+                        LocalDate.now().minusDays(1),   // 어제까지
+                        PageRequest.of(0, 20)
+                );
+
+        // then
+        assertThat(result.getTotalElements()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("응답 필드 확인")
+    void searchResponseFields() {
+        // given
+        receiveHistoryRepository.save(ReceiveHistory.of(1L, 5L, 80, 180));
+
+        // when
+        Page<ReceiveHistoryResponse> result =
+                receiveService.search(null, null, null,
+                        PageRequest.of(0, 20));
+
+        // then
+        ReceiveHistoryResponse response = result.getContent().get(0);
+        assertThat(response.skuId()).isEqualTo(1L);
+        assertThat(response.purchaseOrderId()).isEqualTo(5L);
+        assertThat(response.receivedQuantity()).isEqualTo(80);
+        assertThat(response.stockAfter()).isEqualTo(180);
+        assertThat(response.createdAt()).isNotNull();
+    }
 }
