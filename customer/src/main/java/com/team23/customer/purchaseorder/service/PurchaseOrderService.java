@@ -6,14 +6,19 @@ import com.team23.customer.product.domain.ProductStatus;
 import com.team23.customer.product.domain.SKU;
 import com.team23.customer.product.repository.SkuRepository;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
+import com.team23.customer.purchaseorder.domain.PurchaseOrderStatus;
 import com.team23.customer.purchaseorder.dto.CreatePurchaseOrderRequest;
+import com.team23.customer.purchaseorder.dto.PurchaseOrderListResponse;
 import com.team23.customer.purchaseorder.exception.PurchaseOrderException;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -44,5 +49,20 @@ public class PurchaseOrderService {
                 skuId, quantity, supplierName, supplierContact, expectedAt);
 
         return purchaseOrderRepository.save(purchaseOrder);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PurchaseOrderListResponse> search(
+            PurchaseOrderStatus status,
+            LocalDate from,
+            LocalDate to,
+            Pageable pageable
+    ) {
+        LocalDateTime fromDt = (from != null) ? from.atStartOfDay() : null;
+        LocalDateTime toDt   = (to != null)   ? to.atTime(23, 59, 59) : null;
+
+        return purchaseOrderRepository
+                .search(status, fromDt, toDt, pageable)
+                .map(PurchaseOrderListResponse::from);
     }
 }
