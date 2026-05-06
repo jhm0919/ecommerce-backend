@@ -22,7 +22,12 @@ public class PurchaseOrderController {
     public ResponseEntity<PurchaseOrderResponse> create(
             @Valid @RequestBody CreatePurchaseOrderRequest request
     ) {
-        PurchaseOrder po = purchaseOrderService.create(request);
+        PurchaseOrder po = purchaseOrderService.create(
+                request.skuId(),
+                request.quantity(),
+                request.supplierName(),
+                request.supplierContact(),
+                request.expectedAt());
         return ResponseEntity.status(201).body(PurchaseOrderResponse.from(po));
     }
 }

@@ -125,7 +125,7 @@ public class PurchaseOrder {
     private static void validateSupplierName(String supplierName) {
         Objects.requireNonNull(supplierName, "supplierName must not be null");
         if (supplierName.isBlank()) {
-            throw new IllegalArgumentException("supplierName must not be blank");
+            throw new IllegalArgumentException("공급자 이름은 공백일 수 없습니다.");
         }
     }
 }

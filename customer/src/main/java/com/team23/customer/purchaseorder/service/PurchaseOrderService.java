@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -20,24 +22,26 @@ public class PurchaseOrderService {
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final SkuRepository skuRepository;
 
-    public PurchaseOrder create(CreatePurchaseOrderRequest request) {
+    public PurchaseOrder create(Long skuId,
+                                int quantity,
+                                String supplierName,
+                                String supplierContact,
+                                LocalDate expectedAt) {
         // 1. SKU 조회 + 존재 검증
-        SKU sku = skuRepository.findById(request.skuId())
-                .orElseThrow(() -> new PurchaseOrderException(ErrorCode.SKU_NOT_FOUND, "skuId=" + request.skuId()));
+        SKU sku = skuRepository.findById(skuId)
+                .orElseThrow(() -> new PurchaseOrderException(
+                        ErrorCode.SKU_NOT_FOUND, "skuId=" + skuId));
 
         // 2. DISCONTINUED 차단
         Product product = sku.getProduct();   // Lazy 발동 — @Transactional 안이라 OK
         if (product.getStatus() == ProductStatus.DISCONTINUED) {
-            throw new PurchaseOrderException(ErrorCode.PRODUCT_DISCONTINUED, "skuId=" + request.skuId());
+            throw new PurchaseOrderException(
+                    ErrorCode.PRODUCT_DISCONTINUED, "skuId=" + skuId);
         }
 
         // 3. 수량 검증은 PurchaseOrder.create() 도메인 안에서 처리
         PurchaseOrder purchaseOrder = PurchaseOrder.create(
-                request.skuId(),
-                request.quantity(),
-                request.supplierName(),
-                request.supplierContact(),
-                request.expectedAt());
+                skuId, quantity, supplierName, supplierContact, expectedAt);
 
         return purchaseOrderRepository.save(purchaseOrder);
     }
