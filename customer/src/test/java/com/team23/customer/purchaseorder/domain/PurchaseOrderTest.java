@@ -39,4 +39,26 @@ class PurchaseOrderTest {
         ).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("공백");
     }
+
+    @Test
+    @DisplayName("reopen — RECEIVED → REQUESTED")
+    void reopenSuccess() {
+        PurchaseOrder po = PurchaseOrder.create(
+                1L, 100, "공급사", null, LocalDate.now().plusDays(7));
+        po.receive();   // RECEIVED 상태로
+
+        po.reopen();
+
+        assertThat(po.getStatus()).isEqualTo(PurchaseOrderStatus.REQUESTED);
+    }
+
+    @Test
+    @DisplayName("REQUESTED 상태에서 reopen → 예외")
+    void reopenNotReceivedThrowsException() {
+        PurchaseOrder po = PurchaseOrder.create(
+                1L, 100, "공급사", null, LocalDate.now().plusDays(7));
+
+        assertThatThrownBy(po::reopen)
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

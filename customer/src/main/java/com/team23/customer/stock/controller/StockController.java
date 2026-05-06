@@ -1,5 +1,6 @@
 package com.team23.customer.stock.controller;
 
+import com.team23.customer.purchaseorder.dto.ReceiveCancelResponse;
 import com.team23.customer.stock.dto.ReceiveStockRequest;
 import com.team23.customer.stock.dto.ReceiveStockResponse;
 import com.team23.customer.stock.dto.ReceiveHistoryResponse;
@@ -45,5 +46,12 @@ public class StockController {
         return ResponseEntity.ok(
                 receiveService.search(skuId, from, to, pageable)
         );
+    }
+
+    @PatchMapping("/receive/{id}/cancel")
+    public ResponseEntity<ReceiveCancelResponse> cancel(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(receiveService.cancel(id));
     }
 }

@@ -111,6 +111,14 @@ public class PurchaseOrder {
         this.status = PurchaseOrderStatus.RECEIVED;
     }
 
+    public void reopen() {
+        if (this.status != PurchaseOrderStatus.RECEIVED) {
+            throw new IllegalStateException(
+                    "입고 완료 상태에서만 복구 가능합니다: " + status);
+        }
+        this.status = PurchaseOrderStatus.REQUESTED;
+    }
+
     // ─────────────────────────────────────
     // 검증
     // ─────────────────────────────────────
