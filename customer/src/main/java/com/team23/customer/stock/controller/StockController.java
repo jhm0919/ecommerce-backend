@@ -1,9 +1,7 @@
 package com.team23.customer.stock.controller;
 
 import com.team23.customer.purchaseorder.dto.ReceiveCancelResponse;
-import com.team23.customer.stock.dto.ReceiveStockRequest;
-import com.team23.customer.stock.dto.ReceiveStockResponse;
-import com.team23.customer.stock.dto.ReceiveHistoryResponse;
+import com.team23.customer.stock.dto.*;
 import com.team23.customer.stock.service.ReceiveService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +43,20 @@ public class StockController {
     ) {
         return ResponseEntity.ok(
                 receiveService.search(skuId, from, to, pageable)
+        );
+    }
+
+    @PatchMapping("/receive/{id}")
+    public ResponseEntity<ReceiveAdjustResponse> adjust(
+            @PathVariable Long id,
+            @Valid @RequestBody ReceiveAdjustRequest request
+    ) {
+        return ResponseEntity.ok(
+                receiveService.adjust(
+                        id,
+                        request.receivedQuantity(),
+                        request.reason()
+                )
         );
     }
 
