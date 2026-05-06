@@ -9,6 +9,7 @@ import com.team23.customer.purchaseorder.dto.ReceiveCancelResponse;
 import com.team23.customer.purchaseorder.exception.PurchaseOrderException;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
 import com.team23.customer.stock.domain.ReceiveHistory;
+import com.team23.customer.stock.dto.ReceiveAdjustResponse;
 import com.team23.customer.stock.dto.ReceiveStockResponse;
 import com.team23.customer.stock.dto.ReceiveHistoryResponse;
 import com.team23.customer.stock.repository.ReceiveHistoryRepository;
@@ -257,6 +258,65 @@ class ReceiveServiceTest {
 
         assertThatThrownBy(() ->
                 receiveService.cancel(history.getId())
+        ).isInstanceOf(PurchaseOrderException.class);
+    }
+
+    @Test
+    @DisplayName("수량 감소 수정 — 재고 차감")
+    void adjustDecreaseSuccess() {
+        ReceiveHistory history = receiveHistoryRepository.save(
+                ReceiveHistory.of(skuId, 1L, 100, 200));
+
+        ReceiveAdjustResponse response =
+                receiveService.adjust(history.getId(), 80, "수량 상이");
+
+        assertThat(response.originalQuantity()).isEqualTo(100);
+        assertThat(response.adjustedQuantity()).isEqualTo(80);
+        assertThat(response.currentStock()).isEqualTo(80);   // 100 - 20
+    }
+
+    @Test
+    @DisplayName("수량 증가 수정 — 재고 증가")
+    void adjustIncreaseSuccess() {
+        ReceiveHistory history = receiveHistoryRepository.save(
+                ReceiveHistory.of(skuId, 1L, 80, 180));
+
+        ReceiveAdjustResponse response =
+                receiveService.adjust(history.getId(), 100, "수량 상이");
+
+        assertThat(response.currentStock()).isEqualTo(120);  // 100 + 20
+    }
+
+    @Test
+    @DisplayName("재고 부족 → 예외")
+    void adjustInsufficientStockThrowsException() {
+        // 현재 재고 100, 차감 필요 150 → 불가
+        ReceiveHistory history = receiveHistoryRepository.save(
+                ReceiveHistory.of(skuId, 1L, 250, 350));
+
+        assertThatThrownBy(() ->
+                receiveService.adjust(history.getId(), 100, "대폭 수정")
+        ).isInstanceOf(PurchaseOrderException.class);
+    }
+
+    @Test
+    @DisplayName("취소된 이력 수정 → 예외")
+    void adjustCancelledThrowsException() {
+        ReceiveHistory history = receiveHistoryRepository.save(
+                ReceiveHistory.of(skuId, 1L, 100, 200));
+        history.cancel();
+        receiveHistoryRepository.saveAndFlush(history);
+
+        assertThatThrownBy(() ->
+                receiveService.adjust(history.getId(), 80, "사유")
+        ).isInstanceOf(PurchaseOrderException.class);
+    }
+
+    @Test
+    @DisplayName("없는 ID → 예외")
+    void adjustNotFoundThrowsException() {
+        assertThatThrownBy(() ->
+                receiveService.adjust(99999L, 80, "사유")
         ).isInstanceOf(PurchaseOrderException.class);
     }
 }
