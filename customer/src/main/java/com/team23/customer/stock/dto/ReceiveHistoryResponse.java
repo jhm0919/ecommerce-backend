@@ -1,10 +1,10 @@
 package com.team23.customer.stock.dto;
 
-import com.team23.customer.stock.domain.StockHistory;
+import com.team23.customer.stock.domain.ReceiveHistory;
 
 import java.time.LocalDateTime;
 
-public record StockHistoryResponse(
+public record ReceiveHistoryResponse(
         Long stockHistoryId,
         Long skuId,
         Long purchaseOrderId,
@@ -12,8 +12,8 @@ public record StockHistoryResponse(
         int stockAfter,
         LocalDateTime createdAt
 ) {
-    public static StockHistoryResponse from(StockHistory sh) {
-        return new StockHistoryResponse(
+    public static ReceiveHistoryResponse from(ReceiveHistory sh) {
+        return new ReceiveHistoryResponse(
                 sh.getId(),
                 sh.getSkuId(),
                 sh.getPurchaseOrderId(),

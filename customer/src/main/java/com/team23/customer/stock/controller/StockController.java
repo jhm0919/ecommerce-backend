@@ -2,8 +2,8 @@ package com.team23.customer.stock.controller;
 
 import com.team23.customer.stock.dto.ReceiveStockRequest;
 import com.team23.customer.stock.dto.ReceiveStockResponse;
-import com.team23.customer.stock.dto.StockHistoryResponse;
-import com.team23.customer.stock.service.StockService;
+import com.team23.customer.stock.dto.ReceiveHistoryResponse;
+import com.team23.customer.stock.service.ReceiveService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,14 +20,14 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class StockController {
 
-    private final StockService stockService;
+    private final ReceiveService receiveService;
 
     @PatchMapping("/receive")
     public ResponseEntity<ReceiveStockResponse> receive(
             @Valid @RequestBody ReceiveStockRequest request
     ) {
         return ResponseEntity.ok(
-                stockService.receive(
+                receiveService.receive(
                         request.purchaseOrderId(),
                         request.receivedQuantity()
                 )
@@ -35,7 +35,7 @@ public class StockController {
     }
 
     @GetMapping("/receive-history") // 입고 내역 조회
-    public ResponseEntity<Page<StockHistoryResponse>> history(
+    public ResponseEntity<Page<ReceiveHistoryResponse>> history(
             @RequestParam(required = false) Long skuId,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
@@ -43,7 +43,7 @@ public class StockController {
                     direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ResponseEntity.ok(
-                stockService.search(skuId, from, to, pageable)
+                receiveService.search(skuId, from, to, pageable)
         );
     }
 }

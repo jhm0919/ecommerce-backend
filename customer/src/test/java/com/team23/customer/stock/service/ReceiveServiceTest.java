@@ -7,10 +7,10 @@ import com.team23.customer.purchaseorder.domain.PurchaseOrder;
 import com.team23.customer.purchaseorder.domain.PurchaseOrderStatus;
 import com.team23.customer.purchaseorder.exception.PurchaseOrderException;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
-import com.team23.customer.stock.domain.StockHistory;
+import com.team23.customer.stock.domain.ReceiveHistory;
 import com.team23.customer.stock.dto.ReceiveStockResponse;
-import com.team23.customer.stock.dto.StockHistoryResponse;
-import com.team23.customer.stock.repository.StockHistoryRepository;
+import com.team23.customer.stock.dto.ReceiveHistoryResponse;
+import com.team23.customer.stock.repository.ReceiveHistoryRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,18 +31,19 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
-class StockServiceTest {
+class ReceiveServiceTest {
     @Autowired
-    StockService stockService;
+    ReceiveService receiveService;
     @Autowired PurchaseOrderRepository purchaseOrderRepository;
-    @Autowired StockHistoryRepository stockHistoryRepository;
+    @Autowired
+    ReceiveHistoryRepository receiveHistoryRepository;
     @Autowired CategoryRepository categoryRepository;
     @Autowired ProductRepository productRepository;
     @Autowired EntityManager em;
 
     @AfterEach
     void cleanUp() {
-        stockHistoryRepository.deleteAll();
+        receiveHistoryRepository.deleteAll();
         purchaseOrderRepository.deleteAll();
     }
 
@@ -78,7 +79,7 @@ class StockServiceTest {
 
         // when
         ReceiveStockResponse response =
-                stockService.receive(po.getId(), 50);
+                receiveService.receive(po.getId(), 50);
 
         // then
         assertThat(response.status()).isEqualTo(PurchaseOrderStatus.RECEIVED);
@@ -86,7 +87,7 @@ class StockServiceTest {
         assertThat(response.currentStock()).isGreaterThan(0);
 
         // 이력 기록 확인
-        List<StockHistory> histories = stockHistoryRepository.findAll();
+        List<ReceiveHistory> histories = receiveHistoryRepository.findAll();
 
         assertThat(histories).hasSize(1);
         assertThat(histories.get(0).getReceivedQuantity()).isEqualTo(50);
@@ -100,10 +101,10 @@ class StockServiceTest {
                 PurchaseOrder.create(skuId, 50, "공급사A", null,
                         LocalDate.now().plusDays(7))
         );
-        stockService.receive(po.getId(), 50);   // 1차
+        receiveService.receive(po.getId(), 50);   // 1차
 
         assertThatThrownBy(() ->
-                stockService.receive(po.getId(), 50)   // 2차
+                receiveService.receive(po.getId(), 50)   // 2차
         ).isInstanceOf(PurchaseOrderException.class);
     }
 
@@ -111,7 +112,7 @@ class StockServiceTest {
     @DisplayName("없는 purchaseOrderId → 예외")
     void receiveNotFoundThrowsException() {
         assertThatThrownBy(() ->
-                stockService.receive(99999L, 50)
+                receiveService.receive(99999L, 50)
         ).isInstanceOf(PurchaseOrderException.class);
     }
 
@@ -119,12 +120,12 @@ class StockServiceTest {
     @DisplayName("전체 조회")
     void searchAll() {
         // given
-        stockHistoryRepository.save(StockHistory.of(1L, 1L, 100, 200));
-        stockHistoryRepository.save(StockHistory.of(2L, 2L, 50,  150));
+        receiveHistoryRepository.save(ReceiveHistory.of(1L, 1L, 100, 200));
+        receiveHistoryRepository.save(ReceiveHistory.of(2L, 2L, 50,  150));
 
         // when
-        Page<StockHistoryResponse> result =
-                stockService.search(null, null, null,
+        Page<ReceiveHistoryResponse> result =
+                receiveService.search(null, null, null,
                         PageRequest.of(0, 20));
 
         // then
