@@ -49,6 +49,15 @@ public class ReceiveHistory {
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
 
+    @Column(name = "adjusted_quantity")
+    private Integer adjustedQuantity;   // 수정 후 수량
+
+    @Column(name = "adjust_reason", length = 200)
+    private String adjustReason;
+
+    @Column(name = "adjusted_at")
+    private LocalDateTime adjustedAt;
+
     // ─────────────────────────────────────
     // 정적 팩토리
     // ─────────────────────────────────────
@@ -75,4 +84,24 @@ public class ReceiveHistory {
         this.cancelledAt = LocalDateTime.now();
     }
 
+    public void adjust(int newQuantity, String reason) {
+        if (this.cancelled) {
+            throw new IllegalStateException("취소된 입고 내역은 수정할 수 없습니다");
+        }
+        if (newQuantity <= 0) {
+            throw new IllegalArgumentException("수정 수량은 1 이상이어야 합니다");
+        }
+        this.adjustedQuantity = newQuantity;
+        this.adjustReason = reason;
+        this.adjustedAt = LocalDateTime.now();
+    }
+
+    // 질의 메서드
+    public int getCurrentQuantity() {
+        return adjustedQuantity != null ? adjustedQuantity : receivedQuantity;
+    }
+
+    public boolean isAdjusted() {
+        return adjustedQuantity != null;
+    }
 }
