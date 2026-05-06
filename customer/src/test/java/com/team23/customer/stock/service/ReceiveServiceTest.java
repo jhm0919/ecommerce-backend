@@ -5,6 +5,7 @@ import com.team23.customer.product.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
 import com.team23.customer.purchaseorder.domain.PurchaseOrderStatus;
+import com.team23.customer.purchaseorder.dto.ReceiveCancelResponse;
 import com.team23.customer.purchaseorder.exception.PurchaseOrderException;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
 import com.team23.customer.stock.domain.ReceiveHistory;
@@ -205,5 +206,57 @@ class ReceiveServiceTest {
         assertThat(response.receivedQuantity()).isEqualTo(80);
         assertThat(response.stockAfter()).isEqualTo(180);
         assertThat(response.createdAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("정상 취소 — 재고 차감 + 발주 복구")
+    void cancelSuccess() {
+        PurchaseOrder po = purchaseOrderRepository.save(
+                PurchaseOrder.create(skuId, 50, "공급사", null,
+                        LocalDate.now().plusDays(7))
+        );
+        po.receive();
+        purchaseOrderRepository.save(po);
+
+        ReceiveHistory history = receiveHistoryRepository.save(
+                ReceiveHistory.of(skuId, po.getId(), 50, 150)
+        );
+
+        // when
+        ReceiveCancelResponse response =
+                receiveService.cancel(history.getId());
+
+        // then
+        assertThat(response.purchaseOrderStatus())
+                .isEqualTo(PurchaseOrderStatus.REQUESTED);
+        assertThat(receiveHistoryRepository
+                .findById(history.getId()).orElseThrow().isCancelled())
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("없는 이력 ID → 예외")
+    void cancelNotFoundThrowsException() {
+        assertThatThrownBy(() -> receiveService.cancel(99999L))
+                .isInstanceOf(PurchaseOrderException.class);
+    }
+
+    @Test
+    @DisplayName("이미 취소된 이력 → 예외")
+    void cancelAlreadyCancelledThrowsException() {
+        // given
+        PurchaseOrder po = purchaseOrderRepository.save(
+                PurchaseOrder.create(skuId, 50, "공급사", null,
+                        LocalDate.now().plusDays(7)));
+
+        ReceiveHistory history = receiveHistoryRepository.save(
+                ReceiveHistory.of(skuId, po.getId(), 50, 150));
+
+        history.cancel();
+        receiveHistoryRepository.saveAndFlush(history);   // ← saveAndFlush
+
+        assertThatThrownBy(() ->
+                receiveService.cancel(history.getId())
+        ).isInstanceOf(PurchaseOrderException.class);
     }
 }
