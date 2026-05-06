@@ -1,18 +1,30 @@
 package com.team23.customer.stock.controller;
 
+import com.team23.customer.product.domain.*;
+import com.team23.customer.product.repository.CategoryRepository;
+import com.team23.customer.product.repository.ProductRepository;
+import com.team23.customer.purchaseorder.domain.PurchaseOrder;
+import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
 import com.team23.customer.stock.domain.ReceiveHistory;
 import com.team23.customer.stock.repository.ReceiveHistoryRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -24,10 +36,40 @@ class StockControllerTest {
     MockMvc mockMvc;
     @Autowired
     ReceiveHistoryRepository receiveHistoryRepository;
+    @Autowired
+    CategoryRepository categoryRepository;
+    @Autowired
+    ProductRepository productRepository;
+    @Autowired
+    EntityManager em;
+    @Autowired
+    PurchaseOrderRepository purchaseOrderRepository;
+
+    private Long skuId;
+
+    @BeforeEach
+    void setUp() {
+        Category category = categoryRepository.save(
+                Category.create("바지", "pants"));
+        Product product = Product.register(
+                "청바지",
+                new Money(BigDecimal.valueOf(10000), "KRW"),
+                "설명", "url", category);
+        productRepository.save(product);
+
+        List<SkuOption> options = List.of(new SkuOption("색상", "blue"));
+        product.addSku(options, 100);
+        Product saved = productRepository.saveAndFlush(product);
+
+        this.skuId = saved.getSkus().get(0).getId();
+    }
 
     @AfterEach
     void cleanUp() {
-        receiveHistoryRepository.deleteAll();
+        receiveHistoryRepository.deleteAll();   // 1. 이력 먼저
+        purchaseOrderRepository.deleteAll();    // 2. 발주
+        productRepository.deleteAll();          // 3. 상품 (cascade → sku, sku_options)
+        categoryRepository.deleteAll();         // 4. 카테고리
     }
 
     @Test
@@ -80,5 +122,51 @@ class StockControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(0))
                 .andExpect(jsonPath("$.content").isEmpty());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/seller/stocks/receive/{id}/cancel — 정상")
+    @Transactional
+    void cancelSuccessReturns200() throws Exception {
+        // given
+        PurchaseOrder po = purchaseOrderRepository.save(
+                PurchaseOrder.create(skuId, 50, "공급사", null,
+                        LocalDate.now().plusDays(7)));
+        po.receive();
+        purchaseOrderRepository.save(po);
+
+        ReceiveHistory history = receiveHistoryRepository.save(
+                ReceiveHistory.of(skuId, po.getId(), 50, 150));
+
+        // when & then
+        mockMvc.perform(patch("/api/seller/stocks/receive/" + history.getId() + "/cancel")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.receiveHistoryId").value(history.getId()))
+                .andExpect(jsonPath("$.purchaseOrderStatus").value("REQUESTED"))
+                .andExpect(jsonPath("$.cancelledQuantity").value(50));
+    }
+
+    @Test
+    @DisplayName("없는 이력 ID → 404")
+    void cancelNotFoundReturns404() throws Exception {
+        mockMvc.perform(patch("/api/seller/stocks/receive/99999/cancel")
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("이미 취소된 이력 → 400")
+    void cancelAlreadyCancelledReturns400() throws Exception {
+        // given — 취소된 이력 만들기
+        ReceiveHistory history = receiveHistoryRepository.save(
+                ReceiveHistory.of(skuId, 1L, 50, 150));
+        history.cancel();
+        receiveHistoryRepository.save(history);
+
+        // when & then
+        mockMvc.perform(patch("/api/seller/stocks/receive/" + history.getId() + "/cancel")
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
     }
 }
