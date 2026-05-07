@@ -14,6 +14,7 @@ import com.team23.customer.product.domain.Money;
 import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.SKU;
 import com.team23.customer.product.domain.SkuOption;
+import com.team23.customer.product.domain.StockChangedEvent;
 import com.team23.customer.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -39,6 +41,7 @@ class OrderServiceTest {
     @Mock private OrderRepository orderRepository;
     @Mock private DeliveryRepository deliveryRepository;
     @Mock private ProductRepository productRepository;
+    @Mock private ApplicationEventPublisher eventPublisher;  // ★ 추가
 
     @InjectMocks private OrderService orderService;
 
@@ -83,9 +86,11 @@ class OrderServiceTest {
 
             assertThat(result.getMemberId()).isEqualTo(10L);
             assertThat(result.isMemberOrder()).isTrue();
-            assertThat(sku.getStock()).isEqualTo(48);  // SKU 재고 50 - 2 차감
+            assertThat(sku.getStock()).isEqualTo(48);  // SKU 재고 50 - 2
             verify(orderRepository).save(any(Order.class));
             verify(deliveryRepository).save(any(Delivery.class));
+            // ★ 재고 이력 이벤트 발행 검증
+            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
 
         @Test
@@ -97,14 +102,14 @@ class OrderServiceTest {
             );
             setId(lowStockProduct, 1L);
             SKU lowStockSku = lowStockProduct.addSku(
-                    List.of(new SkuOption("색상", "검정")), 1  // 재고 1개
+                    List.of(new SkuOption("색상", "검정")), 1
             );
             setId(lowStockSku, 100L);
 
             given(productRepository.findById(1L)).willReturn(Optional.of(lowStockProduct));
 
             CreateOrderRequest request = new CreateOrderRequest(
-                    List.of(new CreateOrderRequest.OrderItemRequest(1L, 100L, 5)),  // 5개 요청
+                    List.of(new CreateOrderRequest.OrderItemRequest(1L, 100L, 5)),
                     new CreateOrderRequest.DeliveryInfoRequest(
                             "홍", "010-1", "12345", "서울", "101", null
                     ),
@@ -121,7 +126,7 @@ class OrderServiceTest {
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
             CreateOrderRequest request = new CreateOrderRequest(
-                    List.of(new CreateOrderRequest.OrderItemRequest(1L, 999L, 1)),  // skuId 999 없음
+                    List.of(new CreateOrderRequest.OrderItemRequest(1L, 999L, 1)),
                     new CreateOrderRequest.DeliveryInfoRequest(
                             "홍", "010-1", "12345", "서울", "101", null
                     ),
@@ -149,6 +154,8 @@ class OrderServiceTest {
             assertThat(result.isGuestOrder()).isTrue();
             assertThat(result.getGuestEmail()).isEqualTo("guest@example.com");
             assertThat(result.getGuestPhone()).isEqualTo("010-9999-8888");
+            // ★ 재고 이력 이벤트 발행 검증
+            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
 
         @Test
@@ -159,7 +166,7 @@ class OrderServiceTest {
                     new CreateOrderRequest.DeliveryInfoRequest(
                             "홍", "010-1", "12345", "서울", "101", null
                     ),
-                    null,  // email 없음
+                    null,
                     "010-9999-8888"
             );
 
@@ -267,7 +274,7 @@ class OrderServiceTest {
     class CancelOrder {
 
         @Test
-        @DisplayName("자기 주문 취소 시 SKU 재고 복구")
+        @DisplayName("자기 주문 취소 시 SKU 재고 복구 + ORDER_CANCEL 이벤트 발행")
         void cancelRestoresSkuStock() {
             Order order = Order.createForMember(10L, List.of(
                     OrderItem.of(product, sku, 3)
@@ -279,8 +286,10 @@ class OrderServiceTest {
 
             orderService.cancelMyOrder(10L, 1L);
 
-            assertThat(sku.getStock()).isEqualTo(53);  // SKU 재고 50 + 3 복구
+            assertThat(sku.getStock()).isEqualTo(53);  // 50 + 3 복구
             assertThat(order.getStatus().toString()).isEqualTo("CANCELLED");
+            // ★ ORDER_CANCEL 이벤트 발행 검증
+            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
     }
 

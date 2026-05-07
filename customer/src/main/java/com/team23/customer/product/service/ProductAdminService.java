@@ -7,6 +7,7 @@ import com.team23.customer.product.exception.CategoryNotFoundException;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
+import com.team23.customer.stockhistory.domain.StockChangeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -100,7 +101,16 @@ public class ProductAdminService {
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
         SKU sku = product.addSku(options, initialStock);
-        log.info("SKU added: productId={}, skuCode={}", productId, sku.getSkuCode());
+
+        eventPublisher.publishEvent(StockChangedEvent.of(
+                product, sku,
+                StockChangeType.SKU_CREATED,
+                initialStock,
+                0,            // stockBefore = 0 (새로 생성)
+                initialStock, // stockAfter = initialStock
+                null
+        ));
+
         return sku;
     }
 
@@ -112,9 +122,19 @@ public class ProductAdminService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
+        SKU sku = product.findSkuById(skuId).orElseThrow();
+        int stockBefore = sku.getStock();
+
         product.increaseSkuStock(skuId, quantity);
-        log.info("SKU stock increased: productId={}, skuId={}, quantity={}",
-                productId, skuId, quantity);
+
+        eventPublisher.publishEvent(StockChangedEvent.of(
+                product, sku,
+                StockChangeType.ADMIN_INCREASE,
+                quantity,
+                stockBefore,
+                sku.getStock(),
+                null  // orderId 없음
+        ));
     }
 
     /**
@@ -125,16 +145,25 @@ public class ProductAdminService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
-        product.decreaseSkuStock(skuId, quantity);
-        log.info("SKU stock decreased: productId={}, skuId={}, quantity={}",
-                productId, skuId, quantity);
+        SKU sku = product.findSkuById(skuId).orElseThrow();
+        int stockBefore = sku.getStock();
 
-        // ★ 재고 0이면 이벤트 발행
-        product.findSkuById(skuId).ifPresent(sku -> {
-            if (sku.getStock() == 0) {
-                eventPublisher.publishEvent(SkuSoldOutEvent.of(product, sku));
-            }
-        });
+        product.decreaseSkuStock(skuId, quantity);
+
+        // 품절 이벤트
+        if (sku.getStock() == 0) {
+            eventPublisher.publishEvent(SkuSoldOutEvent.of(product, sku));
+        }
+
+        // 이력 이벤트
+        eventPublisher.publishEvent(StockChangedEvent.of(
+                product, sku,
+                StockChangeType.ADMIN_DECREASE,
+                quantity,
+                stockBefore,
+                sku.getStock(),
+                null
+        ));
     }
 
     /**

@@ -14,8 +14,10 @@ import com.team23.customer.order.repository.OrderRepository;
 import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.SKU;
 import com.team23.customer.product.domain.SkuSoldOutEvent;
+import com.team23.customer.product.domain.StockChangedEvent;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
+import com.team23.customer.stockhistory.domain.StockChangeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,16 +43,18 @@ public class OrderService {
     // 주문 생성
     // ─────────────────────────────────────
 
-    /**
-     * 회원 주문 생성.
-     * Order와 Delivery를 함께 생성하고, 상품 재고를 차감한다.
-     */
     @Transactional
     public Order createMemberOrder(Long memberId, CreateOrderRequest request) {
-        List<OrderItem> items = prepareItemsAndDecreaseStock(request.items());
+        List<PreparedOrderItem> prepared = prepareItemsAndDecreaseStock(request.items());
+        List<OrderItem> items = prepared.stream()
+                .map(PreparedOrderItem::orderItem)
+                .toList();
 
         Order order = Order.createForMember(memberId, items);
         orderRepository.save(order);
+
+        // ★ 주문 저장 후 이벤트 발행 (orderId 확보)
+        publishStockChangedEvents(prepared, order.getId(), StockChangeType.ORDER);
 
         createDelivery(order.getId(), request.delivery());
 
@@ -63,7 +67,10 @@ public class OrderService {
     public Order createGuestOrder(CreateOrderRequest request) {
         validateGuestInfo(request);
 
-        List<OrderItem> items = prepareItemsAndDecreaseStock(request.items());
+        List<PreparedOrderItem> prepared = prepareItemsAndDecreaseStock(request.items());
+        List<OrderItem> items = prepared.stream()
+                .map(PreparedOrderItem::orderItem)
+                .toList();
 
         Order order = Order.createForGuest(
                 request.guestEmail(),
@@ -71,6 +78,9 @@ public class OrderService {
                 items
         );
         orderRepository.save(order);
+
+        // ★ 주문 저장 후 이벤트 발행
+        publishStockChangedEvents(prepared, order.getId(), StockChangeType.ORDER);
 
         createDelivery(order.getId(), request.delivery());
 
@@ -80,31 +90,20 @@ public class OrderService {
     }
 
     // ─────────────────────────────────────
-    // 주문 조회
+    // 주문 조회 (변경 없음)
     // ─────────────────────────────────────
 
-    /**
-     * 회원의 주문 목록 조회.
-     */
     @Transactional(readOnly = true)
     public Page<Order> findMyOrders(Long memberId, Pageable pageable) {
         return orderRepository.findByMemberId(memberId, pageable);
     }
 
-    /**
-     * 회원의 주문 상세 조회.
-     * 다른 회원의 주문 ID로 시도해도 NotFound로 응답 (정보 누출 방지).
-     */
     @Transactional(readOnly = true)
     public Order findMyOrder(Long memberId, Long orderId) {
         return orderRepository.findByIdAndMemberIdWithItems(orderId, memberId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
     }
 
-    /**
-     * 비회원 주문 조회 (주문번호 + 연락처).
-     * 둘 다 일치해야 응답. 그렇지 않으면 NotFound (보안).
-     */
     @Transactional(readOnly = true)
     public Order findGuestOrder(String orderNumber, String contact) {
         Order order = orderRepository.findByOrderNumberWithItems(orderNumber)
@@ -118,10 +117,6 @@ public class OrderService {
         return order;
     }
 
-    /**
-     * 주문에 대한 배송 정보 조회.
-     * 호출자가 권한 검증을 마쳤다는 가정.
-     */
     @Transactional(readOnly = true)
     public Delivery findDeliveryByOrderId(Long orderId) {
         return deliveryRepository.findByOrderId(orderId)
@@ -133,25 +128,29 @@ public class OrderService {
     // 주문 취소
     // ─────────────────────────────────────
 
-    /**
-     * 회원 주문 취소.
-     * Order의 status를 CANCELLED로 변경, 재고 복구.
-     *
-     * <p>주의: 학습 단계에선 Delivery 상태 검증 생략.
-     * 운영 환경에선 Delivery.status가 PREPARING일 때만 취소 가능해야 함.
-     */
     @Transactional
     public Order cancelMyOrder(Long memberId, Long orderId) {
         Order order = orderRepository.findByIdAndMemberIdWithItems(orderId, memberId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        // 재고 복구 — SKU 단위로
         for (OrderItem item : order.getItems()) {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new ProductNotFoundException(item.getProductId()));
 
-            // ★ 변경: product.increaseStock → product.increaseSkuStock
+            SKU sku = product.findSkuById(item.getSkuId()).orElseThrow();
+            int stockBefore = sku.getStock();
+
             product.increaseSkuStock(item.getSkuId(), item.getQuantity());
+
+            // ★ ORDER_CANCEL 이벤트 발행
+            eventPublisher.publishEvent(StockChangedEvent.of(
+                    product, sku,
+                    StockChangeType.ORDER_CANCEL,
+                    item.getQuantity(),
+                    stockBefore,
+                    sku.getStock(),
+                    orderId
+            ));
         }
 
         order.cancel();
@@ -160,28 +159,30 @@ public class OrderService {
         return order;
     }
 
-    // ─── 헬퍼 (큰 변경!) ───
+    // ─────────────────────────────────────
+    // 헬퍼
+    // ─────────────────────────────────────
 
     /**
-     * 요청에서 OrderItem 목록을 만들고 SKU 재고를 차감한다.
-     * 재고 부족 시 예외 → 트랜잭션 롤백.
+     * 재고 차감 + 변동 정보 수집.
+     * orderId가 아직 없어서 이벤트 발행은 하지 않음.
      */
-    private List<OrderItem> prepareItemsAndDecreaseStock(
+    private List<PreparedOrderItem> prepareItemsAndDecreaseStock(
             List<CreateOrderRequest.OrderItemRequest> requests
     ) {
-        List<OrderItem> items = new ArrayList<>();
+        List<PreparedOrderItem> prepared = new ArrayList<>();
+
         for (CreateOrderRequest.OrderItemRequest req : requests) {
-            // 1. Product 조회
             Product product = productRepository.findById(req.productId())
                     .orElseThrow(() -> new ProductNotFoundException(req.productId()));
 
-            // 2. SKU 조회 (Product의 SKU여야 함 — 보안)
             SKU sku = product.findSkuById(req.skuId())
                     .orElseThrow(() -> new IllegalArgumentException(
-                            "SKU not found in product: productId=" + req.productId() +
-                                    ", skuId=" + req.skuId()));
+                            "SKU not found in product: productId=" + req.productId()
+                                    + ", skuId=" + req.skuId()));
 
-            // 3. 재고 차감 (SKU 단위)
+            int stockBefore = sku.getStock();  // ★ 차감 전 재고 기록
+
             try {
                 product.decreaseSkuStock(req.skuId(), req.quantity());
             } catch (IllegalStateException e) {
@@ -190,20 +191,46 @@ public class OrderService {
                 throw new InsufficientStockException();
             }
 
-            // ★ 재고 0이면 이벤트 발행
+            // 품절 이벤트 (알림용)
             if (sku.getStock() == 0) {
                 eventPublisher.publishEvent(SkuSoldOutEvent.of(product, sku));
             }
 
-            // 4. OrderItem 생성 (Product + SKU + quantity)
-            items.add(OrderItem.of(product, sku, req.quantity()));
+            prepared.add(new PreparedOrderItem(
+                    OrderItem.of(product, sku, req.quantity()),
+                    product,
+                    sku,
+                    stockBefore,
+                    sku.getStock(),  // stockAfter
+                    req.quantity()
+            ));
         }
-        return items;
+
+        return prepared;
     }
 
     /**
-     * Delivery를 생성하여 저장한다.
+     * 주문 저장 후 재고 변동 이력 이벤트 발행.
+     * orderId 확보 후 호출.
      */
+    private void publishStockChangedEvents(
+            List<PreparedOrderItem> prepared,
+            Long orderId,
+            StockChangeType changeType
+    ) {
+        for (PreparedOrderItem p : prepared) {
+            eventPublisher.publishEvent(StockChangedEvent.of(
+                    p.product(),
+                    p.sku(),
+                    changeType,
+                    p.quantity(),
+                    p.stockBefore(),
+                    p.stockAfter(),
+                    orderId
+            ));
+        }
+    }
+
     private void createDelivery(Long orderId, CreateOrderRequest.DeliveryInfoRequest request) {
         Address address = new Address(
                 request.zipCode(),
@@ -219,9 +246,6 @@ public class OrderService {
         deliveryRepository.save(delivery);
     }
 
-    /**
-     * 비회원 주문 정보 검증.
-     */
     private void validateGuestInfo(CreateOrderRequest request) {
         if (request.guestEmail() == null || request.guestEmail().isBlank()) {
             throw new IllegalArgumentException("Guest email is required");
@@ -230,4 +254,21 @@ public class OrderService {
             throw new IllegalArgumentException("Guest phone is required");
         }
     }
+
+    // ─────────────────────────────────────
+    // 내부 record
+    // ─────────────────────────────────────
+
+    /**
+     * 재고 차감 정보를 OrderItem과 함께 보관.
+     * 주문 저장 후 이벤트 발행에 사용.
+     */
+    private record PreparedOrderItem(
+            OrderItem orderItem,
+            Product product,
+            SKU sku,
+            int stockBefore,
+            int stockAfter,
+            int quantity
+    ) {}
 }

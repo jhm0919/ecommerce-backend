@@ -24,8 +24,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;   // ★ 수정
-import static org.mockito.Mockito.verify;  // ★ 수정
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ProductAdminServiceTest {
@@ -61,7 +61,7 @@ class ProductAdminServiceTest {
                     "베이직 티셔츠",
                     new BigDecimal("29900"),
                     "KRW",
-                    "100% 면 소재",        // ★ stock 제거
+                    "100% 면 소재",
                     "https://example.com/image.jpg",
                     1L
             );
@@ -74,7 +74,7 @@ class ProductAdminServiceTest {
             Product result = productAdminService.register(request);
 
             assertThat(result.getName()).isEqualTo("베이직 티셔츠");
-            assertThat(result.getStatus().name()).isEqualTo("ACTIVE");  // ★ stock 대신 status
+            assertThat(result.getStatus().name()).isEqualTo("ACTIVE");
             assertThat(result.getCategory()).isEqualTo(category);
         }
 
@@ -85,7 +85,7 @@ class ProductAdminServiceTest {
                     "베이직 티셔츠",
                     new BigDecimal("29900"),
                     "KRW",
-                    "설명",               // ★ stock 제거
+                    "설명",
                     "https://...",
                     999L
             );
@@ -104,15 +104,11 @@ class ProductAdminServiceTest {
         @Test
         @DisplayName("이름만 수정할 수 있다")
         void updateNameOnly() {
-            Product product = createProduct();  // ★ stock 제거
-
+            Product product = createProduct();
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            ProductUpdateRequest request = new ProductUpdateRequest(
-                    "새 이름", null, null, null, null, null
-            );
-
-            Product result = productAdminService.update(1L, request);
+            Product result = productAdminService.update(1L,
+                    new ProductUpdateRequest("새 이름", null, null, null, null, null));
 
             assertThat(result.getName()).isEqualTo("새 이름");
         }
@@ -120,15 +116,11 @@ class ProductAdminServiceTest {
         @Test
         @DisplayName("price만 있고 currency 없으면 예외")
         void rejectPriceWithoutCurrency() {
-            Product product = createProduct();  // ★ stock 제거
-
+            Product product = createProduct();
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            ProductUpdateRequest request = new ProductUpdateRequest(
-                    null, new BigDecimal("39900"), null, null, null, null
-            );
-
-            assertThatThrownBy(() -> productAdminService.update(1L, request))
+            assertThatThrownBy(() -> productAdminService.update(1L,
+                    new ProductUpdateRequest(null, new BigDecimal("39900"), null, null, null, null)))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("price and currency");
         }
@@ -138,23 +130,18 @@ class ProductAdminServiceTest {
         void rejectUnknownProduct() {
             given(productRepository.findById(999L)).willReturn(Optional.empty());
 
-            ProductUpdateRequest request = new ProductUpdateRequest(
-                    "이름", null, null, null, null, null
-            );
-
-            assertThatThrownBy(() -> productAdminService.update(999L, request))
+            assertThatThrownBy(() -> productAdminService.update(999L,
+                    new ProductUpdateRequest("이름", null, null, null, null, null)))
                     .isInstanceOf(ProductNotFoundException.class);
         }
     }
-
-    // ★ IncreaseStock 섹션 제거 → increaseSkuStock으로 대체
 
     @Nested
     @DisplayName("SKU 재고 증가 (increaseSkuStock)")
     class IncreaseSkuStock {
 
         @Test
-        @DisplayName("SKU 재고를 증가시킬 수 있다")
+        @DisplayName("SKU 재고를 증가시킨다")
         void increaseSkuStockNormal() {
             Product product = createProduct();
             setId(product, 1L);
@@ -166,6 +153,21 @@ class ProductAdminServiceTest {
             productAdminService.increaseSkuStock(1L, 100L, 5);
 
             assertThat(sku.getStock()).isEqualTo(15);
+        }
+
+        @Test
+        @DisplayName("재고 증가 시 StockChangedEvent 발행")  // ★ 추가
+        void publishStockChangedEventOnIncrease() {
+            Product product = createProduct();
+            setId(product, 1L);
+            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+            setId(sku, 100L);
+
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+
+            productAdminService.increaseSkuStock(1L, 100L, 5);
+
+            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
 
         @Test
@@ -183,7 +185,7 @@ class ProductAdminServiceTest {
     class DecreaseSkuStock {
 
         @Test
-        @DisplayName("SKU 재고를 감소시킬 수 있다")
+        @DisplayName("SKU 재고를 감소시킨다")
         void decreaseSkuStockNormal() {
             Product product = createProduct();
             setId(product, 1L);
@@ -196,32 +198,25 @@ class ProductAdminServiceTest {
 
             assertThat(sku.getStock()).isEqualTo(7);
         }
-    }
-
-    @Nested
-    @DisplayName("상품 단종 (discontinue)")
-    class Discontinue {
 
         @Test
-        @DisplayName("상품을 단종 처리할 수 있다")
-        void discontinueNormal() {
-            Product product = createProduct();  // ★ stock 제거
+        @DisplayName("재고 감소 시 항상 StockChangedEvent 발행")  // ★ 추가
+        void alwaysPublishStockChangedEvent() {
+            Product product = createProduct();
+            setId(product, 1L);
+            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+            setId(sku, 100L);
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            productAdminService.discontinue(1L);
+            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
 
-            assertThat(product.getStatus().name()).isEqualTo("DISCONTINUED");
+            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
-    }
-
-    @Nested
-    @DisplayName("SKU 재고 감소 (이벤트 발행)")
-    class DecreaseSkuStockEvent {
 
         @Test
-        @DisplayName("재고 0이면 품절 이벤트 발행")
-        void publishEventWhenSoldOut() {
+        @DisplayName("재고 0이면 SkuSoldOutEvent + StockChangedEvent 둘 다 발행")  // ★ 수정
+        void publishBothEventsWhenSoldOut() {
             Product product = createProduct();
             setId(product, 1L);
             SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 3);
@@ -232,11 +227,12 @@ class ProductAdminServiceTest {
             productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 3→0
 
             verify(eventPublisher).publishEvent(any(SkuSoldOutEvent.class));
+            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
 
         @Test
-        @DisplayName("재고 남으면 이벤트 발행 안 함")
-        void noEventWhenStockRemains() {
+        @DisplayName("재고 남으면 SkuSoldOutEvent는 발행 안 함")  // ★ 수정
+        void noSoldOutEventWhenStockRemains() {
             Product product = createProduct();
             setId(product, 1L);
             SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
@@ -246,7 +242,43 @@ class ProductAdminServiceTest {
 
             productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
 
-            verify(eventPublisher, never()).publishEvent(any());
+            verify(eventPublisher, never()).publishEvent(any(SkuSoldOutEvent.class));
+            // StockChangedEvent는 발행됨 (위에서 별도 검증)
+        }
+    }
+
+    @Nested
+    @DisplayName("SKU 추가 (addSku)")  // ★ 추가
+    class AddSku {
+
+        @Test
+        @DisplayName("SKU 추가 시 SKU_CREATED 이벤트 발행")
+        void publishSkuCreatedEvent() {
+            Product product = createProduct();
+            setId(product, 1L);
+
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+
+            productAdminService.addSku(1L,
+                    List.of(new SkuOption("색상", "검정")), 10);
+
+            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("상품 단종 (discontinue)")
+    class Discontinue {
+
+        @Test
+        @DisplayName("상품을 단종 처리할 수 있다")
+        void discontinueNormal() {
+            Product product = createProduct();
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+
+            productAdminService.discontinue(1L);
+
+            assertThat(product.getStatus().name()).isEqualTo("DISCONTINUED");
         }
     }
 
