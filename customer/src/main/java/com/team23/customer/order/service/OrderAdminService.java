@@ -17,7 +17,8 @@ import java.time.LocalDateTime;
 @Transactional
 public class OrderAdminService {
     private final OrderAdminRepository orderAdminRepository;
-
+    
+    @Transactional(readOnly = true)
     public Page<OrderAdminListResponse> search(
             OrderStatus status,
             LocalDate from,
