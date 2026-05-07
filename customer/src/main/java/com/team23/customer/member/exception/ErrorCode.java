@@ -42,10 +42,7 @@ public enum ErrorCode {
     // Receive History
     RECEIVE_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "RH001", "입고 내역을 찾을 수 없습니다"),
     ALREADY_CANCELLED(HttpStatus.BAD_REQUEST, "RH002", "이미 취소된 입고 내역입니다"),
-    INSUFFICIENT_STOCK_FOR_CANCEL(HttpStatus.BAD_REQUEST, "RH003", "현재 재고가 부족하여 입고 취소가 불가합니다"),
-
-    // OrderAdmin
-    INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "OR001", "처리할 수 없는 주문 상태입니다");
+    INSUFFICIENT_STOCK_FOR_CANCEL(HttpStatus.BAD_REQUEST, "RH003", "현재 재고가 부족하여 입고 취소가 불가합니다");
 
     private final HttpStatus status;
     private final String code;
