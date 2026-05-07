@@ -215,14 +215,6 @@ public class Order {
         return List.copyOf(items);
     }
 
-
-    /**
-     *  (Admin) 상태 변경 메서드
-     */
-    void updateStatus(OrderStatus newStatus) {
-        this.status = newStatus;
-    }
-
     // ─────────────────────────────────────
     // 검증
     // ─────────────────────────────────────

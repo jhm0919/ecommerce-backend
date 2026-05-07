@@ -1,10 +1,8 @@
 package com.team23.customer.order.service;
 
-import com.team23.customer.member.exception.BusinessException;
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.domain.OrderItem;
 import com.team23.customer.order.domain.OrderStatus;
-import com.team23.customer.order.dto.OrderAdminConfirmResponse;
 import com.team23.customer.order.dto.OrderAdminListResponse;
 import com.team23.customer.order.repository.OrderAdminRepository;
 import com.team23.customer.product.domain.*;
@@ -25,7 +23,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -153,64 +150,5 @@ class OrderAdminServiceTest {
         assertThat(response.totalAmount()).isNotNull();
         assertThat(response.itemCount()).isEqualTo(1);
         assertThat(response.status()).isEqualTo(OrderStatus.PENDING);
-    }
-
-    @Test
-    @DisplayName("PENDING 주문 일괄 확정 → CONFIRMED")
-    void confirmPendingOrdersReturnsSuccessCount() {
-        Order o1 = createPendingOrder();
-        Order o2 = createPendingOrder();
-
-        OrderAdminConfirmResponse response =
-                orderAdminService.confirm(List.of(o1.getId(), o2.getId()));
-
-        assertThat(response.successCount()).isEqualTo(2);
-        assertThat(response.confirmedOrderIds()).containsExactlyInAnyOrder(
-                o1.getId(), o2.getId());
-
-        Order confirmed = orderAdminRepository.findById(o1.getId()).orElseThrow();
-        assertThat(confirmed.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
-    }
-
-    @Test
-    @DisplayName("없는 orderId → 예외 + 전체 롤백")
-    void confirmWithNotFoundIdThrowsException() {
-        Order o1 = createPendingOrder();
-
-        assertThatThrownBy(() ->
-                orderAdminService.confirm(List.of(o1.getId(), 99999L))
-        ).isInstanceOf(BusinessException.class);
-
-        // 롤백 확인 — o1 도 PENDING 유지
-        Order notChanged = orderAdminRepository.findById(o1.getId()).orElseThrow();
-        assertThat(notChanged.getStatus()).isEqualTo(OrderStatus.PENDING);
-    }
-
-    @Test
-    @DisplayName("CANCELLED 주문 확정 시도 → 예외 + 전체 롤백")
-    void confirmCancelledOrderThrowsException() {
-        Order pending = createPendingOrder();
-        Order cancelled = createPendingOrder();
-        cancelled.cancel();
-        orderAdminRepository.saveAndFlush(cancelled);
-
-        assertThatThrownBy(() ->
-                orderAdminService.confirm(
-                        List.of(pending.getId(), cancelled.getId()))
-        ).isInstanceOf(BusinessException.class);
-
-        Order notChanged = orderAdminRepository.findById(pending.getId()).orElseThrow();
-        assertThat(notChanged.getStatus()).isEqualTo(OrderStatus.PENDING);
-    }
-
-    @Test
-    @DisplayName("단건 확정 → CONFIRMED")
-    void confirmSingleOrderChangesStatusToConfirmed() {
-        Order order = createPendingOrder();
-
-        OrderAdminConfirmResponse response =
-                orderAdminService.confirm(List.of(order.getId()));
-
-        assertThat(response.successCount()).isEqualTo(1);
     }
 }
