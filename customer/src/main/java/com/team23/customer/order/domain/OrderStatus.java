@@ -13,8 +13,9 @@ package com.team23.customer.order.domain;
  * </ul>
  */
 public enum OrderStatus {
-    PENDING,
-    CANCELLED;
+    PENDING,      // 결제 완료 (확정 대기)
+    CONFIRMED,    // 판매자 확정 (상품 준비중) ← 추가
+    CANCELLED;     // 취소
 
     public boolean isCancellable() {
         return this == PENDING;
