@@ -45,7 +45,10 @@ public enum ErrorCode {
     INSUFFICIENT_STOCK_FOR_CANCEL(HttpStatus.BAD_REQUEST, "RH003", "현재 재고가 부족하여 입고 취소가 불가합니다"),
 
     // OrderAdmin
-    INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "OR001", "처리할 수 없는 주문 상태입니다");
+    INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "OR001", "처리할 수 없는 주문 상태입니다"),
+
+    // OrderCancel
+    ALREADY_CANCELLED_ORDER(HttpStatus.BAD_REQUEST, "OR003", "이미 취소된 주문입니다");
 
     private final HttpStatus status;
     private final String code;
