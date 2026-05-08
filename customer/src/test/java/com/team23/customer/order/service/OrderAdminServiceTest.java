@@ -213,4 +213,45 @@ class OrderAdminServiceTest {
 
         assertThat(response.successCount()).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("정상 강제 취소 — CANCELLED + 재고 복구")
+    void cancelOrderChangesStatusAndRestoresStock() {
+        int orderQuantity = 2;   // ← 명시
+
+        OrderItem item = OrderItem.of(testProduct, testSku, orderQuantity);
+        Order order = Order.createForMember(1L, List.of(item));
+        order = orderAdminRepository.saveAndFlush(order);
+
+        int stockBefore = testSku.getStock();   // 100
+
+        orderAdminService.cancel(order.getId(), "재고 부족", "OUT_OF_STOCK");
+
+        Order cancelled = orderAdminRepository.findById(order.getId()).orElseThrow();
+        assertThat(cancelled.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+
+        // 재고 복구 확인 (2개 주문 → 취소 시 +2)
+        Product updated = productRepository.findById(testProduct.getId()).orElseThrow();
+        SKU updatedSku = updated.getSkus().get(0);
+        assertThat(updatedSku.getStock()).isEqualTo(stockBefore + 2);
+    }
+
+    @Test
+    @DisplayName("없는 orderId → 예외")
+    void cancelNotFoundOrderThrowsException() {
+        assertThatThrownBy(() ->
+                orderAdminService.cancel(99999L, "사유", "CODE")
+        ).isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("이미 취소된 주문 → 예외")
+    void cancelAlreadyCancelledOrderThrowsException() {
+        Order order = createPendingOrder();
+        orderAdminService.cancel(order.getId(), "사유", "CODE");
+
+        assertThatThrownBy(() ->
+                orderAdminService.cancel(order.getId(), "사유", "CODE")
+        ).isInstanceOf(BusinessException.class);
+    }
 }

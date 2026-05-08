@@ -2,6 +2,7 @@ package com.team23.customer.order.controller;
 
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.domain.OrderItem;
+import com.team23.customer.order.dto.OrderAdminCancelRequest;
 import com.team23.customer.order.dto.OrderAdminConfirmRequest;
 import com.team23.customer.order.repository.OrderAdminRepository;
 import com.team23.customer.product.domain.*;
@@ -19,7 +20,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 
 import java.math.BigDecimal;
@@ -27,7 +27,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -179,6 +179,68 @@ class OrderAdminControllerTest {
                 new OrderAdminConfirmRequest(List.of());
 
         mockMvc.perform(patch("/api/seller/orders/confirm")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /api/seller/orders/{orderId}/cancel — 정상 취소 200")
+    void cancelOrderReturns200() throws Exception {
+        Order order = createPendingOrder();
+
+        OrderAdminCancelRequest request = new OrderAdminCancelRequest("재고 부족", "OUT_OF_STOCK");
+
+        mockMvc.perform(post("/api/seller/orders/" + order.getId() + "/cancel")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.cancelReason").value("재고 부족"));
+    }
+
+    @Test
+    @DisplayName("없는 orderId → 404")
+    void cancelNotFoundOrderReturns404() throws Exception {
+        OrderAdminCancelRequest request = new OrderAdminCancelRequest("사유", "CODE");
+
+        mockMvc.perform(post("/api/seller/orders/99999/cancel")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("취소 사유 누락 → 400")
+    void cancelWithBlankReasonReturns400() throws Exception {
+        Order order = createPendingOrder();
+
+        OrderAdminCancelRequest request = new OrderAdminCancelRequest("", "CODE");
+
+        mockMvc.perform(post("/api/seller/orders/" + order.getId() + "/cancel")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("이미 취소된 주문 → 400")
+    void cancelAlreadyCancelledOrderReturns400() throws Exception {
+        Order order = createPendingOrder();
+        OrderAdminCancelRequest request = new OrderAdminCancelRequest("사유", "CODE");
+
+        // 1차 취소
+        mockMvc.perform(post("/api/seller/orders/" + order.getId() + "/cancel")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+                .with(csrf()));
+
+        // 2차 취소 시도
+        mockMvc.perform(post("/api/seller/orders/" + order.getId() + "/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))

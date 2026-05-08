@@ -1,9 +1,7 @@
 package com.team23.customer.order.controller;
 
 import com.team23.customer.order.domain.OrderStatus;
-import com.team23.customer.order.dto.OrderAdminConfirmRequest;
-import com.team23.customer.order.dto.OrderAdminConfirmResponse;
-import com.team23.customer.order.dto.OrderAdminListResponse;
+import com.team23.customer.order.dto.*;
 import com.team23.customer.order.service.OrderAdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +40,20 @@ public class OrderAdminController {
             ) {
         return ResponseEntity.ok(
                 orderAdminService.confirm(request.orderIds())
+        );
+    }
+
+    @PostMapping("/{orderId}/cancel")
+    public ResponseEntity<OrderAdminCancelResponse> cancel(
+            @PathVariable Long orderId,
+            @Valid @RequestBody OrderAdminCancelRequest request
+    ) {
+        return ResponseEntity.ok(
+                orderAdminService.cancel(
+                        orderId,
+                        request.cancelReason(),
+                        request.cancelReasonCode()
+                )
         );
     }
 }
