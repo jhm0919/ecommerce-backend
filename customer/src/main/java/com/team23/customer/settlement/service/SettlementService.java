@@ -20,6 +20,7 @@ import java.util.List;
 @Transactional
 public class SettlementService {
     private static final double FEE_RATE = 0.035; // 수수료 : 3.5%
+    private static final double FEE_RATE_PERCENT = 3.5;
 
     private final OrderAdminRepository orderAdminRepository;
 
@@ -47,7 +48,7 @@ public class SettlementService {
                 totalSales,
                 totalFee,
                 totalSettlement,
-                FEE_RATE * 100,
+                FEE_RATE_PERCENT,
                 items
         );
     }
