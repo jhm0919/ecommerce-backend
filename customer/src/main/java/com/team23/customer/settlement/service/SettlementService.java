@@ -54,7 +54,8 @@ public class SettlementService {
 
     private SettlementItem toSettlementItem(Order order) {
         BigDecimal amount = order.getTotalAmount().getAmount();
-        BigDecimal fee = amount.multiply(BigDecimal.valueOf(FEE_RATE)).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal fee = amount.multiply(BigDecimal.valueOf(FEE_RATE))
+                .setScale(0, RoundingMode.HALF_UP); // 원 단위 반올림
         BigDecimal settlement = amount.subtract(fee);
 
         return new SettlementItem(
