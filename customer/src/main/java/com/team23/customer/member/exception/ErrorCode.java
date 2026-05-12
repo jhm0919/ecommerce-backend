@@ -48,7 +48,10 @@ public enum ErrorCode {
     INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "OR001", "처리할 수 없는 주문 상태입니다"),
 
     // OrderCancel
-    ALREADY_CANCELLED_ORDER(HttpStatus.BAD_REQUEST, "OR003", "이미 취소된 주문입니다");
+    ALREADY_CANCELLED_ORDER(HttpStatus.BAD_REQUEST, "OR003", "이미 취소된 주문입니다"),
+
+    // Settlement confirm
+    NO_SETTLEMENT_TARGET(HttpStatus.BAD_REQUEST, "ST001", "정산 확정 대상 주문이 없습니다");
 
     private final HttpStatus status;
     private final String code;
