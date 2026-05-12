@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -44,5 +46,37 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByIdAndMemberIdWithItems(
             @Param("orderId") Long orderId,
             @Param("memberId") Long memberId
+    );
+
+
+    /**
+     * 기간 내 완료 주문의 매출액 + 주문 건수.
+     * [totalRevenue, orderCount] 형태로 반환.
+     */
+    @Query("""
+        SELECT SUM(o.totalAmount.amount), COUNT(o)
+        FROM Order o
+        WHERE o.status = 'PENDING'
+          AND o.createdAt >= :from
+          AND o.createdAt <= :to
+        """)
+    List<Object[]> findRevenueAndOrderCount(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to
+    );
+
+    /**
+     * 기간 내 취소 건수.
+     */
+    @Query("""
+        SELECT COUNT(o)
+        FROM Order o
+        WHERE o.status = 'CANCELLED'
+          AND o.createdAt >= :from
+          AND o.createdAt <= :to
+        """)
+    long countCancelledOrders(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to
     );
 }
