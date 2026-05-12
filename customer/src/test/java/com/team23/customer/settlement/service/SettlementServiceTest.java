@@ -1,5 +1,6 @@
 package com.team23.customer.settlement.service;
 
+import com.team23.customer.member.exception.BusinessException;
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.domain.OrderAdmin;
 import com.team23.customer.order.domain.OrderItem;
@@ -7,7 +8,9 @@ import com.team23.customer.order.repository.OrderAdminRepository;
 import com.team23.customer.product.domain.*;
 import com.team23.customer.product.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
+import com.team23.customer.settlement.dto.SettlementConfirmResponse;
 import com.team23.customer.settlement.dto.SettlementSummaryResponse;
+import com.team23.customer.settlement.repository.SettlementRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,9 +21,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -33,6 +38,8 @@ class SettlementServiceTest {
     CategoryRepository categoryRepository;
     @Autowired
     ProductRepository productRepository;
+    @Autowired
+    SettlementRepository settlementRepository;
 
     private Product testProduct;
     private SKU testSku;
@@ -59,11 +66,20 @@ class SettlementServiceTest {
         orderAdminRepository.deleteAll();
         productRepository.deleteAll();
         categoryRepository.deleteAll();
+        settlementRepository.deleteAll();
     }
 
     // 헬퍼 — CONFIRMED 주문 생성
     private Order createConfirmedOrder(int quantity) {
         OrderItem item = OrderItem.of(testProduct, testSku, quantity);
+        Order order = Order.createForMember(1L, List.of(item));
+        orderAdminRepository.save(order);
+        OrderAdmin.confirm(order);
+        return orderAdminRepository.saveAndFlush(order);
+    }
+
+    private Order createConfirmedOrder() {
+        OrderItem item = OrderItem.of(testProduct, testSku, 1);
         Order order = Order.createForMember(1L, List.of(item));
         orderAdminRepository.save(order);
         OrderAdmin.confirm(order);
@@ -160,5 +176,44 @@ class SettlementServiceTest {
         assertThat(response.totalSalesAmount()).isEqualTo(BigDecimal.ZERO);
         assertThat(response.totalFee()).isEqualTo(BigDecimal.ZERO);
         assertThat(response.totalSettlementAmount()).isEqualTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    @DisplayName("정상 정산 확정 — Settlement 생성 + 건수 반환")
+    void confirmSettlementCreatesSettlements() {
+        createConfirmedOrder();
+        createConfirmedOrder();
+
+        SettlementConfirmResponse response = settlementService.confirm(YearMonth.now());
+
+        assertThat(response.confirmedCount()).isEqualTo(2);
+        assertThat(response.totalSettlementAmount()).isNotNull();
+        assertThat(settlementRepository.findAll()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("중복 정산 방지 — 이미 정산된 주문 제외")
+    void confirmSettlementPreventsDuplicate() {
+        createConfirmedOrder();
+
+        // 1차 정산
+        settlementService.confirm(YearMonth.now());
+
+        // 새 주문 추가
+        createConfirmedOrder();
+
+        // 2차 정산 — 새 주문만
+        SettlementConfirmResponse response = settlementService.confirm(YearMonth.now());
+
+        assertThat(response.confirmedCount()).isEqualTo(1);
+        assertThat(settlementRepository.findAll()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("정산 대상 없음 → 예외")
+    void confirmSettlementNoTargetsThrowsException() {
+        assertThatThrownBy(() ->
+                settlementService.confirm(YearMonth.now())
+        ).isInstanceOf(BusinessException.class);
     }
 }
