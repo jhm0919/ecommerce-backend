@@ -1,13 +1,13 @@
 package com.team23.customer.settlement.controller;
 
+import com.team23.customer.settlement.dto.SettlementConfirmRequest;
+import com.team23.customer.settlement.dto.SettlementConfirmResponse;
 import com.team23.customer.settlement.dto.SettlementSummaryResponse;
 import com.team23.customer.settlement.service.SettlementService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
@@ -25,6 +25,15 @@ public class SettlementController {
     ) {
         return ResponseEntity.ok(
                 settlementService.search(from, to)
+        );
+    }
+
+    @PatchMapping("/confirm")
+    public ResponseEntity<SettlementConfirmResponse> confirm(
+            @Valid @RequestBody SettlementConfirmRequest request
+    ) {
+        return ResponseEntity.ok(
+                settlementService.confirm(request.settledMonth())
         );
     }
 }
