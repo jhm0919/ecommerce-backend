@@ -1,6 +1,6 @@
 package com.team23.customer.purchaseorder.controller;
 
-import com.team23.customer.global.response.ApiResponse;
+import com.team23.customer.global.response.CommonResponse;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
 import com.team23.customer.purchaseorder.domain.PurchaseOrderStatus;
 import com.team23.customer.purchaseorder.dto.CreatePurchaseOrderRequest;
@@ -25,7 +25,7 @@ public class PurchaseOrderController {
     private final PurchaseOrderService purchaseOrderService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<PurchaseOrderResponse>> create(
+    public ResponseEntity<CommonResponse<PurchaseOrderResponse>> create(
             @Valid @RequestBody CreatePurchaseOrderRequest request
     ) {
         PurchaseOrder po = purchaseOrderService.create(
@@ -35,18 +35,18 @@ public class PurchaseOrderController {
                 request.supplierContact(),
                 request.expectedAt());
         return ResponseEntity.status(201)
-                .body(ApiResponse.createSuccess("발주서 생성 완료",PurchaseOrderResponse.from(po)));
+                .body(CommonResponse.createSuccess("발주서 생성 완료",PurchaseOrderResponse.from(po)));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<PurchaseOrderListResponse>>> search(
+    public ResponseEntity<CommonResponse<Page<PurchaseOrderListResponse>>> search(
             @RequestParam(required = false) PurchaseOrderStatus status,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ResponseEntity.ok(
-                ApiResponse.createSuccess(purchaseOrderService.search(status, from, to, pageable))
+                CommonResponse.createSuccess(purchaseOrderService.search(status, from, to, pageable))
         );
     }
 }
