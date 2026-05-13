@@ -13,7 +13,7 @@ import java.util.Map;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ApiResponse<T> {
+public class CommonResponse<T> {
     private static final String SUCCESS_STATUS = "success";
     private static final String ERROR_STATUS = "error";
     private static final String FAIL_STATUS = "fail";
@@ -23,25 +23,25 @@ public class ApiResponse<T> {
     private T data;
 
     //데이터와 함께 성공 반환
-    public static <T> ApiResponse<T> createSuccess(T data) {
-        return new ApiResponse<>(SUCCESS_STATUS, "성공", data);
+    public static <T> CommonResponse<T> createSuccess(T data) {
+        return new CommonResponse<>(SUCCESS_STATUS, "성공", data);
     }
 
-    public static <T> ApiResponse<T> createSuccess(String message, T data) {
-        return new ApiResponse<>(SUCCESS_STATUS, message, data);
+    public static <T> CommonResponse<T> createSuccess(String message, T data) {
+        return new CommonResponse<>(SUCCESS_STATUS, message, data);
     }
 
     //데이터 없이 성공 반환
-    public static ApiResponse<?> createSuccessWithNoContent() {
-        return new ApiResponse<>(SUCCESS_STATUS, "성공", null);
+    public static CommonResponse<?> createSuccessWithNoContent() {
+        return new CommonResponse<>(SUCCESS_STATUS, "성공", null);
     }
 
-    public static ApiResponse<?> createSuccessWithNoContent(String message) {
-        return new ApiResponse<>(SUCCESS_STATUS, message, null);
+    public static CommonResponse<?> createSuccessWithNoContent(String message) {
+        return new CommonResponse<>(SUCCESS_STATUS, message, null);
     }
 
     //유효성 검증
-    public static ApiResponse<?> createFail(BindingResult bindingResult) {
+    public static CommonResponse<?> createFail(BindingResult bindingResult) {
         Map<String, String> errors = new HashMap<>();
         for(ObjectError error : bindingResult.getAllErrors()) {
             if (error instanceof FieldError) {
@@ -51,11 +51,11 @@ public class ApiResponse<T> {
             }
         }
 
-        return new ApiResponse<>(FAIL_STATUS, "입력값 오류", errors);
+        return new CommonResponse<>(FAIL_STATUS, "입력값 오류", errors);
     }
 
     //예외
-    public static ApiResponse<?> createError(String message) {
-        return new ApiResponse<>(ERROR_STATUS, message, null);
+    public static CommonResponse<?> createError(String message) {
+        return new CommonResponse<>(ERROR_STATUS, message, null);
     }
 }
