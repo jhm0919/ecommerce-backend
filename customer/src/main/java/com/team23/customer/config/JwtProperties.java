@@ -1,4 +1,4 @@
-package com.team23.customer.security.jwt;
+package com.team23.customer.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

@@ -1,0 +1,39 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false  # 도커 환경에서는 SQL 로그 끔
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - email
+              - profile
+
+logging:
+  level:
+    org.hibernate.SQL: INFO  # 로컬보다 낮춤
+    org.hibernate.orm.jdbc.bind: INFO
+
+app:
+  allowed-origins:
+    - "*"  # ★ 테스트 편의상 전체 허용
+
+# ─────────────────────────────────────
+# Swagger / OpenAPI
+# ─────────────────────────────────────
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+  api-docs:
+    path: /v3/api-docs
+  default-produces-media-type: application/json
