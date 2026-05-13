@@ -86,10 +86,10 @@ class OrderAdminControllerTest {
 
         mockMvc.perform(get("/api/seller/orders"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(2))
-                .andExpect(jsonPath("$.content[0].orderNumber").isNotEmpty())
-                .andExpect(jsonPath("$.content[0].status").value("PENDING"))
-                .andExpect(jsonPath("$.content[0].itemCount").value(1));
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andExpect(jsonPath("$.data.content[0].orderNumber").isNotEmpty())
+                .andExpect(jsonPath("$.data.content[0].status").value("PENDING"))
+                .andExpect(jsonPath("$.data.content[0].itemCount").value(1));
     }
 
     @Test
@@ -100,7 +100,7 @@ class OrderAdminControllerTest {
         mockMvc.perform(get("/api/seller/orders")
                         .param("status", "PENDING"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(1));
+                .andExpect(jsonPath("$.data.totalElements").value(1));
     }
 
     @Test
@@ -112,7 +112,7 @@ class OrderAdminControllerTest {
                         .param("from", LocalDate.now().toString())
                         .param("to", LocalDate.now().toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(1));
+                .andExpect(jsonPath("$.data.totalElements").value(1));
     }
 
     @Test
@@ -121,7 +121,7 @@ class OrderAdminControllerTest {
         mockMvc.perform(get("/api/seller/orders")
                         .param("status", "CONFIRMED"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(0));
+                .andExpect(jsonPath("$.data.totalElements").value(0));
     }
 
     @Test
@@ -138,8 +138,8 @@ class OrderAdminControllerTest {
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.successCount").value(2))
-                .andExpect(jsonPath("$.confirmedOrderIds").isArray());
+                .andExpect(jsonPath("$.data.successCount").value(2))
+                .andExpect(jsonPath("$.data.confirmedOrderIds").isArray());
     }
 
     @Test
@@ -197,8 +197,8 @@ class OrderAdminControllerTest {
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CANCELLED"))
-                .andExpect(jsonPath("$.cancelReason").value("재고 부족"));
+                .andExpect(jsonPath("$.data.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.data.cancelReason").value("재고 부족"));
     }
 
     @Test

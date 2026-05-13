@@ -92,13 +92,13 @@ class SettlementControllerTest {
 
         mockMvc.perform(get("/api/seller/settlements"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalSalesAmount").isNumber())
-                .andExpect(jsonPath("$.totalFee").isNumber())
-                .andExpect(jsonPath("$.totalSettlementAmount").isNumber())
-                .andExpect(jsonPath("$.feeRate").value(3.5))
-                .andExpect(jsonPath("$.items").isArray())
-                .andExpect(jsonPath("$.items[0].orderId").exists())
-                .andExpect(jsonPath("$.items[0].orderNumber").isNotEmpty());
+                .andExpect(jsonPath("$.data.totalSalesAmount").isNumber())
+                .andExpect(jsonPath("$.data.totalFee").isNumber())
+                .andExpect(jsonPath("$.data.totalSettlementAmount").isNumber())
+                .andExpect(jsonPath("$.data.feeRate").value(3.5))
+                .andExpect(jsonPath("$.data.items").isArray())
+                .andExpect(jsonPath("$.data.items[0].orderId").exists())
+                .andExpect(jsonPath("$.data.items[0].orderNumber").isNotEmpty());
     }
 
     @Test
@@ -110,7 +110,7 @@ class SettlementControllerTest {
                         .param("from", LocalDate.now().toString())
                         .param("to", LocalDate.now().toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.items.length()").value(1));
+                .andExpect(jsonPath("$.data.items.length()").value(1));
     }
 
     @Test
@@ -123,8 +123,8 @@ class SettlementControllerTest {
 
         mockMvc.perform(get("/api/seller/settlements"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.items").isEmpty())
-                .andExpect(jsonPath("$.totalSalesAmount").value(0));
+                .andExpect(jsonPath("$.data.items").isEmpty())
+                .andExpect(jsonPath("$.data.totalSalesAmount").value(0));
     }
 
     @Test
@@ -139,9 +139,9 @@ class SettlementControllerTest {
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.confirmedCount").value(1))
-                .andExpect(jsonPath("$.settledMonth").isNotEmpty())
-                .andExpect(jsonPath("$.totalSettlementAmount").isNumber());
+                .andExpect(jsonPath("$.data.confirmedCount").value(1))
+                .andExpect(jsonPath("$.data.settledMonth").isNotEmpty())
+                .andExpect(jsonPath("$.data.totalSettlementAmount").isNumber());
     }
 
     @Test

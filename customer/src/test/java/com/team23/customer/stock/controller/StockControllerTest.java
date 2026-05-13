@@ -87,9 +87,9 @@ class StockControllerTest {
         // when & then
         mockMvc.perform(get("/api/seller/stocks/receive-history"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(2))
-                .andExpect(jsonPath("$.content[0].receivedQuantity").exists())
-                .andExpect(jsonPath("$.content[0].stockAfter").exists());
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andExpect(jsonPath("$.data.content[0].receivedQuantity").exists())
+                .andExpect(jsonPath("$.data.content[0].stockAfter").exists());
     }
 
     @Test
@@ -103,8 +103,8 @@ class StockControllerTest {
         mockMvc.perform(get("/api/seller/stocks/receive-history")
                         .param("skuId", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.content[0].skuId").value(1));
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].skuId").value(1));
     }
 
     @Test
@@ -116,7 +116,7 @@ class StockControllerTest {
                         .param("from", LocalDate.now().toString())
                         .param("to",   LocalDate.now().toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(1));
+                .andExpect(jsonPath("$.data.totalElements").value(1));
     }
 
     @Test
@@ -125,8 +125,8 @@ class StockControllerTest {
         mockMvc.perform(get("/api/seller/stocks/receive-history")
                         .param("skuId", "99999"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(0))
-                .andExpect(jsonPath("$.content").isEmpty());
+                .andExpect(jsonPath("$.data.totalElements").value(0))
+                .andExpect(jsonPath("$.data.content").isEmpty());
     }
 
     @Test
@@ -147,9 +147,9 @@ class StockControllerTest {
         mockMvc.perform(patch("/api/seller/stocks/receive/" + history.getId() + "/cancel")
                         .with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.receiveHistoryId").value(history.getId()))
-                .andExpect(jsonPath("$.purchaseOrderStatus").value("REQUESTED"))
-                .andExpect(jsonPath("$.cancelledQuantity").value(50));
+                .andExpect(jsonPath("$.data.receiveHistoryId").value(history.getId()))
+                .andExpect(jsonPath("$.data.purchaseOrderStatus").value("REQUESTED"))
+                .andExpect(jsonPath("$.data.cancelledQuantity").value(50));
     }
 
     @Test
@@ -187,9 +187,9 @@ class StockControllerTest {
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.originalQuantity").value(100))
-                .andExpect(jsonPath("$.adjustedQuantity").value(80))
-                .andExpect(jsonPath("$.reason").value("수량 상이"));
+                .andExpect(jsonPath("$.data.originalQuantity").value(100))
+                .andExpect(jsonPath("$.data.adjustedQuantity").value(80))
+                .andExpect(jsonPath("$.data.reason").value("수량 상이"));
     }
 
     @Test
