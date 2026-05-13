@@ -1,5 +1,6 @@
 package com.team23.customer.order.controller;
 
+import com.team23.customer.global.response.ApiResponse;
 import com.team23.customer.order.domain.OrderStatus;
 import com.team23.customer.order.dto.*;
 import com.team23.customer.order.service.OrderAdminService;
@@ -22,7 +23,7 @@ public class OrderAdminController {
     private final OrderAdminService orderAdminService;
 
     @GetMapping
-    public ResponseEntity<Page<OrderAdminListResponse>> search(
+    public ResponseEntity<ApiResponse<Page<OrderAdminListResponse>>> search(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
@@ -30,29 +31,30 @@ public class OrderAdminController {
                     direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ResponseEntity.ok(
-                orderAdminService.search(status, from, to, pageable)
+                ApiResponse.createSuccess(orderAdminService.search(status, from, to, pageable))
         );
     }
 
     @PatchMapping("/confirm")
-    public ResponseEntity<OrderAdminConfirmResponse> confirm(
+    public ResponseEntity<ApiResponse<OrderAdminConfirmResponse>> confirm(
             @Valid @RequestBody OrderAdminConfirmRequest request
             ) {
         return ResponseEntity.ok(
-                orderAdminService.confirm(request.orderIds())
+                ApiResponse.createSuccess(orderAdminService.confirm(request.orderIds()))
         );
     }
 
     @PostMapping("/{orderId}/cancel")
-    public ResponseEntity<OrderAdminCancelResponse> cancel(
+    public ResponseEntity<ApiResponse<OrderAdminCancelResponse>> cancel(
             @PathVariable Long orderId,
             @Valid @RequestBody OrderAdminCancelRequest request
     ) {
         return ResponseEntity.ok(
-                orderAdminService.cancel(
+                ApiResponse.createSuccess(
+                        orderAdminService.cancel(
                         orderId,
                         request.cancelReason(),
-                        request.cancelReasonCode()
+                        request.cancelReasonCode())
                 )
         );
     }

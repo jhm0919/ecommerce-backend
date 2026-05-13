@@ -1,5 +1,6 @@
 package com.team23.customer.settlement.controller;
 
+import com.team23.customer.global.response.ApiResponse;
 import com.team23.customer.settlement.dto.SettlementConfirmRequest;
 import com.team23.customer.settlement.dto.SettlementConfirmResponse;
 import com.team23.customer.settlement.dto.SettlementSummaryResponse;
@@ -19,21 +20,21 @@ public class SettlementController {
     private final SettlementService settlementService;
 
     @GetMapping
-    public ResponseEntity<SettlementSummaryResponse> search(
+    public ResponseEntity<ApiResponse<SettlementSummaryResponse>> search(
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to
     ) {
         return ResponseEntity.ok(
-                settlementService.search(from, to)
+                ApiResponse.createSuccess(settlementService.search(from, to))
         );
     }
 
     @PatchMapping("/confirm")
-    public ResponseEntity<SettlementConfirmResponse> confirm(
+    public ResponseEntity<ApiResponse<SettlementConfirmResponse>> confirm(
             @Valid @RequestBody SettlementConfirmRequest request
     ) {
         return ResponseEntity.ok(
-                settlementService.confirm(request.settledMonth())
+                ApiResponse.createSuccess(settlementService.confirm(request.settledMonth()))
         );
     }
 }
