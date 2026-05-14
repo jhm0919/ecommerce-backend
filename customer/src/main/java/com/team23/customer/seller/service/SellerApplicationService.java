@@ -1,4 +1,4 @@
-package com.team23.customer.service;
+package com.team23.customer.seller.service;
 
 import com.team23.customer.member.exception.BusinessException;
 import com.team23.customer.member.exception.ErrorCode;

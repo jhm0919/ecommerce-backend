@@ -3,7 +3,7 @@ package com.team23.customer.seller.controller;
 import com.team23.customer.global.response.CommonResponse;
 import com.team23.customer.seller.dto.SellerApplicationRequest;
 import com.team23.customer.seller.dto.SellerApplicationResponse;
-import com.team23.customer.service.SellerApplicationService;
+import com.team23.customer.seller.service.SellerApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
