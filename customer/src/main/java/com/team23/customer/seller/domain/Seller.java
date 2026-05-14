@@ -74,4 +74,7 @@ public class Seller {
         this.temporaryPassword = false;     // 변경 후 임시 해제
     }
 
+    public void suspend() {
+        this.status = SellerStatus.SUSPENDED;
+    }
 }
