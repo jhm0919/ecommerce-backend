@@ -51,7 +51,11 @@ public enum ErrorCode {
     ALREADY_CANCELLED_ORDER(HttpStatus.BAD_REQUEST, "OR003", "이미 취소된 주문입니다"),
 
     // Settlement confirm
-    NO_SETTLEMENT_TARGET(HttpStatus.BAD_REQUEST, "ST001", "정산 확정 대상 주문이 없습니다");
+    NO_SETTLEMENT_TARGET(HttpStatus.BAD_REQUEST, "ST001", "정산 확정 대상 주문이 없습니다"),
+
+    // Seller
+    DUPLICATE_BUSINESS_REGISTRATION_NUMBER(HttpStatus.CONFLICT, "SA001", "이미 신청된 사업자등록번호입니다"),
+    DUPLICATE_MAIL_ORDER_SALES_NUMBER(HttpStatus.CONFLICT, "SA002", "이미 신청된 통신판매업신고번호입니다");
 
     private final HttpStatus status;
     private final String code;
