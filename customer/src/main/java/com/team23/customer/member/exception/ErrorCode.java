@@ -55,7 +55,12 @@ public enum ErrorCode {
 
     // Seller
     DUPLICATE_BUSINESS_REGISTRATION_NUMBER(HttpStatus.CONFLICT, "SA001", "이미 신청된 사업자등록번호입니다"),
-    DUPLICATE_MAIL_ORDER_SALES_NUMBER(HttpStatus.CONFLICT, "SA002", "이미 신청된 통신판매업신고번호입니다");
+    DUPLICATE_MAIL_ORDER_SALES_NUMBER(HttpStatus.CONFLICT, "SA002", "이미 신청된 통신판매업신고번호입니다"),
+
+    // Seller login
+    SELLER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "SL001", "아이디 또는 비밀번호가 올바르지 않습니다"),
+    SELLER_INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "SL002", "아이디 또는 비밀번호가 올바르지 않습니다"),
+    SELLER_SUSPENDED(HttpStatus.FORBIDDEN, "SL003", "정지된 판매자 계정입니다");
 
     private final HttpStatus status;
     private final String code;
