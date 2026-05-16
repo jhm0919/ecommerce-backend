@@ -13,7 +13,8 @@ package com.team23.customer.member.domain;
  */
 public enum MemberRole {
     USER,
-    ADMIN;
+    ADMIN,
+    SELLER;   // ★ 추가
 
     /**
      * Spring Security가 사용하는 형식 (ROLE_ 접두사 포함).
