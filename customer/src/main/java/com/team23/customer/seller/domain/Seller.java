@@ -1,5 +1,7 @@
 package com.team23.customer.seller.domain;
 
+import com.team23.customer.member.exception.BusinessException;
+import com.team23.customer.member.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -23,6 +25,7 @@ public class Seller {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ───── 계정 정보 ─────
     @Column(name = "login_id", nullable = false, unique = true, length = 50)
     private String loginId;
 
@@ -38,7 +41,23 @@ public class Seller {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private SellerStatus status;
+    // ───── 운영 정보 (추가) ─────
+    @Column(name = "business_name", nullable = false, length = 100)
+    private String businessName;
 
+    @Column(name = "manager_name", nullable = false, length = 50)
+    private String managerName;
+
+    @Column(name = "manager_email", nullable = false, length = 100)
+    private String managerEmail;
+
+    @Column(name = "phone_number", nullable = false, length = 20)
+    private String phoneNumber;
+
+    @Column(name = "mobile_number", nullable = false, length = 20)
+    private String mobileNumber;
+
+    // ───── 시간 ─────
     @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
@@ -54,24 +73,54 @@ public class Seller {
     public static Seller create(
             String loginId,
             String encodedPassword,
-            Long applicationId
+            Long applicationId,
+            String businessName,
+            String managerName,
+            String managerEmail,
+            String phoneNumber,
+            String mobileNumber
     ) {
         Seller seller = new Seller();
         seller.loginId = loginId;
         seller.password = encodedPassword;
-        seller.temporaryPassword = true;    // 최초는 항상 임시
+        seller.temporaryPassword = true;
         seller.applicationId = applicationId;
         seller.status = SellerStatus.ACTIVE;
+        seller.businessName = businessName;
+        seller.managerName = managerName;
+        seller.managerEmail = managerEmail;
+        seller.phoneNumber = phoneNumber;
+        seller.mobileNumber = mobileNumber;
         return seller;
     }
 
     // ─────────────────────────────────────
     // 비즈니스 메서드
     // ─────────────────────────────────────
+    public void changeLoginId(String newLoginId) {
+        if (this.loginId.equals(newLoginId)) {
+            throw new BusinessException(ErrorCode.SAME_AS_CURRENT_LOGIN_ID) {};
+        }
+        this.loginId = newLoginId;
+    }
 
     public void changePassword(String newEncodedPassword) {
         this.password = newEncodedPassword;
         this.temporaryPassword = false;     // 변경 후 임시 해제
+    }
+
+    public void updateProfile(
+            String businessName,
+            String managerName,
+            String managerEmail,
+            String phoneNumber,
+            String mobileNumber
+    ) {
+        this.businessName = businessName;
+        this.managerName = managerName;
+        this.managerEmail = managerEmail;
+        this.phoneNumber = phoneNumber;
+        this.mobileNumber = mobileNumber;
     }
 
     public void suspend() {

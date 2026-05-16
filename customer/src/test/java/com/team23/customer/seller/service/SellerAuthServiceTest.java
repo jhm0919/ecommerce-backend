@@ -46,7 +46,12 @@ class SellerAuthServiceTest {
                 Seller.create(
                         loginId,
                         passwordEncoder.encode(rawPassword),
-                        null
+                        null,
+                        "주식회사 예시",
+                        "홍길동",
+                        "hong@example.com",
+                        "02-1234-5678",
+                        "010-1234-5678"
                 )
         );
     }

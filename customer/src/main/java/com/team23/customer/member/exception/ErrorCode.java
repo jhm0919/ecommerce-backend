@@ -60,7 +60,12 @@ public enum ErrorCode {
     // Seller login
     SELLER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "SL001", "아이디 또는 비밀번호가 올바르지 않습니다"),
     SELLER_INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "SL002", "아이디 또는 비밀번호가 올바르지 않습니다"),
-    SELLER_SUSPENDED(HttpStatus.FORBIDDEN, "SL003", "정지된 판매자 계정입니다");
+    SELLER_SUSPENDED(HttpStatus.FORBIDDEN, "SL003", "정지된 판매자 계정입니다"),
+    //Seller update
+    SAME_AS_CURRENT_LOGIN_ID(HttpStatus.BAD_REQUEST, "SL004", "현재 아이디와 동일합니다"),
+    DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, "SL005", "이미 사용 중인 아이디입니다"),
+    INVALID_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "SL006", "현재 비밀번호가 올바르지 않습니다"),
+    SAME_AS_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "SL007", "현재 비밀번호와 동일합니다");
 
     private final HttpStatus status;
     private final String code;
