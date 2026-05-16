@@ -55,7 +55,7 @@ class AuthControllerIntegrationTest {
         initialTokens = authService.issueTokens(
                 testMember.getId(),
                 testMember.getProviderSub(),
-                testMember.getRole().name()  // ★ role 추가
+                testMember.getRole().name()
         );
     }
 
@@ -69,8 +69,12 @@ class AuthControllerIntegrationTest {
             var result = mockMvc.perform(post("/api/auth/refresh")
                             .cookie(new Cookie(COOKIE_NAME, initialTokens.refreshToken())))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.accessToken").exists())
-                    .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                    // ★ CommonResponse 검증
+                    .andExpect(jsonPath("$.status").value("success"))
+                    .andExpect(jsonPath("$.message").value("성공"))
+                    // ★ $.accessToken → $.data.accessToken
+                    .andExpect(jsonPath("$.data.accessToken").exists())
+                    .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
                     .andExpect(cookie().exists(COOKIE_NAME))
                     .andExpect(cookie().httpOnly(COOKIE_NAME, true))
                     .andReturn();
@@ -123,7 +127,7 @@ class AuthControllerIntegrationTest {
         void logoutInvalidatesTokenAndClearsCookie() throws Exception {
             mockMvc.perform(post("/api/auth/logout")
                             .cookie(new Cookie(COOKIE_NAME, initialTokens.refreshToken())))
-                    .andExpect(status().isNoContent())
+                    .andExpect(status().isNoContent())  // body 없음 → 그대로
                     .andExpect(cookie().maxAge(COOKIE_NAME, 0));
 
             String hash = TokenHasher.hash(initialTokens.refreshToken());

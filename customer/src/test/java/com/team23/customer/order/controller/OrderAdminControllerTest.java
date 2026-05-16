@@ -19,14 +19,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -34,16 +31,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class OrderAdminControllerTest {
-    @Autowired
-    MockMvc mockMvc;
-    @Autowired
-    ObjectMapper objectMapper;
-    @Autowired
-    OrderAdminRepository orderAdminRepository;
-    @Autowired
-    CategoryRepository categoryRepository;
-    @Autowired
-    ProductRepository productRepository;
+
+    @Autowired MockMvc mockMvc;
+    @Autowired ObjectMapper objectMapper;
+    @Autowired OrderAdminRepository orderAdminRepository;
+    @Autowired CategoryRepository categoryRepository;
+    @Autowired ProductRepository productRepository;
 
     private Product testProduct;
     private SKU testSku;
@@ -86,6 +79,10 @@ class OrderAdminControllerTest {
 
         mockMvc.perform(get("/api/seller/orders"))
                 .andExpect(status().isOk())
+                // ★ CommonResponse 검증
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.message").value("성공"))
+                // ★ data 검증
                 .andExpect(jsonPath("$.data.totalElements").value(2))
                 .andExpect(jsonPath("$.data.content[0].orderNumber").isNotEmpty())
                 .andExpect(jsonPath("$.data.content[0].status").value("PENDING"))
@@ -100,6 +97,7 @@ class OrderAdminControllerTest {
         mockMvc.perform(get("/api/seller/orders")
                         .param("status", "PENDING"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))  // ★ 추가
                 .andExpect(jsonPath("$.data.totalElements").value(1));
     }
 
@@ -112,6 +110,7 @@ class OrderAdminControllerTest {
                         .param("from", LocalDate.now().toString())
                         .param("to", LocalDate.now().toString()))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))  // ★ 추가
                 .andExpect(jsonPath("$.data.totalElements").value(1));
     }
 
@@ -121,6 +120,7 @@ class OrderAdminControllerTest {
         mockMvc.perform(get("/api/seller/orders")
                         .param("status", "CONFIRMED"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))  // ★ 추가
                 .andExpect(jsonPath("$.data.totalElements").value(0));
     }
 
@@ -138,6 +138,7 @@ class OrderAdminControllerTest {
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))  // ★ 추가
                 .andExpect(jsonPath("$.data.successCount").value(2))
                 .andExpect(jsonPath("$.data.confirmedOrderIds").isArray());
     }
@@ -152,7 +153,8 @@ class OrderAdminControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value("error"));  // ★ 추가
     }
 
     @Test
@@ -169,7 +171,8 @@ class OrderAdminControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("error"));  // ★ 추가
     }
 
     @Test
@@ -182,7 +185,8 @@ class OrderAdminControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("fail"));  // ★ @Valid 실패 = fail
     }
 
     @Test
@@ -190,13 +194,15 @@ class OrderAdminControllerTest {
     void cancelOrderReturns200() throws Exception {
         Order order = createPendingOrder();
 
-        OrderAdminCancelRequest request = new OrderAdminCancelRequest("재고 부족", "OUT_OF_STOCK");
+        OrderAdminCancelRequest request =
+                new OrderAdminCancelRequest("재고 부족", "OUT_OF_STOCK");
 
         mockMvc.perform(post("/api/seller/orders/" + order.getId() + "/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))  // ★ 추가
                 .andExpect(jsonPath("$.data.status").value("CANCELLED"))
                 .andExpect(jsonPath("$.data.cancelReason").value("재고 부족"));
     }
@@ -204,13 +210,15 @@ class OrderAdminControllerTest {
     @Test
     @DisplayName("없는 orderId → 404")
     void cancelNotFoundOrderReturns404() throws Exception {
-        OrderAdminCancelRequest request = new OrderAdminCancelRequest("사유", "CODE");
+        OrderAdminCancelRequest request =
+                new OrderAdminCancelRequest("사유", "CODE");
 
         mockMvc.perform(post("/api/seller/orders/99999/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value("error"));  // ★ 추가
     }
 
     @Test
@@ -218,20 +226,23 @@ class OrderAdminControllerTest {
     void cancelWithBlankReasonReturns400() throws Exception {
         Order order = createPendingOrder();
 
-        OrderAdminCancelRequest request = new OrderAdminCancelRequest("", "CODE");
+        OrderAdminCancelRequest request =
+                new OrderAdminCancelRequest("", "CODE");
 
         mockMvc.perform(post("/api/seller/orders/" + order.getId() + "/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("fail"));  // ★ @Valid 실패 = fail
     }
 
     @Test
     @DisplayName("이미 취소된 주문 → 400")
     void cancelAlreadyCancelledOrderReturns400() throws Exception {
         Order order = createPendingOrder();
-        OrderAdminCancelRequest request = new OrderAdminCancelRequest("사유", "CODE");
+        OrderAdminCancelRequest request =
+                new OrderAdminCancelRequest("사유", "CODE");
 
         // 1차 취소
         mockMvc.perform(post("/api/seller/orders/" + order.getId() + "/cancel")
@@ -244,6 +255,7 @@ class OrderAdminControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("error"));  // ★ 추가
     }
 }

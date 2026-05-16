@@ -1,7 +1,11 @@
 package com.team23.customer.product.controller;
 
+import com.team23.customer.global.response.CommonResponse;
 import com.team23.customer.product.dto.CategoryResponse;
 import com.team23.customer.product.service.CategoryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Tag(name = "카테고리", description = "카테고리 조회 API")
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
@@ -17,14 +22,13 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
-    /**
-     * 모든 카테고리 조회.
-     */
+    @Operation(summary = "카테고리 목록 조회", description = "모든 카테고리를 조회한다.")
+    @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping
-    public ResponseEntity<List<CategoryResponse>> list() {
+    public ResponseEntity<CommonResponse<List<CategoryResponse>>> list() {
         List<CategoryResponse> response = categoryService.findAll().stream()
                 .map(CategoryResponse::from)
                 .toList();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(CommonResponse.createSuccess(response));
     }
 }

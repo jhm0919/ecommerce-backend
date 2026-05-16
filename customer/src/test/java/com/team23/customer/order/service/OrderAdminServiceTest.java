@@ -10,6 +10,7 @@ import com.team23.customer.order.repository.OrderAdminRepository;
 import com.team23.customer.product.domain.*;
 import com.team23.customer.product.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,19 +27,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@Transactional
+// ★ 클래스 레벨 @Transactional 제거 → 각 테스트 독립 트랜잭션
 class OrderAdminServiceTest {
-    @Autowired
-    OrderAdminService orderAdminService;
-    @Autowired
-    OrderAdminRepository orderAdminRepository;
-    @Autowired
-    CategoryRepository categoryRepository;
-    @Autowired
-    ProductRepository productRepository;
+
+    @Autowired OrderAdminService orderAdminService;
+    @Autowired OrderAdminRepository orderAdminRepository;
+    @Autowired CategoryRepository categoryRepository;
+    @Autowired ProductRepository productRepository;
+    @Autowired EntityManager entityManager;  // ★ 추가
 
     private Product testProduct;
     private SKU testSku;
@@ -62,12 +60,11 @@ class OrderAdminServiceTest {
 
     @AfterEach
     void cleanUp() {
-        orderAdminRepository.deleteAll();   // order_items cascade 삭제
+        orderAdminRepository.deleteAll();
         productRepository.deleteAll();
         categoryRepository.deleteAll();
     }
 
-    // 테스트용 주문 생성 헬퍼
     private Order createPendingOrder() {
         OrderItem item = OrderItem.of(testProduct, testSku, 1);
         Order order = Order.createForMember(1L, List.of(item));
@@ -87,8 +84,7 @@ class OrderAdminServiceTest {
         createPendingOrder();
 
         Page<OrderAdminListResponse> result =
-                orderAdminService.search(null, null, null,
-                        PageRequest.of(0, 20));
+                orderAdminService.search(null, null, null, PageRequest.of(0, 20));
 
         assertThat(result.getTotalElements()).isEqualTo(2);
     }
@@ -101,12 +97,11 @@ class OrderAdminServiceTest {
 
         Page<OrderAdminListResponse> result =
                 orderAdminService.search(
-                        OrderStatus.PENDING, null, null,
-                        PageRequest.of(0, 20));
+                        OrderStatus.PENDING, null, null, PageRequest.of(0, 20));
 
         assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent().get(0).status())
-                .isEqualTo(OrderStatus.PENDING); }
+        assertThat(result.getContent().get(0).status()).isEqualTo(OrderStatus.PENDING);
+    }
 
     @Test
     @DisplayName("기간 필터 — 범위 내 주문 반환")
@@ -115,10 +110,7 @@ class OrderAdminServiceTest {
 
         Page<OrderAdminListResponse> result =
                 orderAdminService.search(
-                        null,
-                        LocalDate.now(),
-                        LocalDate.now(),
-                        PageRequest.of(0, 20));
+                        null, LocalDate.now(), LocalDate.now(), PageRequest.of(0, 20));
 
         assertThat(result.getTotalElements()).isEqualTo(1);
     }
@@ -144,8 +136,7 @@ class OrderAdminServiceTest {
         createPendingOrder();
 
         Page<OrderAdminListResponse> result =
-                orderAdminService.search(null, null, null,
-                        PageRequest.of(0, 20));
+                orderAdminService.search(null, null, null, PageRequest.of(0, 20));
 
         OrderAdminListResponse response = result.getContent().get(0);
         assertThat(response.orderId()).isNotNull();
@@ -165,8 +156,8 @@ class OrderAdminServiceTest {
                 orderAdminService.confirm(List.of(o1.getId(), o2.getId()));
 
         assertThat(response.successCount()).isEqualTo(2);
-        assertThat(response.confirmedOrderIds()).containsExactlyInAnyOrder(
-                o1.getId(), o2.getId());
+        assertThat(response.confirmedOrderIds())
+                .containsExactlyInAnyOrder(o1.getId(), o2.getId());
 
         Order confirmed = orderAdminRepository.findById(o1.getId()).orElseThrow();
         assertThat(confirmed.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
@@ -174,6 +165,7 @@ class OrderAdminServiceTest {
 
     @Test
     @DisplayName("없는 orderId → 예외 + 전체 롤백")
+        // ★ @Transactional 없음 → 예외 후 DB 조회 가능
     void confirmWithNotFoundIdThrowsException() {
         Order o1 = createPendingOrder();
 
@@ -181,7 +173,7 @@ class OrderAdminServiceTest {
                 orderAdminService.confirm(List.of(o1.getId(), 99999L))
         ).isInstanceOf(BusinessException.class);
 
-        // 롤백 확인 — o1 도 PENDING 유지
+        // ★ 새 트랜잭션으로 조회 → rollback 여부 확인
         Order notChanged = orderAdminRepository.findById(o1.getId()).orElseThrow();
         assertThat(notChanged.getStatus()).isEqualTo(OrderStatus.PENDING);
     }
@@ -195,8 +187,7 @@ class OrderAdminServiceTest {
         orderAdminRepository.saveAndFlush(cancelled);
 
         assertThatThrownBy(() ->
-                orderAdminService.confirm(
-                        List.of(pending.getId(), cancelled.getId()))
+                orderAdminService.confirm(List.of(pending.getId(), cancelled.getId()))
         ).isInstanceOf(BusinessException.class);
 
         Order notChanged = orderAdminRepository.findById(pending.getId()).orElseThrow();
@@ -215,25 +206,29 @@ class OrderAdminServiceTest {
     }
 
     @Test
+    @Transactional
     @DisplayName("정상 강제 취소 — CANCELLED + 재고 복구")
     void cancelOrderChangesStatusAndRestoresStock() {
-        int orderQuantity = 2;   // ← 명시
+        int orderQuantity = 2;
 
-        OrderItem item = OrderItem.of(testProduct, testSku, orderQuantity);
+        Product freshProduct = productRepository.findById(testProduct.getId()).orElseThrow();
+        SKU freshSku = freshProduct.getSkus().get(0);
+        int stockBefore = freshSku.getStock();
+
+        OrderItem item = OrderItem.of(freshProduct, freshSku, orderQuantity);
         Order order = Order.createForMember(1L, List.of(item));
         order = orderAdminRepository.saveAndFlush(order);
-
-        int stockBefore = testSku.getStock();   // 100
 
         orderAdminService.cancel(order.getId(), "재고 부족", "OUT_OF_STOCK");
 
         Order cancelled = orderAdminRepository.findById(order.getId()).orElseThrow();
         assertThat(cancelled.getStatus()).isEqualTo(OrderStatus.CANCELLED);
 
-        // 재고 복구 확인 (2개 주문 → 취소 시 +2)
+        entityManager.flush();  // ★ dirty 변경사항 DB에 반영
+        entityManager.clear();  // ★ 그 다음 캐시 제거
         Product updated = productRepository.findById(testProduct.getId()).orElseThrow();
         SKU updatedSku = updated.getSkus().get(0);
-        assertThat(updatedSku.getStock()).isEqualTo(stockBefore + 2);
+        assertThat(updatedSku.getStock()).isEqualTo(stockBefore + orderQuantity);
     }
 
     @Test

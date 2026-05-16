@@ -3,16 +3,19 @@ package com.team23.customer.auth.controller;
 import com.team23.customer.auth.dto.TokenPair;
 import com.team23.customer.auth.dto.TokenResponse;
 import com.team23.customer.auth.service.AuthService;
+import com.team23.customer.global.response.CommonResponse;
 import com.team23.customer.security.jwt.CookieIssuer;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "인증", description = "토큰 갱신 및 로그아웃 API")
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")
@@ -24,33 +27,33 @@ public class AuthController {
     private final AuthService authService;
     private final CookieIssuer cookieIssuer;
 
-    /**
-     * Refresh Token으로 새 토큰 쌍을 발급받는다.
-     *
-     * <p>흐름:
-     * <ol>
-     *   <li>쿠키에서 RT 추출</li>
-     *   <li>AuthService에서 RT 검증 + 새 토큰 발급 + 회전</li>
-     *   <li>새 RT는 쿠키로, 새 AT는 응답 body로</li>
-     * </ol>
-     */
+    @Operation(
+            summary = "토큰 갱신",
+            description = "Refresh Token으로 새 Access Token과 Refresh Token을 발급받는다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "토큰 갱신 성공"),
+            @ApiResponse(responseCode = "401", description = "Refresh Token 없음 또는 만료")
+    })
     @PostMapping("/refresh")
-    public ResponseEntity<TokenResponse> refresh(
+    public ResponseEntity<CommonResponse<TokenResponse>> refresh(
             @CookieValue(value = REFRESH_TOKEN_COOKIE, required = false) String refreshToken,
             HttpServletResponse response
     ) {
         TokenPair tokens = authService.refreshTokens(refreshToken);
-
         cookieIssuer.addRefreshTokenCookie(response, tokens.refreshToken());
-
-        return ResponseEntity.ok(new TokenResponse(tokens.accessToken()));
+        return ResponseEntity.ok(
+                CommonResponse.createSuccess(new TokenResponse(tokens.accessToken()))
+        );
     }
 
-    /**
-     * 로그아웃 처리.
-     *
-     * <p>RT가 없거나 이미 무효화되었어도 정상 응답 (멱등성).
-     */
+    @Operation(
+            summary = "로그아웃",
+            description = "Refresh Token을 무효화하고 쿠키를 삭제한다. RT 없어도 정상 응답 (멱등)."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "로그아웃 성공")
+    })
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             @CookieValue(value = REFRESH_TOKEN_COOKIE, required = false) String refreshToken,

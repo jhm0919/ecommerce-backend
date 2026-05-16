@@ -71,10 +71,10 @@ class SettlementControllerTest {
 
     @AfterEach
     void cleanUp() {
-        orderAdminRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        settlementRepository.deleteAll();
+        settlementRepository.deleteAll();   // 1. 정산 먼저
+        orderAdminRepository.deleteAll();   // 2. 주문
+        productRepository.deleteAll();      // 3. 상품 (SKU cascade 삭제)
+        categoryRepository.deleteAll();     // 4. 카테고리 마지막
     }
 
     private void createConfirmedOrder() {

@@ -1,12 +1,17 @@
 package com.team23.customer.order.controller;
 
 import com.team23.customer.delivery.domain.Delivery;
+import com.team23.customer.global.response.CommonResponse;
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.dto.CreateOrderRequest;
 import com.team23.customer.order.dto.OrderDetailResponse;
 import com.team23.customer.order.dto.OrderResponse;
 import com.team23.customer.order.service.OrderService;
 import com.team23.customer.security.jwt.AuthPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "주문", description = "회원/비회원 주문 API")
 @Slf4j
 @RestController
 @RequestMapping("/api/orders")
@@ -28,87 +34,105 @@ public class OrderController {
     // 회원용 API
     // ─────────────────────────────────────
 
-    /**
-     * 회원 주문 생성.
-     */
+    @Operation(summary = "회원 주문 생성", description = "로그인한 회원의 주문을 생성한다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "주문 생성 성공"),
+            @ApiResponse(responseCode = "400", description = "재고 부족 / 입력값 오류"),
+            @ApiResponse(responseCode = "404", description = "상품 또는 SKU 없음")
+    })
     @PostMapping("/me")
-    public ResponseEntity<OrderDetailResponse> createMemberOrder(
+    public ResponseEntity<CommonResponse<OrderDetailResponse>> createMemberOrder(
             @AuthenticationPrincipal AuthPrincipal principal,
             @Valid @RequestBody CreateOrderRequest request
     ) {
         Order order = orderService.createMemberOrder(principal.memberId(), request);
         Delivery delivery = orderService.findDeliveryByOrderId(order.getId());
-
         return ResponseEntity.status(201)
-                .body(OrderDetailResponse.from(order, delivery));
+                .body(CommonResponse.createSuccess(OrderDetailResponse.from(order, delivery)));
     }
 
-    /**
-     * 내 주문 목록.
-     */
+    @Operation(summary = "내 주문 목록", description = "로그인한 회원의 주문 목록을 조회한다.")
+    @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping("/me")
-    public ResponseEntity<Page<OrderResponse>> getMyOrders(
+    public ResponseEntity<CommonResponse<Page<OrderResponse>>> getMyOrders(
             @AuthenticationPrincipal AuthPrincipal principal,
             Pageable pageable
     ) {
         Page<Order> orders = orderService.findMyOrders(principal.memberId(), pageable);
-        return ResponseEntity.ok(orders.map(OrderResponse::from));
+        return ResponseEntity.ok(
+                CommonResponse.createSuccess(orders.map(OrderResponse::from))
+        );
     }
 
-    /**
-     * 내 주문 상세.
-     */
+    @Operation(summary = "내 주문 상세", description = "로그인한 회원의 주문 상세를 조회한다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "주문 없음")
+    })
     @GetMapping("/me/{orderId}")
-    public ResponseEntity<OrderDetailResponse> getMyOrderDetail(
+    public ResponseEntity<CommonResponse<OrderDetailResponse>> getMyOrderDetail(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long orderId
     ) {
         Order order = orderService.findMyOrder(principal.memberId(), orderId);
         Delivery delivery = orderService.findDeliveryByOrderId(order.getId());
-        return ResponseEntity.ok(OrderDetailResponse.from(order, delivery));
+        return ResponseEntity.ok(
+                CommonResponse.createSuccess(OrderDetailResponse.from(order, delivery))
+        );
     }
 
-    /**
-     * 내 주문 취소.
-     */
+    @Operation(summary = "내 주문 취소", description = "PENDING 상태의 주문만 취소 가능.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "취소 성공"),
+            @ApiResponse(responseCode = "400", description = "취소 불가 상태"),
+            @ApiResponse(responseCode = "404", description = "주문 없음")
+    })
     @PostMapping("/me/{orderId}/cancel")
-    public ResponseEntity<OrderDetailResponse> cancelMyOrder(
+    public ResponseEntity<CommonResponse<OrderDetailResponse>> cancelMyOrder(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long orderId
     ) {
         Order order = orderService.cancelMyOrder(principal.memberId(), orderId);
         Delivery delivery = orderService.findDeliveryByOrderId(order.getId());
-        return ResponseEntity.ok(OrderDetailResponse.from(order, delivery));
+        return ResponseEntity.ok(
+                CommonResponse.createSuccess(OrderDetailResponse.from(order, delivery))
+        );
     }
 
     // ─────────────────────────────────────
     // 비회원용 API
     // ─────────────────────────────────────
 
-    /**
-     * 비회원 주문 생성.
-     */
+    @Operation(summary = "비회원 주문 생성", description = "비회원 주문을 생성한다. 이메일과 전화번호 필수.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "주문 생성 성공"),
+            @ApiResponse(responseCode = "400", description = "재고 부족 / 입력값 오류"),
+            @ApiResponse(responseCode = "404", description = "상품 또는 SKU 없음")
+    })
     @PostMapping("/guest")
-    public ResponseEntity<OrderDetailResponse> createGuestOrder(
+    public ResponseEntity<CommonResponse<OrderDetailResponse>> createGuestOrder(
             @Valid @RequestBody CreateOrderRequest request
     ) {
         Order order = orderService.createGuestOrder(request);
         Delivery delivery = orderService.findDeliveryByOrderId(order.getId());
-
         return ResponseEntity.status(201)
-                .body(OrderDetailResponse.from(order, delivery));
+                .body(CommonResponse.createSuccess(OrderDetailResponse.from(order, delivery)));
     }
 
-    /**
-     * 비회원 주문 조회 (주문번호 + 연락처).
-     */
+    @Operation(summary = "비회원 주문 조회", description = "주문번호 + 연락처(이메일 또는 전화번호)로 조회.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "주문 없음 또는 연락처 불일치")
+    })
     @GetMapping("/guest")
-    public ResponseEntity<OrderDetailResponse> getGuestOrder(
+    public ResponseEntity<CommonResponse<OrderDetailResponse>> getGuestOrder(
             @RequestParam String orderNumber,
             @RequestParam String contact
     ) {
         Order order = orderService.findGuestOrder(orderNumber, contact);
         Delivery delivery = orderService.findDeliveryByOrderId(order.getId());
-        return ResponseEntity.ok(OrderDetailResponse.from(order, delivery));
+        return ResponseEntity.ok(
+                CommonResponse.createSuccess(OrderDetailResponse.from(order, delivery))
+        );
     }
 }

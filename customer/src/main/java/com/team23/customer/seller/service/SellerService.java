@@ -24,11 +24,18 @@ public class SellerService {
         Seller seller = sellerRepository.findById(sellerId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SELLER_NOT_FOUND) {});
 
-        seller.changeLoginId(newLoginId);  // 도메인 안에서 동일 ID 검증
+        // ① 동일 ID (메모리, entity 변경 없음)
+        if (seller.getLoginId().equals(newLoginId)) {
+            throw new BusinessException(ErrorCode.SAME_AS_CURRENT_LOGIN_ID) {};
+        }
 
+        // ② DB 중복 체크 (entity 변경 전 → auto-flush 없음)
         if (sellerRepository.existsByLoginId(newLoginId)) {
             throw new BusinessException(ErrorCode.DUPLICATE_LOGIN_ID) {};
         }
+
+        // ③ 변경 (검증 끝난 후)
+        seller.changeLoginId(newLoginId);
     }
 
     // ───── 비밀번호 변경 ─────
