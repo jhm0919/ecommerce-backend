@@ -1,13 +1,13 @@
 package com.team23.customer.order.controller;
 
 import com.team23.customer.delivery.domain.Delivery;
-import com.team23.customer.global.response.CommonResponse;
+import com.team23.common.response.CommonResponse;
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.dto.CreateOrderRequest;
 import com.team23.customer.order.dto.OrderDetailResponse;
 import com.team23.customer.order.dto.OrderResponse;
 import com.team23.customer.order.service.OrderService;
-import com.team23.customer.security.jwt.AuthPrincipal;
+import com.team23.common.security.jwt.AuthPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

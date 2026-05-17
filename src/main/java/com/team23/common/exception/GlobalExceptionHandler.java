@@ -1,9 +1,6 @@
-package com.team23.customer.global.exeption;  // 사용자의 현재 구조 따름
+package com.team23.common.exception;  // 사용자의 현재 구조 따름
 
-import com.team23.customer.global.response.CommonResponse;
-import com.team23.customer.member.dto.ErrorResponse;
-import com.team23.customer.member.exception.BusinessException;
-import com.team23.customer.member.exception.ErrorCode;
+import com.team23.common.response.CommonResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

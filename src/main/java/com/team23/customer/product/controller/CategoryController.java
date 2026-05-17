@@ -1,6 +1,6 @@
 package com.team23.customer.product.controller;
 
-import com.team23.customer.global.response.CommonResponse;
+import com.team23.common.response.CommonResponse;
 import com.team23.customer.product.dto.CategoryResponse;
 import com.team23.customer.product.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;

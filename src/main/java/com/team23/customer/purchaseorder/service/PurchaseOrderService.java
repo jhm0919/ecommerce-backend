@@ -1,13 +1,12 @@
 package com.team23.customer.purchaseorder.service;
 
-import com.team23.customer.member.exception.ErrorCode;
+import com.team23.common.exception.ErrorCode;
 import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.ProductStatus;
 import com.team23.customer.product.domain.SKU;
 import com.team23.customer.product.repository.SkuRepository;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
 import com.team23.customer.purchaseorder.domain.PurchaseOrderStatus;
-import com.team23.customer.purchaseorder.dto.CreatePurchaseOrderRequest;
 import com.team23.customer.purchaseorder.dto.PurchaseOrderListResponse;
 import com.team23.customer.purchaseorder.exception.PurchaseOrderException;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;

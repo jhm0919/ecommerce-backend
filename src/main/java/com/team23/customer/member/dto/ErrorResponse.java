@@ -1,6 +1,6 @@
 package com.team23.customer.member.dto;  // 사용자의 현재 구조 따름
 
-import com.team23.customer.member.exception.ErrorCode;
+import com.team23.common.exception.ErrorCode;
 
 import java.time.LocalDateTime;
 

@@ -1,7 +1,7 @@
 package com.team23.customer.product.exception;
 
-import com.team23.customer.member.exception.BusinessException;
-import com.team23.customer.member.exception.ErrorCode;
+import com.team23.common.exception.BusinessException;
+import com.team23.common.exception.ErrorCode;
 
 /**
  * 존재하지 않는 카테고리 ID로 조회/참조 시 발생.

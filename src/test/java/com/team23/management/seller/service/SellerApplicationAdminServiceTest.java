@@ -1,6 +1,6 @@
 package com.team23.management.seller.service;
 
-import com.team23.customer.member.exception.BusinessException;
+import com.team23.common.exception.BusinessException;
 import com.team23.customer.seller.domain.ApplicationStatus;
 import com.team23.customer.seller.domain.Seller;
 import com.team23.customer.seller.domain.SellerApplication;

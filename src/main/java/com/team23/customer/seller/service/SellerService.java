@@ -1,7 +1,7 @@
 package com.team23.customer.seller.service;
 
-import com.team23.customer.member.exception.BusinessException;
-import com.team23.customer.member.exception.ErrorCode;
+import com.team23.common.exception.BusinessException;
+import com.team23.common.exception.ErrorCode;
 import com.team23.customer.seller.domain.Seller;
 import com.team23.customer.seller.dto.ChangePasswordRequest;
 import com.team23.customer.seller.dto.UpdateProfileRequest;

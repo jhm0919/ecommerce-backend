@@ -1,6 +1,6 @@
 package com.team23.customer.settlement.controller;
 
-import com.team23.customer.global.response.CommonResponse;
+import com.team23.common.response.CommonResponse;
 import com.team23.customer.settlement.dto.SettlementConfirmRequest;
 import com.team23.customer.settlement.dto.SettlementConfirmResponse;
 import com.team23.customer.settlement.dto.SettlementSummaryResponse;

@@ -1,6 +1,6 @@
 package com.team23.management.seller.controller;
 
-import com.team23.customer.global.response.CommonResponse;
+import com.team23.common.response.CommonResponse;
 import com.team23.customer.seller.domain.ApplicationStatus;
 import com.team23.management.seller.dto.RejectApplicationRequest;
 import com.team23.management.seller.service.SellerApplicationAdminService;

@@ -1,6 +1,6 @@
 package com.team23.customer.product.controller;
 
-import com.team23.customer.global.response.CommonResponse;
+import com.team23.common.response.CommonResponse;
 import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.SKU;
 import com.team23.customer.product.domain.SkuOption;

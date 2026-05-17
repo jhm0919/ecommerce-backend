@@ -1,4 +1,4 @@
-package com.team23.customer.security.oauth;
+package com.team23.common.security.oauth;
 
 
 import com.team23.customer.auth.dto.TokenPair;
@@ -7,7 +7,7 @@ import com.team23.customer.member.domain.AuthProvider;
 import com.team23.customer.member.domain.Member;
 import com.team23.customer.member.exception.MemberNotFoundException;
 import com.team23.customer.member.repository.MemberRepository;
-import com.team23.customer.security.jwt.CookieIssuer;
+import com.team23.common.security.jwt.CookieIssuer;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

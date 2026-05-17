@@ -1,6 +1,6 @@
-package com.team23.customer.security.jwt;
+package com.team23.common.security.jwt;
 
-import com.team23.customer.config.JwtProperties;
+import com.team23.common.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;

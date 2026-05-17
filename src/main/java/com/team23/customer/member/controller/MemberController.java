@@ -1,10 +1,10 @@
 package com.team23.customer.member.controller;
 
-import com.team23.customer.global.response.CommonResponse;
+import com.team23.common.response.CommonResponse;
 import com.team23.customer.member.dto.MemberInfo;
 import com.team23.customer.member.dto.MemberResponse;
 import com.team23.customer.member.service.MemberService;
-import com.team23.customer.security.jwt.AuthPrincipal;
+import com.team23.common.security.jwt.AuthPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

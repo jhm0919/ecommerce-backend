@@ -1,12 +1,11 @@
 package com.team23.customer.seller.service;
 
-import com.team23.customer.member.exception.BusinessException;
+import com.team23.common.exception.BusinessException;
 import com.team23.customer.seller.domain.ApplicationStatus;
 import com.team23.customer.seller.domain.SellerApplication;
 import com.team23.customer.seller.dto.SellerApplicationRequest;
 import com.team23.customer.seller.dto.SellerApplicationResponse;
 import com.team23.customer.seller.repository.SellerApplicationRepository;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +15,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class SellerApplicationServiceTest {

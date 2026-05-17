@@ -1,7 +1,7 @@
 package com.team23.customer.order.service;
 
-import com.team23.customer.member.exception.BusinessException;
-import com.team23.customer.member.exception.ErrorCode;
+import com.team23.common.exception.BusinessException;
+import com.team23.common.exception.ErrorCode;
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.domain.OrderAdmin;
 import com.team23.customer.order.domain.OrderItem;
@@ -11,7 +11,6 @@ import com.team23.customer.order.dto.OrderAdminConfirmResponse;
 import com.team23.customer.order.dto.OrderAdminListResponse;
 import com.team23.customer.order.repository.OrderAdminRepository;
 import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.domain.SKU;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.product.repository.SkuRepository;

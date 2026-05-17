@@ -1,6 +1,6 @@
 package com.team23.customer.stockhistory.controller;
 
-import com.team23.customer.global.response.CommonResponse;
+import com.team23.common.response.CommonResponse;
 import com.team23.customer.stockhistory.domain.StockChangeType;
 import com.team23.customer.stockhistory.dto.StockHistoryResponse;
 import com.team23.customer.stockhistory.service.StockHistoryService;

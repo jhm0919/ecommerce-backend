@@ -1,4 +1,4 @@
-package com.team23.customer.security.oauth;
+package com.team23.common.security.oauth;
 
 
 import com.team23.customer.member.domain.AuthProvider;

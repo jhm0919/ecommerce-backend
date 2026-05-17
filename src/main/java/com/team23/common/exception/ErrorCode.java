@@ -1,4 +1,4 @@
-package com.team23.customer.member.exception;
+package com.team23.common.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

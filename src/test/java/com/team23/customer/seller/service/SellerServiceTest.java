@@ -1,7 +1,7 @@
 package com.team23.customer.seller.service;
 
 import com.team23.customer.auth.repository.RefreshTokenRepository;
-import com.team23.customer.member.exception.BusinessException;
+import com.team23.common.exception.BusinessException;
 import com.team23.customer.seller.domain.Seller;
 import com.team23.customer.seller.dto.ChangePasswordRequest;
 import com.team23.customer.seller.dto.UpdateProfileRequest;
@@ -16,7 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class SellerServiceTest {
