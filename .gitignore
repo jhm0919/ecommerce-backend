@@ -1,14 +1,15 @@
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
 # Compiled class file
 *.class
 
 # Log file
 *.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
 
 # Package Files #
 *.jar
@@ -19,16 +20,9 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# virtual machine crash logs
 hs_err_pid*
 replay_pid*
-
-# Gradle build
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
 
 ### STS ###
 .apt_generated
@@ -44,6 +38,7 @@ bin/
 
 ### IntelliJ IDEA ###
 .idea
+.ai
 *.iws
 *.iml
 *.ipr
@@ -60,3 +55,5 @@ out/
 
 ### VS Code ###
 .vscode/
+
+.env
