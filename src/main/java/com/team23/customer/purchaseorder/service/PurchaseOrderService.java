@@ -1,6 +1,6 @@
 package com.team23.customer.purchaseorder.service;
 
-import com.team23.global.exception.ErrorCode;
+import com.team23.common.exception.ErrorCode;
 import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.ProductStatus;
 import com.team23.customer.product.domain.SKU;

@@ -1,7 +1,7 @@
 package com.team23.customer.member.exception;
 
-import com.team23.global.exception.BusinessException;
-import com.team23.global.exception.ErrorCode;
+import com.team23.common.exception.BusinessException;
+import com.team23.common.exception.ErrorCode;
 
 public class MemberNotFoundException extends BusinessException {
     public MemberNotFoundException(String providerSub) {

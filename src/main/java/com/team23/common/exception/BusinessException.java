@@ -1,4 +1,4 @@
-package com.team23.global.exception;
+package com.team23.common.exception;
 
 import lombok.Getter;
 

@@ -1,7 +1,7 @@
 package com.team23.customer.order.exception;
 
-import com.team23.global.exception.BusinessException;
-import com.team23.global.exception.ErrorCode;
+import com.team23.common.exception.BusinessException;
+import com.team23.common.exception.ErrorCode;
 
 /**
  * 주문 접근 권한 없음.

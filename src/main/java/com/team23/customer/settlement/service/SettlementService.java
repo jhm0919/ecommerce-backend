@@ -1,7 +1,7 @@
 package com.team23.customer.settlement.service;
 
-import com.team23.global.exception.BusinessException;
-import com.team23.global.exception.ErrorCode;
+import com.team23.common.exception.BusinessException;
+import com.team23.common.exception.ErrorCode;
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.domain.OrderStatus;
 import com.team23.customer.order.repository.OrderAdminRepository;

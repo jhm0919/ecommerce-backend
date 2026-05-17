@@ -1,6 +1,6 @@
 package com.team23.customer.stats.controller;
 
-import com.team23.global.response.CommonResponse;
+import com.team23.common.response.CommonResponse;
 import com.team23.customer.stats.dto.SalesStatsResponse;
 import com.team23.customer.stats.service.SalesStatsService;
 import io.swagger.v3.oas.annotations.Operation;

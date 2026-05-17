@@ -1,7 +1,7 @@
 package com.team23.customer.order.domain;
 
-import com.team23.global.exception.BusinessException;
-import com.team23.global.exception.ErrorCode;
+import com.team23.common.exception.BusinessException;
+import com.team23.common.exception.ErrorCode;
 
 public class OrderAdmin {
 

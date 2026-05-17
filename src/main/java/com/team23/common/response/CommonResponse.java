@@ -1,4 +1,4 @@
-package com.team23.global.response;
+package com.team23.common.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

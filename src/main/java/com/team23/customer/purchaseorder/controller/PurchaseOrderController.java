@@ -1,6 +1,6 @@
 package com.team23.customer.purchaseorder.controller;
 
-import com.team23.global.response.CommonResponse;
+import com.team23.common.response.CommonResponse;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
 import com.team23.customer.purchaseorder.domain.PurchaseOrderStatus;
 import com.team23.customer.purchaseorder.dto.CreatePurchaseOrderRequest;

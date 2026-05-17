@@ -1,6 +1,6 @@
-package com.team23.global.exception;  // 사용자의 현재 구조 따름
+package com.team23.common.exception;  // 사용자의 현재 구조 따름
 
-import com.team23.global.response.CommonResponse;
+import com.team23.common.response.CommonResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

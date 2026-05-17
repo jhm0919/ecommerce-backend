@@ -2,8 +2,8 @@ package com.team23.customer.seller.service;
 
 import com.team23.customer.auth.dto.TokenPair;
 import com.team23.customer.auth.service.AuthService;
-import com.team23.global.exception.BusinessException;
-import com.team23.global.exception.ErrorCode;
+import com.team23.common.exception.BusinessException;
+import com.team23.common.exception.ErrorCode;
 import com.team23.customer.seller.domain.Seller;
 import com.team23.customer.seller.domain.SellerStatus;
 import com.team23.customer.seller.repository.SellerRepository;
