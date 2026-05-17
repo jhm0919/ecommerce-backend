@@ -1,0 +1,93 @@
+language: "ko-KR"
+tone_instructions: "간결하고 단호하게, 운영 장애 가능성과 보안 리스크를 우선 지적한다. 학습자가 이해할 수 있도록 지적한 사유와 권장 대안을 함께 제시한다."
+
+reviews:
+  profile: "assertive"
+  high_level_summary: true
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: false
+    ignore_title_keywords:
+      - "WIP"
+      - "draft"
+
+  path_filters:
+    - "!build/**"
+    - "!.gradle/**"
+    - "!**/generated/**"
+    - "!gradle/**"
+    - "!**/*.lock"
+    - "src/main/**"
+    - "src/test/**"
+
+  path_instructions:
+    - path: "src/main/java/**/controller/**"
+      instructions: |
+        - 인증/인가 누락을 최우선으로 확인한다.
+        - @Valid 누락, request DTO validation, pagination, idempotency 누락을 지적한다.
+        - API 응답 스펙(CommonResponse 형식)이 기존 클라이언트와 깨지지 않는지 확인한다.
+        - @AuthenticationPrincipal AuthPrincipal 로 받는지, sellerId/memberId 혼동 없는지 확인한다.
+
+    - path: "src/main/java/**/service/**"
+      instructions: |
+        - @Transactional 경계가 적절한지, readOnly 누락이 없는지 확인한다.
+        - 동시성, 중복 처리, 재시도 시 부작용을 집중 리뷰한다.
+        - 외부 API 호출 실패, timeout, rollback 처리를 확인한다.
+        - BusinessException 던질 때 적절한 ErrorCode 사용하는지 확인한다.
+
+    - path: "src/main/java/**/repository/**"
+      instructions: |
+        - N+1 query 가능성을 지적한다. Fetch Join, EntityGraph, IN 절 활용 여부 확인.
+        - @Query JPQL 사용 시 SQL injection 가능성과 파라미터 바인딩을 확인한다.
+        - pagination과 정렬 기준의 안정성을 확인한다.
+        - findAll() 의 무분별한 사용을 지적한다.
+
+    - path: "src/main/java/**/domain/**"
+      instructions: |
+        - 도메인 캡슐화를 확인한다. public setter 남발, 무분별한 @Setter 사용을 지적한다.
+        - 상태 변경 로직이 도메인 안에 있는지(Tell, Don't Ask 원칙) 확인한다.
+        - 정적 팩토리 메서드의 인자 누락이나 일관성을 확인한다.
+        - JPA 양방향 연관관계의 편의 메서드, equals/hashCode 함정을 확인한다.
+
+    - path: "src/main/java/**/dto/**"
+      instructions: |
+        - record 사용 권장. 불필요한 가변 필드를 지적한다.
+        - @NotNull, @NotBlank, @Email, @Pattern, @Size 등 validation 어노테이션 누락을 확인한다.
+        - 응답 DTO에 민감 정보(password, 내부 ID, 토큰 등) 노출되지 않는지 확인한다.
+
+    - path: "src/main/java/com/team23/common/security/**"
+      instructions: |
+        - 토큰 검증, 권한 체크, refresh flow, 민감정보 노출을 집중 리뷰한다.
+        - 로그에 credential, token, PII가 남지 않는지 확인한다.
+        - SecurityConfig 의 requestMatchers 순서와 permitAll/hasRole 사용을 확인한다.
+        - JWT claim 추출 시 타입 변환 안전성, null 처리 확인.
+
+    - path: "src/main/java/com/team23/common/**"
+      instructions: |
+        - 공통 인프라 변경은 모든 도메인에 영향을 미친다. 영향 범위를 반드시 확인한다.
+        - ErrorCode 추가 시 HTTP status, 코드 prefix, 메시지 일관성을 확인한다.
+        - GlobalExceptionHandler 변경 시 기존 예외 처리 흐름과의 호환성을 확인한다.
+
+    - path: "src/test/java/**"
+      instructions: |
+        - happy path 외 실패 케이스, 경계값, 권한 실패, 동시성 케이스가 있는지 확인한다.
+        - @BeforeEach 에서 repository.deleteAll() 로 테스트 격리가 보장되는지 확인한다.
+        - @DisplayName 의 한글 설명이 명확한지, camelCase 메서드명 컨벤션을 따르는지 확인한다.
+        - mock 이 실제 장애 상황을 충분히 반영하는지 확인한다.
+
+    - path: "**/application*.{yaml,yml,properties}"
+      instructions: |
+        - credentials, API key, secret 이 평문으로 노출되지 않는지 확인한다.
+        - 환경 변수 참조 (${VAR}) 누락이나 default 값의 보안 영향을 확인한다.
+        - profile 별 설정 분리가 적절한지 확인한다.
+
+    - path: "**/build.gradle*"
+      instructions: |
+        - 의존성 추가 시 보안 취약점, 라이센스, 버전 충돌 가능성을 확인한다.
+        - Spring Boot starter 외 외부 라이브러리는 신뢰성을 확인한다.
+
+    - path: "**/.env*"
+      instructions: |
+        - .env 파일이 .gitignore 에 포함되어 있는지 반드시 확인한다.
+        - 실제 credentials 가 커밋된 경우 즉시 지적한다.
