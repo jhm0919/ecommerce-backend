@@ -1,4 +1,4 @@
-package com.team23.customer.config;
+package com.team23.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
