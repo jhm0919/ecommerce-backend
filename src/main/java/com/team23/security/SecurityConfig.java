@@ -1,8 +1,8 @@
-package com.team23.customer.security;
+package com.team23.security;
 
 import com.team23.config.CorsProperties;
-import com.team23.customer.security.jwt.JwtAuthenticationFilter;
-import com.team23.customer.security.oauth.OAuth2LoginSuccessHandler;
+import com.team23.security.jwt.JwtAuthenticationFilter;
+import com.team23.security.oauth.OAuth2LoginSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

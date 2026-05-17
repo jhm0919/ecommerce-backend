@@ -8,7 +8,7 @@ import com.team23.customer.auth.exception.InvalidRefreshTokenException;
 import com.team23.customer.auth.repository.RefreshTokenRepository;
 import com.team23.customer.member.domain.Member;
 import com.team23.customer.member.repository.MemberRepository;
-import com.team23.customer.security.jwt.JwtProvider;
+import com.team23.security.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

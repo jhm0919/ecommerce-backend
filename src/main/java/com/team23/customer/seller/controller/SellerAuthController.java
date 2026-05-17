@@ -2,7 +2,7 @@ package com.team23.customer.seller.controller;
 
 import com.team23.customer.auth.dto.TokenPair;
 import com.team23.global.response.CommonResponse;
-import com.team23.customer.security.jwt.CookieIssuer;
+import com.team23.security.jwt.CookieIssuer;
 import com.team23.customer.seller.dto.SellerLoginRequest;
 import com.team23.customer.seller.dto.SellerLoginResponse;
 import com.team23.customer.seller.repository.SellerRepository;
