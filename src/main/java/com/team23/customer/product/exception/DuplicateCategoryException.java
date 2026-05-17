@@ -1,7 +1,7 @@
 package com.team23.customer.product.exception;
 
-import com.team23.customer.member.exception.BusinessException;
-import com.team23.customer.member.exception.ErrorCode;
+import com.team23.global.exception.BusinessException;
+import com.team23.global.exception.ErrorCode;
 
 /**
  * 이미 존재하는 이름 또는 slug로 카테고리를 등록하려 할 때 발생.

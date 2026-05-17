@@ -1,6 +1,6 @@
 package com.team23.customer.order.service;
 
-import com.team23.customer.member.exception.BusinessException;
+import com.team23.global.exception.BusinessException;
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.domain.OrderItem;
 import com.team23.customer.order.domain.OrderStatus;

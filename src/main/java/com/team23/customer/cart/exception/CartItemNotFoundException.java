@@ -1,8 +1,8 @@
 // CartItemNotFoundException.java
 package com.team23.customer.cart.exception;
 
-import com.team23.customer.member.exception.BusinessException;
-import com.team23.customer.member.exception.ErrorCode;
+import com.team23.global.exception.BusinessException;
+import com.team23.global.exception.ErrorCode;
 
 public class CartItemNotFoundException extends BusinessException {
 

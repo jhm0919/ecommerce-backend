@@ -1,6 +1,6 @@
 package com.team23.customer.settlement.service;
 
-import com.team23.customer.member.exception.BusinessException;
+import com.team23.global.exception.BusinessException;
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.domain.OrderAdmin;
 import com.team23.customer.order.domain.OrderItem;
@@ -26,7 +26,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class SettlementServiceTest {

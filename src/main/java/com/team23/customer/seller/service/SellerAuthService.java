@@ -2,15 +2,14 @@ package com.team23.customer.seller.service;
 
 import com.team23.customer.auth.dto.TokenPair;
 import com.team23.customer.auth.service.AuthService;
-import com.team23.customer.member.exception.BusinessException;
-import com.team23.customer.member.exception.ErrorCode;
+import com.team23.global.exception.BusinessException;
+import com.team23.global.exception.ErrorCode;
 import com.team23.customer.seller.domain.Seller;
 import com.team23.customer.seller.domain.SellerStatus;
 import com.team23.customer.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
