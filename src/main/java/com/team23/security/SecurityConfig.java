@@ -1,6 +1,6 @@
 package com.team23.security;
 
-import com.team23.config.CorsProperties;
+import com.team23.common.config.CorsProperties;
 import com.team23.security.jwt.JwtAuthenticationFilter;
 import com.team23.security.oauth.OAuth2LoginSuccessHandler;
 import lombok.RequiredArgsConstructor;

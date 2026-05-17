@@ -1,6 +1,6 @@
 package com.team23.security.jwt;
 
-import com.team23.config.CookieProperties;
+import com.team23.common.config.CookieProperties;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;

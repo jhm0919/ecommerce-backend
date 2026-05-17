@@ -1,4 +1,4 @@
-package com.team23.config;
+package com.team23.common.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
