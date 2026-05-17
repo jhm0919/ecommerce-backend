@@ -1,6 +1,6 @@
 package com.team23.customer.seller.controller;
 
-import com.team23.customer.global.response.CommonResponse;
+import com.team23.global.response.CommonResponse;
 import com.team23.customer.security.jwt.AuthPrincipal;
 import com.team23.customer.seller.dto.ChangeLoginIdRequest;
 import com.team23.customer.seller.dto.ChangePasswordRequest;

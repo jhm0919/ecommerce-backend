@@ -1,6 +1,6 @@
 package com.team23.customer.notification.controller;
 
-import com.team23.customer.global.response.CommonResponse;
+import com.team23.global.response.CommonResponse;
 import com.team23.customer.notification.dto.NotificationResponse;
 import com.team23.customer.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;

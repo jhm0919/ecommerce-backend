@@ -1,7 +1,6 @@
-package com.team23.customer.global.exeption;  // 사용자의 현재 구조 따름
+package com.team23.global.exception;  // 사용자의 현재 구조 따름
 
-import com.team23.customer.global.response.CommonResponse;
-import com.team23.customer.member.dto.ErrorResponse;
+import com.team23.global.response.CommonResponse;
 import com.team23.customer.member.exception.BusinessException;
 import com.team23.customer.member.exception.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;

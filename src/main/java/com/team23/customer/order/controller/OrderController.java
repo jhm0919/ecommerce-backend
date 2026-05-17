@@ -1,7 +1,7 @@
 package com.team23.customer.order.controller;
 
 import com.team23.customer.delivery.domain.Delivery;
-import com.team23.customer.global.response.CommonResponse;
+import com.team23.global.response.CommonResponse;
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.dto.CreateOrderRequest;
 import com.team23.customer.order.dto.OrderDetailResponse;

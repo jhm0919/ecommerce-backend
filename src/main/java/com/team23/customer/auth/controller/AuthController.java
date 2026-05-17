@@ -3,7 +3,7 @@ package com.team23.customer.auth.controller;
 import com.team23.customer.auth.dto.TokenPair;
 import com.team23.customer.auth.dto.TokenResponse;
 import com.team23.customer.auth.service.AuthService;
-import com.team23.customer.global.response.CommonResponse;
+import com.team23.global.response.CommonResponse;
 import com.team23.customer.security.jwt.CookieIssuer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
