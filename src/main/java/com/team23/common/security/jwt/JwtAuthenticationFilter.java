@@ -1,4 +1,4 @@
-package com.team23.security.jwt;
+package com.team23.common.security.jwt;
 
 import com.team23.customer.member.domain.MemberRole;
 import io.jsonwebtoken.Claims;

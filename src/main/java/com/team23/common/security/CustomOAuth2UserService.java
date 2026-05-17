@@ -1,9 +1,9 @@
-package com.team23.security;
+package com.team23.common.security;
 
 import com.team23.customer.member.dto.OAuthUserInfo;
 import com.team23.customer.member.service.MemberService;
-import com.team23.security.oauth.KakaoUserInfoMapper;
-import com.team23.security.oauth.NaverUserInfoMapper;
+import com.team23.common.security.oauth.KakaoUserInfoMapper;
+import com.team23.common.security.oauth.NaverUserInfoMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;

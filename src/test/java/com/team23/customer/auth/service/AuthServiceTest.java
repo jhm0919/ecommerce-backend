@@ -8,7 +8,7 @@ import com.team23.customer.auth.repository.RefreshTokenRepository;
 import com.team23.customer.member.domain.AuthProvider;
 import com.team23.customer.member.domain.Member;
 import com.team23.customer.member.repository.MemberRepository;
-import com.team23.security.jwt.JwtProvider;
+import com.team23.common.security.jwt.JwtProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

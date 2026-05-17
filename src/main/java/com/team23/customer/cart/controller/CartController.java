@@ -5,7 +5,7 @@ import com.team23.customer.cart.dto.CartResponse;
 import com.team23.customer.cart.dto.UpdateCartItemRequest;
 import com.team23.customer.cart.service.CartService;
 import com.team23.common.response.CommonResponse;
-import com.team23.security.jwt.AuthPrincipal;
+import com.team23.common.security.jwt.AuthPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

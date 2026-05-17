@@ -1,4 +1,4 @@
-package com.team23.security.jwt;
+package com.team23.common.security.jwt;
 
 import com.team23.common.config.JwtProperties;
 import io.jsonwebtoken.Claims;

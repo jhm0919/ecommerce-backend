@@ -1,8 +1,8 @@
-package com.team23.security;
+package com.team23.common.security;
 
 import com.team23.customer.member.dto.OAuthUserInfo;
 import com.team23.customer.member.service.MemberService;
-import com.team23.security.oauth.GoogleUserInfoMapper;
+import com.team23.common.security.oauth.GoogleUserInfoMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
