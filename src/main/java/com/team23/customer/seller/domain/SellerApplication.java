@@ -1,5 +1,7 @@
 package com.team23.customer.seller.domain;
 
+import com.team23.customer.member.exception.BusinessException;
+import com.team23.customer.member.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -88,5 +90,23 @@ public class SellerApplication {
         app.mobileNumber = mobileNumber;
         app.status = ApplicationStatus.PENDING;
         return app;
+    }
+
+    // ─────────────────────────────────────
+    // 비즈니스 메서드 (어드민 처리)
+    // ─────────────────────────────────────
+
+    public void approve() {
+        if (this.status != ApplicationStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_APPLICATION_STATUS) {};
+        }
+        this.status = ApplicationStatus.APPROVED;
+    }
+
+    public void reject() {
+        if (this.status != ApplicationStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_APPLICATION_STATUS) {};
+        }
+        this.status = ApplicationStatus.REJECTED;
     }
 }
