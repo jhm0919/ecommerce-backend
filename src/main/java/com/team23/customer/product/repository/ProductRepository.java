@@ -52,6 +52,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             """)
     Optional<Product> findByIdWithCategory(@Param("id") Long id);
 
-
-
+    boolean existsByCategoryId(Long categoryId);
 }

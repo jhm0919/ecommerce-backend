@@ -1,13 +1,17 @@
 package com.team23.customer.product.service;
 
+import com.team23.common.exception.BusinessException;
+import com.team23.common.exception.ErrorCode;
 import com.team23.customer.product.domain.Category;
 import com.team23.customer.product.dto.CategoryCreateRequest;
 import com.team23.customer.product.dto.CategoryUpdateRequest;
 import com.team23.customer.product.exception.CategoryNotFoundException;
 import com.team23.customer.product.exception.DuplicateCategoryException;
 import com.team23.customer.product.repository.CategoryRepository;
+import com.team23.customer.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CategoryAdminService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
 
     /**
      * 새 카테고리를 등록한다.
@@ -54,5 +59,24 @@ public class CategoryAdminService {
 
         log.info("Category updated: id={}", categoryId);
         return category;
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new CategoryNotFoundException(id));
+
+        // 상품이 존재하면 삭제 불가
+        if (productRepository.existsByCategoryId(id)) {
+            throw new BusinessException(ErrorCode.CATEGORY_HAS_PRODUCTS) {};
+        }
+
+        try {
+            categoryRepository.delete(category);
+            categoryRepository.flush(); // FK 위반을 트랜잭션 내부에서 즉시 감지
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(ErrorCode.CATEGORY_HAS_PRODUCTS) {};
+        }
+        log.info("Category deleted: id={}, name={}", id, category.getName());
     }
 }

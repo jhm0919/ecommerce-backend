@@ -53,4 +53,16 @@ public class CategoryAdminController {
                 CommonResponse.createSuccess(CategoryResponse.from(category))
         );
     }
+
+    @Operation(summary = "카테고리 삭제", description = "카테고리를 삭제한다. 상품이 존재하면 삭제 불가.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "삭제 성공"),
+            @ApiResponse(responseCode = "400", description = "상품이 존재하는 카테고리"),
+            @ApiResponse(responseCode = "404", description = "카테고리 없음")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        categoryAdminService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }
