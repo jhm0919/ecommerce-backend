@@ -377,4 +377,45 @@ class BannerAdminServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).bannerId()).isEqualTo(bannerScheduledId);
     }
+
+    @Test
+    @DisplayName("정상 삭제 - DB 에서 제거됨")
+    void deleteSuccess_removesFromDb() {
+        Long bannerId = bannerAdminService.create(createRequest(1));
+
+        bannerAdminService.delete(bannerId);
+
+        assertThat(bannerRepository.findById(bannerId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 bannerId 삭제 → 예외")
+    void deleteNotFound_throwsException() {
+        assertThatThrownBy(() ->
+                bannerAdminService.delete(999L)
+        ).isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("PUBLISHED 배너도 삭제 가능 (현재 정책)")
+    void deletePublishedBanner_succeeds() {
+        Long bannerId = bannerAdminService.create(createRequest(1));
+        bannerAdminService.publish(bannerId);
+
+        bannerAdminService.delete(bannerId);
+
+        assertThat(bannerRepository.findById(bannerId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("삭제 후 동일한 displayOrder 로 재등록 가능")
+    void afterDelete_canReuseDisplayOrder() {
+        Long bannerId = bannerAdminService.create(createRequest(1));
+        bannerAdminService.delete(bannerId);
+
+        // 같은 displayOrder=1 로 새 배너 등록 → 정상 등록되어야 함
+        assertThatCode(() ->
+                bannerAdminService.create(createRequest(1))
+        ).doesNotThrowAnyException();
+    }
 }

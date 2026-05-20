@@ -18,10 +18,7 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -363,6 +360,35 @@ class BannerAdminControllerTest {
     @DisplayName("PATCH publish - 존재하지 않는 ID → 404")
     void publishNotFound_returns404() throws Exception {
         mockMvc.perform(patch("/api/admin/banners/{id}/publish", 999L)
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("DELETE /api/admin/banners/{id} - 정상 삭제 200")
+    void delete_returns200() throws Exception {
+        String createResponse = mockMvc.perform(post("/api/admin/banners")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest(1)))
+                        .with(csrf()))
+                .andReturn().getResponse().getContentAsString();
+        Long bannerId = objectMapper.readTree(createResponse)
+                .path("data").path("bannerId").asLong();
+
+        mockMvc.perform(delete("/api/admin/banners/{id}", bannerId)
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"));
+
+        // 삭제 확인 — 단건 조회 시 404
+        mockMvc.perform(get("/api/admin/banners/{id}", bannerId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("DELETE - 존재하지 않는 ID → 404")
+    void deleteNotFound_returns404() throws Exception {
+        mockMvc.perform(delete("/api/admin/banners/{id}", 999L)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
     }
