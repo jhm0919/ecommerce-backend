@@ -194,4 +194,33 @@ class BannerAdminControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(0));
     }
+
+    @Test
+    @DisplayName("GET /api/admin/banners/{id} - 정상 조회 200")
+    void getOne_returns200() throws Exception {
+        // 사전 데이터 생성
+        String createResponse = mockMvc.perform(post("/api/admin/banners")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest(1)))
+                        .with(csrf()))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Long bannerId = objectMapper.readTree(createResponse)
+                .path("data").path("bannerId").asLong();
+
+        mockMvc.perform(get("/api/admin/banners/{id}", bannerId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.bannerId").value(bannerId))
+                .andExpect(jsonPath("$.data.name").value("여름 세일"))
+                .andExpect(jsonPath("$.data.status").value("DRAFT"));
+    }
+
+    @Test
+    @DisplayName("GET /api/admin/banners/{id} - 존재하지 않는 ID → 404")
+    void getOneNotFound_returns404() throws Exception {
+        mockMvc.perform(get("/api/admin/banners/{id}", 999L))
+                .andExpect(status().isNotFound());
+    }
 }
