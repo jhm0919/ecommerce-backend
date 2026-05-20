@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface BannerRepository extends JpaRepository<Banner, Long> {
     boolean existsByDisplayOrder(int displayOrder);
+    boolean existsByDisplayOrderAndIdNot(int displayOrder, Long id);
     List<Banner> findAllByOrderByDisplayOrderAsc();
 
 }

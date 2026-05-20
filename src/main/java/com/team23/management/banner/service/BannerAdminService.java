@@ -6,6 +6,7 @@ import com.team23.management.banner.domain.Banner;
 import com.team23.management.banner.domain.BannerStatus;
 import com.team23.management.banner.dto.BannerCreateRequest;
 import com.team23.management.banner.dto.BannerResponse;
+import com.team23.management.banner.dto.BannerUpdateRequest;
 import com.team23.management.banner.repository.BannerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -56,5 +57,31 @@ public class BannerAdminService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.BANNER_NOT_FOUND) {});
 
         return BannerResponse.from(banner);
+    }
+
+    public void update(Long bannerId, BannerUpdateRequest request) {
+
+        // 1. 대상 배너 조회
+        Banner banner = bannerRepository.findById(bannerId)
+                .orElseThrow(() ->
+                        new BusinessException(ErrorCode.BANNER_NOT_FOUND) {});
+
+        // 2. displayOrder 중복 검증 (자기 자신 제외)
+        if (bannerRepository.existsByDisplayOrderAndIdNot(
+                request.displayOrder(), bannerId)) {
+            throw new BusinessException(ErrorCode.DUPLICATE_BANNER_ORDER) {};
+        }
+
+        // 3. 도메인 메서드 호출 (period 검증은 도메인 안에서)
+        banner.update(
+                request.name(),
+                request.imageUrl(),
+                request.linkUrl(),
+                request.startAt(),
+                request.endAt(),
+                request.displayOrder()
+        );
+
+        // 4. save 호출 불필요 — @Transactional + dirty checking 으로 자동 반영
     }
 }

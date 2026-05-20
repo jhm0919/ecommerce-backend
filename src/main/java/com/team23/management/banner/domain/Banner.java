@@ -123,4 +123,27 @@ public class Banner {
         }
         return BannerStatus.PUBLISHED;
     }
+
+    /**
+     * 배너 정보를 일괄 수정한다.
+     *
+     * <p>게시 기간 유효성을 검증하며, displayOrder 중복 검증은 Service 책임.
+     */
+    public void update(
+            String name,
+            String imageUrl,
+            String linkUrl,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            int displayOrder
+    ) {
+        validatePeriod(startAt, endAt);
+
+        this.name = name;
+        this.imageUrl = imageUrl;
+        this.linkUrl = linkUrl;
+        this.startAt = startAt;
+        this.endAt = endAt;
+        this.displayOrder = displayOrder;
+    }
 }

@@ -3,6 +3,7 @@ package com.team23.management.banner.controller;
 import com.team23.common.response.CommonResponse;
 import com.team23.management.banner.domain.BannerStatus;
 import com.team23.management.banner.dto.BannerCreateRequest;
+import com.team23.management.banner.dto.BannerUpdateRequest;
 import com.team23.management.banner.service.BannerAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -67,5 +68,23 @@ public class BannerAdminController {
         return ResponseEntity.ok(
                 CommonResponse.createSuccess(bannerAdminService.getOne(bannerId))
         );
+    }
+
+    @Operation(summary = "배너 수정",
+            description = "배너의 모든 정보를 일괄 수정한다. status 는 변경 불가.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "수정 성공"),
+            @ApiResponse(responseCode = "400", description = "필수 항목 누락 / 게시 기간 오류 / 형식 오류"),
+            @ApiResponse(responseCode = "404", description = "배너 없음"),
+            @ApiResponse(responseCode = "409", description = "우선순위 중복")
+    })
+    @PutMapping("/{bannerId}")
+    public ResponseEntity<CommonResponse<?>> update(
+            @PathVariable Long bannerId,
+            @Valid @RequestBody BannerUpdateRequest request
+    ) {
+        bannerAdminService.update(bannerId, request);
+        return ResponseEntity.ok(
+                CommonResponse.createSuccessWithNoContent("배너가 수정되었습니다"));
     }
 }
