@@ -21,6 +21,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -320,5 +321,49 @@ class BannerAdminControllerTest {
                         .content(invalidBody)
                         .with(csrf()))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/admin/banners/{id}/publish - 정상 게시 200")
+    void publish_returns200() throws Exception {
+        String createResponse = mockMvc.perform(post("/api/admin/banners")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest(1)))
+                        .with(csrf()))
+                .andReturn().getResponse().getContentAsString();
+        Long bannerId = objectMapper.readTree(createResponse)
+                .path("data").path("bannerId").asLong();
+
+        mockMvc.perform(patch("/api/admin/banners/{id}/publish", bannerId)
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"));
+    }
+
+    @Test
+    @DisplayName("PATCH publish - 이미 게시된 배너 → 400")
+    void publishAlreadyPublished_returns400() throws Exception {
+        String createResponse = mockMvc.perform(post("/api/admin/banners")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest(1)))
+                        .with(csrf()))
+                .andReturn().getResponse().getContentAsString();
+        Long bannerId = objectMapper.readTree(createResponse)
+                .path("data").path("bannerId").asLong();
+
+        mockMvc.perform(patch("/api/admin/banners/{id}/publish", bannerId)
+                .with(csrf()));
+
+        mockMvc.perform(patch("/api/admin/banners/{id}/publish", bannerId)
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PATCH publish - 존재하지 않는 ID → 404")
+    void publishNotFound_returns404() throws Exception {
+        mockMvc.perform(patch("/api/admin/banners/{id}/publish", 999L)
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
     }
 }
