@@ -1,6 +1,7 @@
 package com.team23.management.banner.controller;
 
 import com.team23.management.banner.dto.BannerCreateRequest;
+import com.team23.management.banner.dto.BannerUpdateRequest;
 import com.team23.management.banner.repository.BannerRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -49,6 +51,17 @@ class BannerAdminControllerTest {
                 "https://example.com/sale",
                 LocalDateTime.of(2026, 6, 1, 0, 0),
                 LocalDateTime.of(2026, 6, 30, 23, 59),
+                displayOrder
+        );
+    }
+
+    private BannerUpdateRequest updateRequest(String name, int displayOrder) {
+        return new BannerUpdateRequest(
+                name,
+                "https://cdn.example.com/banner-updated.jpg",
+                "https://example.com/updated",
+                LocalDateTime.of(2026, 7, 1, 0, 0),
+                LocalDateTime.of(2026, 7, 31, 23, 59),
                 displayOrder
         );
     }
@@ -222,5 +235,90 @@ class BannerAdminControllerTest {
     void getOneNotFound_returns404() throws Exception {
         mockMvc.perform(get("/api/admin/banners/{id}", 999L))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PUT /api/admin/banners/{id} - 정상 수정 200")
+    void update_returns200() throws Exception {
+        // 사전 데이터
+        String createResponse = mockMvc.perform(post("/api/admin/banners")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest(1)))
+                        .with(csrf()))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Long bannerId = objectMapper.readTree(createResponse)
+                .path("data").path("bannerId").asLong();
+
+        mockMvc.perform(put("/api/admin/banners/{id}", bannerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest("가을 세일", 1)))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"));
+    }
+
+    @Test
+    @DisplayName("PUT - 존재하지 않는 ID → 404")
+    void updateNotFound_returns404() throws Exception {
+        mockMvc.perform(put("/api/admin/banners/{id}", 999L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest("가을 세일", 1)))
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PUT - 다른 배너와 displayOrder 중복 → 409")
+    void updateDuplicateOrder_returns409() throws Exception {
+        String createResponse = mockMvc.perform(post("/api/admin/banners")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest(1)))
+                        .with(csrf()))
+                .andReturn().getResponse().getContentAsString();
+
+        mockMvc.perform(post("/api/admin/banners")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest(2)))
+                .with(csrf()));
+
+        Long bannerId2 = bannerRepository.findAllByOrderByDisplayOrderAsc()
+                .get(1).getId();   // displayOrder=2 의 배너
+
+        // bannerId2 를 displayOrder=1 로 수정 시도 → 중복
+        mockMvc.perform(put("/api/admin/banners/{id}", bannerId2)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest("가을 세일", 1)))
+                        .with(csrf()))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("PUT - 필수 항목 누락 → 400")
+    void updateMissingField_returns400() throws Exception {
+        String createResponse = mockMvc.perform(post("/api/admin/banners")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest(1)))
+                        .with(csrf()))
+                .andReturn().getResponse().getContentAsString();
+        Long bannerId = objectMapper.readTree(createResponse)
+                .path("data").path("bannerId").asLong();
+
+        String invalidBody = """
+            {
+              "imageUrl": "https://cdn.example.com/banner-updated.jpg",
+              "linkUrl": "https://example.com/updated",
+              "startAt": "2026-07-01T00:00:00",
+              "endAt": "2026-07-31T23:59:59",
+              "displayOrder": 1
+            }
+            """;
+
+        mockMvc.perform(put("/api/admin/banners/{id}", bannerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidBody)
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
     }
 }
