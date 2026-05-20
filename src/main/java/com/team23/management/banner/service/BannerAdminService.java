@@ -94,4 +94,12 @@ public class BannerAdminService {
 
         // dirty checking 으로 UPDATE 자동 반영
     }
+
+    public void delete(Long bannerId) {
+        Banner banner = bannerRepository.findById(bannerId)
+                .orElseThrow(() ->
+                        new BusinessException(ErrorCode.BANNER_NOT_FOUND) {});
+
+        bannerRepository.delete(banner);
+    }
 }

@@ -104,4 +104,18 @@ public class BannerAdminController {
         return ResponseEntity.ok(
                 CommonResponse.createSuccessWithNoContent("배너가 게시되었습니다"));
     }
+
+    @Operation(summary = "배너 삭제", description = "배너를 물리 삭제한다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "배너 없음")
+    })
+    @DeleteMapping("/{bannerId}")
+    public ResponseEntity<CommonResponse<?>> delete(
+            @PathVariable Long bannerId
+    ) {
+        bannerAdminService.delete(bannerId);
+        return ResponseEntity.ok(
+                CommonResponse.createSuccessWithNoContent("배너가 삭제되었습니다"));
+    }
 }
