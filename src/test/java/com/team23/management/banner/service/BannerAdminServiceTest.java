@@ -244,4 +244,137 @@ class BannerAdminServiceTest {
                 bannerAdminService.update(999L, updateRequest("가을 세일", 1))
         ).isInstanceOf(BusinessException.class);
     }
+
+    // ───── publish 자체 동작 ─────
+
+    @Test
+    @DisplayName("DRAFT 배너 publish 성공 → DB status PUBLISHED")
+    void publishSuccess_changesDbStatusToPublished() {
+        Long bannerId = bannerAdminService.create(createRequest(1));
+
+        bannerAdminService.publish(bannerId);
+
+        Banner published = bannerRepository.findById(bannerId).orElseThrow();
+        assertThat(published.getStatus()).isEqualTo(BannerStatus.PUBLISHED);
+    }
+
+    @Test
+    @DisplayName("이미 PUBLISHED 인 배너 publish → 예외")
+    void publishAlreadyPublished_throwsException() {
+        Long bannerId = bannerAdminService.create(createRequest(1));
+        bannerAdminService.publish(bannerId);
+
+        assertThatThrownBy(() ->
+                bannerAdminService.publish(bannerId)
+        ).isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 bannerId publish → 예외")
+    void publishNotFound_throwsException() {
+        assertThatThrownBy(() ->
+                bannerAdminService.publish(999L)
+        ).isInstanceOf(BusinessException.class);
+    }
+
+    // ───── 시간 기반 currentStatus 검증 ─────
+
+    @Test
+    @DisplayName("publish 후 startAt 미래 → 응답 SCHEDULED")
+    void publishedFutureStartAt_returnsScheduled() {
+        // 시작 1년 후, 종료 1년 1달 후
+        LocalDateTime futureStart = LocalDateTime.now().plusYears(1);
+        LocalDateTime futureEnd = LocalDateTime.now().plusYears(1).plusMonths(1);
+
+        Long bannerId = bannerAdminService.create(new BannerCreateRequest(
+                "미래 세일",
+                "https://cdn.example.com/banner.jpg",
+                "https://example.com/sale",
+                futureStart,
+                futureEnd,
+                1
+        ));
+        bannerAdminService.publish(bannerId);
+
+        BannerResponse response = bannerAdminService.getOne(bannerId);
+        assertThat(response.status()).isEqualTo(BannerStatus.SCHEDULED);
+    }
+
+    @Test
+    @DisplayName("publish 후 게시 기간 중 → 응답 PUBLISHED")
+    void publishedDuringPeriod_returnsPublished() {
+        // 시작 1시간 전, 종료 1시간 후 (현재 게시 중)
+        LocalDateTime nowMinus = LocalDateTime.now().minusHours(1);
+        LocalDateTime nowPlus = LocalDateTime.now().plusHours(1);
+
+        Long bannerId = bannerAdminService.create(new BannerCreateRequest(
+                "진행중 세일",
+                "https://cdn.example.com/banner.jpg",
+                "https://example.com/sale",
+                nowMinus,
+                nowPlus,
+                1
+        ));
+        bannerAdminService.publish(bannerId);
+
+        BannerResponse response = bannerAdminService.getOne(bannerId);
+        assertThat(response.status()).isEqualTo(BannerStatus.PUBLISHED);
+    }
+
+    @Test
+    @DisplayName("publish 후 endAt 과거 → 응답 EXPIRED")
+    void publishedPastEndAt_returnsExpired() {
+        // 시작 2일 전, 종료 1일 전 (이미 만료)
+        LocalDateTime pastStart = LocalDateTime.now().minusDays(2);
+        LocalDateTime pastEnd = LocalDateTime.now().minusDays(1);
+
+        Long bannerId = bannerAdminService.create(new BannerCreateRequest(
+                "만료 세일",
+                "https://cdn.example.com/banner.jpg",
+                "https://example.com/sale",
+                pastStart,
+                pastEnd,
+                1
+        ));
+        bannerAdminService.publish(bannerId);
+
+        BannerResponse response = bannerAdminService.getOne(bannerId);
+        assertThat(response.status()).isEqualTo(BannerStatus.EXPIRED);
+    }
+
+    // ───── status 필터링 (시간 기반) ─────
+
+    @Test
+    @DisplayName("status=SCHEDULED 필터 - 미래 게시 배너만 반환")
+    void listFilterScheduled_returnsOnlyFuture() {
+        // 1. SCHEDULED: 미래 시작
+        Long bannerScheduledId = bannerAdminService.create(new BannerCreateRequest(
+                "예약",
+                "https://cdn.example.com/banner1.jpg",
+                "https://example.com",
+                LocalDateTime.now().plusYears(1),
+                LocalDateTime.now().plusYears(2),
+                1
+        ));
+        bannerAdminService.publish(bannerScheduledId);
+
+        // 2. PUBLISHED: 현재 게시 중
+        Long bannerPublishedId = bannerAdminService.create(new BannerCreateRequest(
+                "현재",
+                "https://cdn.example.com/banner2.jpg",
+                "https://example.com",
+                LocalDateTime.now().minusHours(1),
+                LocalDateTime.now().plusHours(1),
+                2
+        ));
+        bannerAdminService.publish(bannerPublishedId);
+
+        // 3. DRAFT: publish 안 함
+        bannerAdminService.create(createRequest(3));
+
+        List<BannerResponse> result = bannerAdminService.list(BannerStatus.SCHEDULED);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).bannerId()).isEqualTo(bannerScheduledId);
+    }
 }
