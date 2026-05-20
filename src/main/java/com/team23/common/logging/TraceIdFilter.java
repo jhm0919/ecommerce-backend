@@ -27,7 +27,7 @@ public class TraceIdFilter extends OncePerRequestFilter { // 한 요청에 한 �
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         long startTime = System.currentTimeMillis();
-        String traceId = UUID.randomUUID().toString().substring(0, 8);
+        String traceId = UUID.randomUUID().toString().substring(0, 16);
 
         try { // 예외 발생해도 MDC 정리 + 종료 로그 보장, 누락 시 다음 요청에 traceId 오염 가능 (심각한 버그)
             MDC.put(TRACE_ID_KEY, traceId);
