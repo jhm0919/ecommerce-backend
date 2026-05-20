@@ -26,7 +26,7 @@ public class ServiceLoggingAspect {
         long startTime = System.currentTimeMillis();
 
         try {
-            Object result = joinPoint.proceed(); // 원래 메서드 실행, 호출 전후로 로깅 끼워넣음, proceed() 안 하면 원래 메서드 실행 안 됨 (버그)
+            Object result = joinPoint.proceed(); // 원본 메서드 실행 - 호출 전후로 로깅 인터셉트
             long duration = System.currentTimeMillis() - startTime;
             log.info("[AOP][Service] {}.{}() 완료 - {}ms", className, methodName, duration);
             return result;
