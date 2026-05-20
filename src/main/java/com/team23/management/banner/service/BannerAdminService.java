@@ -84,4 +84,14 @@ public class BannerAdminService {
 
         // 4. save 호출 불필요 — @Transactional + dirty checking 으로 자동 반영
     }
+
+    public void publish(Long bannerId) {
+        Banner banner = bannerRepository.findById(bannerId)
+                .orElseThrow(() ->
+                        new BusinessException(ErrorCode.BANNER_NOT_FOUND) {});
+
+        banner.publish();   // 도메인이 DRAFT 검증 + 상태 전환
+
+        // dirty checking 으로 UPDATE 자동 반영
+    }
 }
