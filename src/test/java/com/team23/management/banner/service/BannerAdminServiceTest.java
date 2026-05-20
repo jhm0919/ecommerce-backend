@@ -146,4 +146,25 @@ class BannerAdminServiceTest {
 
         assertThat(result).isEmpty();
     }
+
+    @Test
+    @DisplayName("단건 조회 정상")
+    void getOneSuccess() {
+        Long bannerId = bannerAdminService.create(createRequest(1));
+
+        BannerResponse response = bannerAdminService.getOne(bannerId);
+
+        assertThat(response.bannerId()).isEqualTo(bannerId);
+        assertThat(response.name()).isEqualTo("여름 세일");
+        assertThat(response.displayOrder()).isEqualTo(1);
+        assertThat(response.status()).isEqualTo(BannerStatus.DRAFT);
+    }
+
+    @Test
+    @DisplayName("단건 조회 - 존재하지 않는 ID 예외")
+    void getOneNotFound_throwsException() {
+        assertThatThrownBy(() ->
+                bannerAdminService.getOne(999L)
+        ).isInstanceOf(BusinessException.class);
+    }
 }

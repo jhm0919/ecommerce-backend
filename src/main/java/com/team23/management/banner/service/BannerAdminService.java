@@ -49,4 +49,12 @@ public class BannerAdminService {
                 .filter(response -> status == null || response.status() == status)
                 .toList();
     }
+
+    @Transactional(readOnly = true)
+    public BannerResponse getOne(Long bannerId) {
+        Banner banner = bannerRepository.findById(bannerId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BANNER_NOT_FOUND) {});
+
+        return BannerResponse.from(banner);
+    }
 }

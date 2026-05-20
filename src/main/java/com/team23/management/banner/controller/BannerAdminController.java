@@ -54,4 +54,18 @@ public class BannerAdminController {
                 CommonResponse.createSuccess(bannerAdminService.list(status))
         );
     }
+
+    @Operation(summary = "배너 단건 조회")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "배너 없음")
+    })
+    @GetMapping("/{bannerId}")
+    public ResponseEntity<CommonResponse<?>> getOne(
+            @PathVariable Long bannerId
+    ) {
+        return ResponseEntity.ok(
+                CommonResponse.createSuccess(bannerAdminService.getOne(bannerId))
+        );
+    }
 }
