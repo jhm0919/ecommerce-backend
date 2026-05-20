@@ -146,4 +146,17 @@ public class Banner {
         this.endAt = endAt;
         this.displayOrder = displayOrder;
     }
+
+    /**
+     * 배너를 게시 상태로 전환한다.
+     *
+     * <p>DRAFT 상태에서만 호출 가능. 호출 후 DB status 는 PUBLISHED 로 저장된다.
+     * <p>실제 표시 상태(SCHEDULED/PUBLISHED/EXPIRED) 는 currentStatus() 가 시간 기반으로 동적 계산.
+     */
+    public void publish() {
+        if (this.status != BannerStatus.DRAFT) {
+            throw new BusinessException(ErrorCode.INVALID_BANNER_STATUS) {};
+        }
+        this.status = BannerStatus.PUBLISHED;
+    }
 }
