@@ -4,6 +4,7 @@ import com.team23.common.exception.BusinessException;
 import com.team23.management.banner.domain.Banner;
 import com.team23.management.banner.domain.BannerStatus;
 import com.team23.management.banner.dto.BannerCreateRequest;
+import com.team23.management.banner.dto.BannerResponse;
 import com.team23.management.banner.repository.BannerRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -99,5 +101,49 @@ class BannerAdminServiceTest {
         );
 
         assertThatThrownBy(() -> bannerAdminService.create(invalid)).isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("배너 목록 조회 — displayOrder 오름차순")
+    void listAllOrderedByDisplayOrder() {
+        bannerAdminService.create(createRequest(2));
+        bannerAdminService.create(createRequest(1));
+        bannerAdminService.create(createRequest(3));
+
+        List<BannerResponse> result = bannerAdminService.list(null);
+
+        assertThat(result).hasSize(3);
+        assertThat(result).extracting(BannerResponse::displayOrder)
+                .containsExactly(1, 2, 3);
+    }
+
+    @Test
+    @DisplayName("배너 목록 — 빈 목록 200")
+    void listEmptyReturnsEmptyList() {
+        List<BannerResponse> result = bannerAdminService.list(null);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("status=DRAFT 필터 — DRAFT 배너만 반환")
+    void listFilterDraftReturnsOnlyDraft() {
+        bannerAdminService.create(createRequest(1));
+        bannerAdminService.create(createRequest(2));
+
+        List<BannerResponse> result = bannerAdminService.list(BannerStatus.DRAFT);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).allMatch(r -> r.status() == BannerStatus.DRAFT);
+    }
+
+    @Test
+    @DisplayName("status=PUBLISHED 필터 — 게시된 배너 없으면 빈 목록")
+    void listFilterPublishedReturnsEmptyWhenNoPublished() {
+        bannerAdminService.create(createRequest(1));   // DRAFT 상태
+
+        List<BannerResponse> result = bannerAdminService.list(BannerStatus.PUBLISHED);
+
+        assertThat(result).isEmpty();
     }
 }
