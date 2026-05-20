@@ -86,7 +86,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/orders/guest").permitAll()
                         .requestMatchers("/api/seller/me/**").hasRole("SELLER")
                         .requestMatchers("/api/seller/**").permitAll()
+                        // ───── 어드민 - 판매자 입점 신청 ─────
                         .requestMatchers("/api/admin/seller/applications/**").permitAll()
+                        // ───── 어드민 - 배너 관리 (추가) ─────
+                        .requestMatchers("/api/admin/banners/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // 질문 등록/삭제 — 로그인 필요
                         .requestMatchers("/api/questions/**").authenticated()

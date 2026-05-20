@@ -78,7 +78,11 @@ public enum ErrorCode {
     QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "Q001", "질문을 찾을 수 없습니다"),
     QUESTION_NOT_DELETABLE(HttpStatus.BAD_REQUEST, "Q002", "답변이 존재하는 질문은 삭제할 수 없습니다"),
     QUESTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "Q003", "질문에 접근할 수 없습니다"),
-    QUESTION_NOT_OWNER(HttpStatus.FORBIDDEN, "Q004", "본인의 질문만 삭제할 수 있습니다");
+    QUESTION_NOT_OWNER(HttpStatus.FORBIDDEN, "Q004", "본인의 질문만 삭제할 수 있습니다"),
+
+    // Banner Admin
+    DUPLICATE_BANNER_ORDER(HttpStatus.CONFLICT, "BN001","이미 사용 중인 배너 우선순위입니다"),
+    INVALID_BANNER_PERIOD(HttpStatus.BAD_REQUEST, "BN002", "배너 게시 기간이 올바르지 않습니다");
 
     private final HttpStatus status;
     private final String code;
