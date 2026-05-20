@@ -92,4 +92,35 @@ public class Banner {
             throw new BusinessException(ErrorCode.INVALID_BANNER_PERIOD) {};
         }
     }
+
+    // ─────────────────────────────────────
+    // 비즈니스 메서드
+    // ─────────────────────────────────────
+
+    /**
+     * 현재 시각 기준으로 표시할 상태를 계산한다.
+     *
+     * <p>DB 저장값(DRAFT, PUBLISHED) + 시간 정보로 4가지 응답 상태 결정.
+     *
+     * <ul>
+     *   <li>DB DRAFT → DRAFT</li>
+     *   <li>DB PUBLISHED + now < startAt → SCHEDULED</li>
+     *   <li>DB PUBLISHED + startAt <= now < endAt → PUBLISHED</li>
+     *   <li>DB PUBLISHED + now >= endAt → EXPIRED</li>
+     * </ul>
+     */
+    public BannerStatus currentStatus() {
+        if (this.status == BannerStatus.DRAFT) {
+            return BannerStatus.DRAFT;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(this.startAt)) {
+            return BannerStatus.SCHEDULED;
+        }
+        if (!now.isBefore(this.endAt)) {
+            return BannerStatus.EXPIRED;
+        }
+        return BannerStatus.PUBLISHED;
+    }
 }
