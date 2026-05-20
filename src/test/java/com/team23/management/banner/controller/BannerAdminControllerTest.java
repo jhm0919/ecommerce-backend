@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -139,5 +140,58 @@ class BannerAdminControllerTest {
                         .content(objectMapper.writeValueAsString(invalid))
                         .with(csrf()))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /api/admin/banners — 목록 조회 200")
+    void list_returns200() throws Exception {
+        // 사전 데이터
+        mockMvc.perform(post("/api/admin/banners")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest(1)))
+                .with(csrf()));
+
+        mockMvc.perform(get("/api/admin/banners"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].status").value("DRAFT"));
+    }
+
+    @Test
+    @DisplayName("GET /api/admin/banners?status=DRAFT — 필터 정상 동작")
+    void listWithStatus_returns200() throws Exception {
+        mockMvc.perform(post("/api/admin/banners")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest(1)))
+                .with(csrf()));
+
+        mockMvc.perform(get("/api/admin/banners")
+                        .param("status", "DRAFT"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1));
+    }
+
+    @Test
+    @DisplayName("GET /api/admin/banners?status=PUBLISHED — DRAFT만 있으면 빈 목록")
+    void listFilterPublished_returnsEmptyWhenAllDraft() throws Exception {
+        mockMvc.perform(post("/api/admin/banners")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest(1)))
+                .with(csrf()));
+
+        mockMvc.perform(get("/api/admin/banners")
+                        .param("status", "PUBLISHED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("GET /api/admin/banners — 빈 목록도 200")
+    void listEmpty_returns200() throws Exception {
+        mockMvc.perform(get("/api/admin/banners"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
     }
 }
