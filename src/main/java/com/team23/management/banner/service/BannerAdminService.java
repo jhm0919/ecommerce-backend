@@ -3,11 +3,15 @@ package com.team23.management.banner.service;
 import com.team23.common.exception.BusinessException;
 import com.team23.common.exception.ErrorCode;
 import com.team23.management.banner.domain.Banner;
+import com.team23.management.banner.domain.BannerStatus;
 import com.team23.management.banner.dto.BannerCreateRequest;
+import com.team23.management.banner.dto.BannerResponse;
 import com.team23.management.banner.repository.BannerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -34,5 +38,15 @@ public class BannerAdminService {
 
         // 3. 저장 + ID 반환
         return bannerRepository.save(banner).getId();
+    }
+
+    @Transactional(readOnly = true)
+    public List<BannerResponse> list(BannerStatus status) {
+        List<Banner> banners = bannerRepository.findAllByOrderByDisplayOrderAsc();
+
+        return banners.stream()
+                .map(BannerResponse::from)
+                .filter(response -> status == null || response.status() == status)
+                .toList();
     }
 }
