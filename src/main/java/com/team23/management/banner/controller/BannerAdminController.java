@@ -87,4 +87,21 @@ public class BannerAdminController {
         return ResponseEntity.ok(
                 CommonResponse.createSuccessWithNoContent("배너가 수정되었습니다"));
     }
+
+    @Operation(summary = "배너 게시",
+            description = "DRAFT 상태의 배너를 게시 상태로 전환한다. " +
+                    "실제 표시 상태(SCHEDULED/PUBLISHED/EXPIRED) 는 시간 기반으로 동적 결정.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "게시 성공"),
+            @ApiResponse(responseCode = "400", description = "DRAFT 아닌 배너"),
+            @ApiResponse(responseCode = "404", description = "배너 없음")
+    })
+    @PatchMapping("/{bannerId}/publish")
+    public ResponseEntity<CommonResponse<?>> publish(
+            @PathVariable Long bannerId
+    ) {
+        bannerAdminService.publish(bannerId);
+        return ResponseEntity.ok(
+                CommonResponse.createSuccessWithNoContent("배너가 게시되었습니다"));
+    }
 }
