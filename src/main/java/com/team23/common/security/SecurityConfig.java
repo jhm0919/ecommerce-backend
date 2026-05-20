@@ -88,6 +88,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/seller/**").permitAll()
                         .requestMatchers("/api/admin/seller/applications/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // 질문 등록/삭제 — 로그인 필요
+                        .requestMatchers("/api/questions/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/products/*/questions").authenticated()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

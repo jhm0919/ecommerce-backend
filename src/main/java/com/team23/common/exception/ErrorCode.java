@@ -72,7 +72,13 @@ public enum ErrorCode {
 
     // Seller Application Admin
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "SA003", "입점 신청을 찾을 수 없습니다"),
-    INVALID_APPLICATION_STATUS(HttpStatus.BAD_REQUEST, "SA004", "처리할 수 없는 신청 상태입니다");
+    INVALID_APPLICATION_STATUS(HttpStatus.BAD_REQUEST, "SA004", "처리할 수 없는 신청 상태입니다"),
+
+    // Question
+    QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "Q001", "질문을 찾을 수 없습니다"),
+    QUESTION_NOT_DELETABLE(HttpStatus.BAD_REQUEST, "Q002", "답변이 존재하는 질문은 삭제할 수 없습니다"),
+    QUESTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "Q003", "질문에 접근할 수 없습니다"),
+    QUESTION_NOT_OWNER(HttpStatus.FORBIDDEN, "Q004", "본인의 질문만 삭제할 수 있습니다");
 
     private final HttpStatus status;
     private final String code;
