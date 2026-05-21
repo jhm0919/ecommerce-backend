@@ -106,4 +106,59 @@ class DashboardAdminControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    // 결제 건수
+
+    @Test
+    @DisplayName("[payments] GET /api/admin/dashboard/payments - 정상 조회 200")
+    void getPayments_returns200() throws Exception {
+        mockMvc.perform(get("/api/admin/dashboard/payments")
+                        .param("startDate", "2026-01-01")
+                        .param("endDate", "2026-01-31")
+                        .param("unit", "DAILY"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.unit").value("DAILY"))
+                .andExpect(jsonPath("$.data.items").isArray());
+    }
+
+    @Test
+    @DisplayName("[payments] unit 기본값 DAILY")
+    void payments_unitDefault_DAILY() throws Exception {
+        mockMvc.perform(get("/api/admin/dashboard/payments")
+                        .param("startDate", "2026-01-01")
+                        .param("endDate", "2026-01-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.unit").value("DAILY"));
+    }
+
+    @Test
+    @DisplayName("[payments] MONTHLY 단위 조회")
+    void payments_unitMonthly_returns200() throws Exception {
+        mockMvc.perform(get("/api/admin/dashboard/payments")
+                        .param("startDate", "2026-01-01")
+                        .param("endDate", "2026-03-31")
+                        .param("unit", "MONTHLY"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.unit").value("MONTHLY"));
+    }
+
+    @Test
+    @DisplayName("[payments] startDate > endDate → 400")
+    void payments_invalidDateRange_returns400() throws Exception {
+        mockMvc.perform(get("/api/admin/dashboard/payments")
+                        .param("startDate", "2026-01-10")
+                        .param("endDate", "2026-01-05"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("[payments] 잘못된 unit 값 → 400")
+    void payments_invalidUnit_returns400() throws Exception {
+        mockMvc.perform(get("/api/admin/dashboard/payments")
+                        .param("startDate", "2026-01-01")
+                        .param("endDate", "2026-01-31")
+                        .param("unit", "YEARLY"))
+                .andExpect(status().isBadRequest());
+    }
+
 }

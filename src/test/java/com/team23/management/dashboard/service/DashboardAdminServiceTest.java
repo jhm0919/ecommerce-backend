@@ -7,6 +7,7 @@ import com.team23.customer.order.domain.OrderStatus;
 import com.team23.customer.order.repository.OrderRepository;
 import com.team23.customer.product.domain.Money;
 import com.team23.management.dashboard.domain.AggregationUnit;
+import com.team23.management.dashboard.dto.PaymentsTimeSeriesResponse;
 import com.team23.management.dashboard.dto.SalesTimeSeriesResponse;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -209,5 +210,109 @@ class DashboardAdminServiceTest {
 
         assertThat(response.totalOrderCount()).isZero();
         assertThat(response.items()).isEmpty();
+    }
+
+    // 결제 건수
+    @Test
+    @DisplayName("[payments] DAILY 집계 - 결제 건수/총액/평균")
+    void getDailyPayments_aggregates() {
+        insertOrder(new BigDecimal("10000"), OrderStatus.PENDING, LocalDateTime.of(2026, 1, 1, 10, 0));
+        insertOrder(new BigDecimal("20000"), OrderStatus.PENDING, LocalDateTime.of(2026, 1, 1, 11, 0));
+        insertOrder(new BigDecimal("30000"), OrderStatus.PENDING, LocalDateTime.of(2026, 1, 1, 12, 0));
+
+        PaymentsTimeSeriesResponse response = dashboardAdminService.getPaymentsTimeSeries(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 1, 1),
+                AggregationUnit.DAILY
+        );
+
+        assertThat(response.items()).hasSize(1);
+        assertThat(response.items().get(0).paymentCount()).isEqualTo(3);
+        assertThat(response.items().get(0).totalAmount()).isEqualByComparingTo(new BigDecimal("60000"));
+        assertThat(response.items().get(0).averageAmount()).isEqualByComparingTo(new BigDecimal("20000"));   // 60000 / 3
+
+        assertThat(response.totalPaymentCount()).isEqualTo(3);
+        assertThat(response.totalAmount()).isEqualByComparingTo(new BigDecimal("60000"));
+        assertThat(response.averageAmount()).isEqualByComparingTo(new BigDecimal("20000"));
+    }
+
+    @Test
+    @DisplayName("[payments] CANCELLED 도 포함 (sales 와 차이점)")
+    void cancelledOrder_isIncluded() {
+        insertOrder(new BigDecimal("10000"), OrderStatus.PENDING, LocalDateTime.of(2026, 1, 1, 10, 0));
+        insertOrder(new BigDecimal("50000"), OrderStatus.CANCELLED, LocalDateTime.of(2026, 1, 1, 11, 0));   // 포함됨!
+
+        PaymentsTimeSeriesResponse response = dashboardAdminService.getPaymentsTimeSeries(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 1, 1),
+                AggregationUnit.DAILY
+        );
+
+        assertThat(response.totalPaymentCount()).isEqualTo(2);   // 둘 다 포함
+        assertThat(response.totalAmount()).isEqualByComparingTo(new BigDecimal("60000"));   // 10000 + 50000
+    }
+
+    @Test
+    @DisplayName("[payments] 평균 - 무한소수는 반올림 (HALF_UP)")
+    void averageRounding_halfUp() {
+        insertOrder(new BigDecimal("10000"), OrderStatus.PENDING, LocalDateTime.of(2026, 1, 1, 10, 0));
+        insertOrder(new BigDecimal("10000"), OrderStatus.PENDING, LocalDateTime.of(2026, 1, 1, 11, 0));
+        insertOrder(new BigDecimal("10000"), OrderStatus.PENDING, LocalDateTime.of(2026, 1, 1, 12, 0));
+        // 평균: 30000 / 3 = 10000 (정확)
+
+        PaymentsTimeSeriesResponse response = dashboardAdminService.getPaymentsTimeSeries(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 1, 1),
+                AggregationUnit.DAILY
+        );
+
+        assertThat(response.averageAmount()).isEqualByComparingTo(new BigDecimal("10000"));
+    }
+
+    @Test
+    @DisplayName("[payments] 데이터 없는 기간 - 평균 0")
+    void noData_averageZero() {
+        PaymentsTimeSeriesResponse response = dashboardAdminService.getPaymentsTimeSeries(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 1, 31),
+                AggregationUnit.DAILY
+        );
+
+        assertThat(response.items()).isEmpty();
+        assertThat(response.totalPaymentCount()).isZero();
+        assertThat(response.totalAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(response.averageAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    @DisplayName("[payments] MONTHLY 집계")
+    void monthlyPayments_aggregates() {
+        insertOrder(new BigDecimal("100000"), OrderStatus.PENDING, LocalDateTime.of(2026, 1, 15, 10, 0));
+        insertOrder(new BigDecimal("50000"), OrderStatus.CANCELLED, LocalDateTime.of(2026, 2, 10, 10, 0));
+        insertOrder(new BigDecimal("30000"), OrderStatus.PENDING, LocalDateTime.of(2026, 2, 20, 10, 0));
+
+        PaymentsTimeSeriesResponse response = dashboardAdminService.getPaymentsTimeSeries(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 3, 31),
+                AggregationUnit.MONTHLY
+        );
+
+        assertThat(response.items()).hasSize(2);
+        assertThat(response.items().get(0).date()).isEqualTo("2026-01");
+        assertThat(response.items().get(0).totalAmount()).isEqualByComparingTo(new BigDecimal("100000"));
+        assertThat(response.items().get(1).date()).isEqualTo("2026-02");
+        assertThat(response.items().get(1).totalAmount()).isEqualByComparingTo(new BigDecimal("80000"));   // CANCELLED 도 포함
+    }
+
+    @Test
+    @DisplayName("[payments] startDate > endDate → 예외")
+    void payments_invalidDateRange_throws() {
+        assertThatThrownBy(() ->
+                dashboardAdminService.getPaymentsTimeSeries(
+                        LocalDate.of(2026, 1, 10),
+                        LocalDate.of(2026, 1, 5),
+                        AggregationUnit.DAILY
+                )
+        ).isInstanceOf(BusinessException.class);
     }
 }
