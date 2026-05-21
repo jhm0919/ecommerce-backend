@@ -109,7 +109,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @return Object[] = [yearMonth(String "YYYY-MM"), revenue(BigDecimal), count(Long)]
      */
     @Query("""
-            SELECT FUNCTION('DATE_FORMAT', o.createdAt, '%Y-%m') AS yearMonth,
+            SELECT FUNCTION('YEAR', o.createdAt),
+                   FUNCTION('MONTH', o.createdAt),
                    COALESCE(SUM(o.totalAmount.amount), 0),
                    COUNT(o)
             FROM Order o
@@ -118,8 +119,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                 com.team23.customer.order.domain.OrderStatus.CONFIRMED
             )
               AND o.createdAt >= :from AND o.createdAt < :to
-            GROUP BY FUNCTION('DATE_FORMAT', o.createdAt, '%Y-%m')
-            ORDER BY yearMonth ASC
+            GROUP BY FUNCTION('YEAR', o.createdAt), FUNCTION('MONTH', o.createdAt)
+            ORDER BY FUNCTION('YEAR', o.createdAt) ASC, FUNCTION('MONTH', o.createdAt) ASC
             """)
     List<Object[]> findMonthlySales(
             @Param("from") LocalDateTime from,
