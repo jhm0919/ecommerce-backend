@@ -126,4 +126,43 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime toExclusive
     );
+
+    /**
+     * 일별 결제 집계 (모든 상태 포함 — 결제 시도 전체).
+     *
+     * @return Object[] = [date(java.sql.Date), totalAmount(BigDecimal), count(Long)]
+     */
+    @Query("""
+        SELECT FUNCTION('DATE', o.createdAt) AS orderDate,
+               COALESCE(SUM(o.totalAmount.amount), 0),
+               COUNT(o)
+        FROM Order o
+        WHERE o.createdAt >= :from AND o.createdAt < :to
+        GROUP BY FUNCTION('DATE', o.createdAt)
+        ORDER BY orderDate ASC
+        """)
+    List<Object[]> findDailyPayments(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime toExclusive
+    );
+
+    /**
+     * 월별 결제 집계 (모든 상태 포함).
+     *
+     * @return Object[] = [year(Integer), month(Integer), totalAmount(BigDecimal), count(Long)]
+     */
+    @Query("""
+        SELECT FUNCTION('YEAR', o.createdAt),
+               FUNCTION('MONTH', o.createdAt),
+               COALESCE(SUM(o.totalAmount.amount), 0),
+               COUNT(o)
+        FROM Order o
+        WHERE o.createdAt >= :from AND o.createdAt < :to
+        GROUP BY FUNCTION('YEAR', o.createdAt), FUNCTION('MONTH', o.createdAt)
+        ORDER BY FUNCTION('YEAR', o.createdAt) ASC, FUNCTION('MONTH', o.createdAt) ASC
+        """)
+    List<Object[]> findMonthlyPayments(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime toExclusive
+    );
 }
