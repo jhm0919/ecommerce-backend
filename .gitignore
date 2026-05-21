@@ -1,7 +1,6 @@
 HELP.md
 .gradle
 build/
-!gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
 
@@ -19,6 +18,9 @@ build/
 *.zip
 *.tar.gz
 *.rar
+
+# Gradle Wrapper (반드시 git 추적)
+!gradle/wrapper/gradle-wrapper.jar
 
 # virtual machine crash logs
 hs_err_pid*
