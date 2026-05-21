@@ -165,4 +165,45 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime toExclusive
     );
+
+    /**
+     * 일별 환불 집계 (CANCELLED 만).
+     *
+     * @return Object[] = [date(java.sql.Date), refundAmount(BigDecimal), count(Long)]
+     */
+    @Query("""
+        SELECT FUNCTION('DATE', o.createdAt) AS orderDate,
+               COALESCE(SUM(o.totalAmount.amount), 0),
+               COUNT(o)
+        FROM Order o
+        WHERE o.status = com.team23.customer.order.domain.OrderStatus.CANCELLED
+          AND o.createdAt >= :from AND o.createdAt < :to
+        GROUP BY FUNCTION('DATE', o.createdAt)
+        ORDER BY orderDate ASC
+        """)
+    List<Object[]> findDailyRefunds(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime toExclusive
+    );
+
+    /**
+     * 월별 환불 집계 (CANCELLED 만).
+     *
+     * @return Object[] = [year(Integer), month(Integer), refundAmount(BigDecimal), count(Long)]
+     */
+    @Query("""
+        SELECT FUNCTION('YEAR', o.createdAt),
+               FUNCTION('MONTH', o.createdAt),
+               COALESCE(SUM(o.totalAmount.amount), 0),
+               COUNT(o)
+        FROM Order o
+        WHERE o.status = com.team23.customer.order.domain.OrderStatus.CANCELLED
+          AND o.createdAt >= :from AND o.createdAt < :to
+        GROUP BY FUNCTION('YEAR', o.createdAt), FUNCTION('MONTH', o.createdAt)
+        ORDER BY FUNCTION('YEAR', o.createdAt) ASC, FUNCTION('MONTH', o.createdAt) ASC
+        """)
+    List<Object[]> findMonthlyRefunds(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime toExclusive
+    );
 }

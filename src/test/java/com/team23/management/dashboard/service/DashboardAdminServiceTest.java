@@ -8,6 +8,7 @@ import com.team23.customer.order.repository.OrderRepository;
 import com.team23.customer.product.domain.Money;
 import com.team23.management.dashboard.domain.AggregationUnit;
 import com.team23.management.dashboard.dto.PaymentsTimeSeriesResponse;
+import com.team23.management.dashboard.dto.RefundsTimeSeriesResponse;
 import com.team23.management.dashboard.dto.SalesTimeSeriesResponse;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -315,4 +316,75 @@ class DashboardAdminServiceTest {
                 )
         ).isInstanceOf(BusinessException.class);
     }
+
+    @Test
+    @DisplayName("[refunds] DAILY 집계 - CANCELLED 만 포함")
+    void getDailyRefunds_onlyCancelled() {
+        insertOrder(new BigDecimal("10000"), OrderStatus.CANCELLED, LocalDateTime.of(2026, 1, 1, 10, 0));
+        insertOrder(new BigDecimal("20000"), OrderStatus.CANCELLED, LocalDateTime.of(2026, 1, 1, 11, 0));
+        insertOrder(new BigDecimal("50000"), OrderStatus.PENDING, LocalDateTime.of(2026, 1, 1, 12, 0));   // 제외 대상
+        insertOrder(new BigDecimal("70000"), OrderStatus.CONFIRMED, LocalDateTime.of(2026, 1, 1, 13, 0));   // 제외 대상
+
+        RefundsTimeSeriesResponse response = dashboardAdminService.getRefundsTimeSeries(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 1, 1),
+                AggregationUnit.DAILY
+        );
+
+        assertThat(response.items()).hasSize(1);
+        assertThat(response.items().get(0).refundCount()).isEqualTo(2);
+        assertThat(response.items().get(0).refundAmount()).isEqualByComparingTo(new BigDecimal("30000"));
+
+        assertThat(response.totalRefundCount()).isEqualTo(2);
+        assertThat(response.totalRefundAmount()).isEqualByComparingTo(new BigDecimal("30000"));
+    }
+
+    @Test
+    @DisplayName("[refunds] 환불 없는 기간 - 빈 목록")
+    void noRefunds_returnsEmpty() {
+        insertOrder(new BigDecimal("10000"), OrderStatus.PENDING, LocalDateTime.of(2026, 1, 1, 10, 0));   // 취소 안 됨
+
+        RefundsTimeSeriesResponse response = dashboardAdminService.getRefundsTimeSeries(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 1, 1),
+                AggregationUnit.DAILY
+        );
+
+        assertThat(response.items()).isEmpty();
+        assertThat(response.totalRefundCount()).isZero();
+        assertThat(response.totalRefundAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    @DisplayName("[refunds] MONTHLY 집계 - CANCELLED 만")
+    void monthlyRefunds_aggregates() {
+        insertOrder(new BigDecimal("100000"), OrderStatus.CANCELLED, LocalDateTime.of(2026, 1, 15, 10, 0));
+        insertOrder(new BigDecimal("50000"), OrderStatus.PENDING, LocalDateTime.of(2026, 2, 10, 10, 0));   // 제외
+        insertOrder(new BigDecimal("30000"), OrderStatus.CANCELLED, LocalDateTime.of(2026, 2, 20, 10, 0));
+
+        RefundsTimeSeriesResponse response = dashboardAdminService.getRefundsTimeSeries(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 3, 31),
+                AggregationUnit.MONTHLY
+        );
+
+        assertThat(response.items()).hasSize(2);
+        assertThat(response.items().get(0).date()).isEqualTo("2026-01");
+        assertThat(response.items().get(0).refundAmount()).isEqualByComparingTo(new BigDecimal("100000"));
+        assertThat(response.items().get(1).date()).isEqualTo("2026-02");
+        assertThat(response.items().get(1).refundAmount()).isEqualByComparingTo(new BigDecimal("30000"));
+    }
+
+    @Test
+    @DisplayName("[refunds] startDate > endDate → 예외")
+    void refunds_invalidDateRange_throws() {
+        assertThatThrownBy(() ->
+                dashboardAdminService.getRefundsTimeSeries(
+                        LocalDate.of(2026, 1, 10),
+                        LocalDate.of(2026, 1, 5),
+                        AggregationUnit.DAILY
+                )
+        ).isInstanceOf(BusinessException.class);
+    }
+
 }

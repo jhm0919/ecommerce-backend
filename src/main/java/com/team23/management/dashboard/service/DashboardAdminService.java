@@ -4,10 +4,7 @@ import com.team23.common.exception.BusinessException;
 import com.team23.common.exception.ErrorCode;
 import com.team23.customer.order.repository.OrderRepository;
 import com.team23.management.dashboard.domain.AggregationUnit;
-import com.team23.management.dashboard.dto.PaymentsTimeSeriesItem;
-import com.team23.management.dashboard.dto.PaymentsTimeSeriesResponse;
-import com.team23.management.dashboard.dto.SalesTimeSeriesItem;
-import com.team23.management.dashboard.dto.SalesTimeSeriesResponse;
+import com.team23.management.dashboard.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -162,5 +159,50 @@ public class DashboardAdminService {
             return BigDecimal.ZERO;
         }
         return total.divide(BigDecimal.valueOf(count), 0, RoundingMode.HALF_UP);
+    }
+
+    public RefundsTimeSeriesResponse getRefundsTimeSeries(LocalDate startDate, LocalDate endDate, AggregationUnit unit) {
+        validateDateRange(startDate, endDate);
+
+        LocalDateTime from = startDate.atStartOfDay();
+        LocalDateTime toExclusive = endDate.plusDays(1).atStartOfDay();
+
+        List<Object[]> rawResults = (unit == AggregationUnit.DAILY)
+                ? orderRepository.findDailyRefunds(from, toExclusive)
+                : orderRepository.findMonthlyRefunds(from, toExclusive);
+
+        List<RefundsTimeSeriesItem> items = rawResults.stream()
+                .map(row -> toRefundsItem(row, unit))
+                .toList();
+
+        long totalRefundCount = items.stream()
+                .mapToLong(RefundsTimeSeriesItem::refundCount)
+                .sum();
+        BigDecimal totalRefundAmount = items.stream()
+                .map(RefundsTimeSeriesItem::refundAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new RefundsTimeSeriesResponse(unit, startDate, endDate, items, totalRefundCount, totalRefundAmount);
+    }
+
+    private RefundsTimeSeriesItem toRefundsItem(Object[] row, AggregationUnit unit) {
+        String dateStr;
+        BigDecimal refundAmount;
+        long count;
+
+        if (unit == AggregationUnit.DAILY) {
+            Date sqlDate = (Date) row[0];
+            dateStr = sqlDate.toLocalDate().toString();
+            refundAmount = (BigDecimal) row[1];
+            count = ((Number) row[2]).longValue();
+        } else {
+            int year = ((Number) row[0]).intValue();
+            int month = ((Number) row[1]).intValue();
+            dateStr = String.format("%04d-%02d", year, month);
+            refundAmount = (BigDecimal) row[2];
+            count = ((Number) row[3]).longValue();
+        }
+
+        return new RefundsTimeSeriesItem(dateStr, count, refundAmount);
     }
 }
