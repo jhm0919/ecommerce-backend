@@ -4,6 +4,8 @@ import com.team23.common.exception.BusinessException;
 import com.team23.common.exception.ErrorCode;
 import com.team23.customer.order.repository.OrderRepository;
 import com.team23.management.dashboard.domain.AggregationUnit;
+import com.team23.management.dashboard.dto.PaymentsTimeSeriesItem;
+import com.team23.management.dashboard.dto.PaymentsTimeSeriesResponse;
 import com.team23.management.dashboard.dto.SalesTimeSeriesItem;
 import com.team23.management.dashboard.dto.SalesTimeSeriesResponse;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -95,5 +98,69 @@ public class DashboardAdminService {
         if (days > MAX_DAYS) {
             throw new BusinessException(ErrorCode.DATE_RANGE_TOO_LONG) {};
         }
+    }
+
+    public PaymentsTimeSeriesResponse getPaymentsTimeSeries(LocalDate startDate, LocalDate endDate, AggregationUnit unit) {
+        validateDateRange(startDate, endDate);
+
+        LocalDateTime from = startDate.atStartOfDay();
+        LocalDateTime toExclusive = endDate.plusDays(1).atStartOfDay();
+
+        List<Object[]> rawResults = (unit == AggregationUnit.DAILY)
+                ? orderRepository.findDailyPayments(from, toExclusive)
+                : orderRepository.findMonthlyPayments(from, toExclusive);
+
+        List<PaymentsTimeSeriesItem> items = rawResults.stream()
+                .map(row -> toPaymentsItem(row, unit))
+                .toList();
+
+        // 합계
+        long totalPaymentCount = items.stream()
+                .mapToLong(PaymentsTimeSeriesItem::paymentCount)
+                .sum();
+        BigDecimal totalAmount = items.stream()
+                .map(PaymentsTimeSeriesItem::totalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal averageAmount = calculateAverage(totalAmount, totalPaymentCount);
+
+        return new PaymentsTimeSeriesResponse(
+                unit, startDate, endDate, items,
+                totalPaymentCount, totalAmount, averageAmount
+        );
+    }
+
+    private PaymentsTimeSeriesItem toPaymentsItem(Object[] row, AggregationUnit unit) {
+        String dateStr;
+        BigDecimal totalAmount;
+        long count;
+
+        if (unit == AggregationUnit.DAILY) {
+            // [date, totalAmount, count]
+            Date sqlDate = (Date) row[0];
+            dateStr = sqlDate.toLocalDate().toString();
+            totalAmount = (BigDecimal) row[1];
+            count = ((Number) row[2]).longValue();
+        } else {
+            // [year, month, totalAmount, count]
+            int year = ((Number) row[0]).intValue();
+            int month = ((Number) row[1]).intValue();
+            dateStr = String.format("%04d-%02d", year, month);
+            totalAmount = (BigDecimal) row[2];
+            count = ((Number) row[3]).longValue();
+        }
+
+        BigDecimal averageAmount = calculateAverage(totalAmount, count);
+        return new PaymentsTimeSeriesItem(dateStr, count, totalAmount, averageAmount);
+    }
+
+    /**
+     * 평균 금액 계산. count=0 일 때 0 반환 (division by zero 방지).
+     * KRW 가정으로 소수점 0자리, HALF_UP 반올림.
+     */
+    private BigDecimal calculateAverage(BigDecimal total, long count) {
+        if (count == 0) {
+            return BigDecimal.ZERO;
+        }
+        return total.divide(BigDecimal.valueOf(count), 0, RoundingMode.HALF_UP);
     }
 }
