@@ -62,17 +62,23 @@ public class DashboardAdminService {
 
     private SalesTimeSeriesItem toItem(Object[] row, AggregationUnit unit) {
         String dateStr;
+        BigDecimal revenue;
+        long count;
+
         if (unit == AggregationUnit.DAILY) {
-            // FUNCTION('DATE', ...) 는 java.sql.Date 반환
+            // [date(sql.Date), revenue, count]
             Date sqlDate = (Date) row[0];
             dateStr = sqlDate.toLocalDate().toString();   // "2026-01-15"
+            revenue = (BigDecimal) row[1];
+            count = ((Number) row[2]).longValue();
         } else {
-            // FUNCTION('DATE_FORMAT', ...) 는 String 반환
-            dateStr = (String) row[0];                     // "2026-01"
+            // [year, month, revenue, count]
+            int year = ((Number) row[0]).intValue();
+            int month = ((Number) row[1]).intValue();
+            dateStr = String.format("%04d-%02d", year, month);   // "2026-01"
+            revenue = (BigDecimal) row[2];
+            count = ((Number) row[3]).longValue();
         }
-
-        BigDecimal revenue = (BigDecimal) row[1];
-        long count = ((Number) row[2]).longValue();
 
         return new SalesTimeSeriesItem(dateStr, revenue, count);
     }
