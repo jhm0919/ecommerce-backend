@@ -41,5 +41,40 @@ services:
       mysql:
         condition: service_healthy
 
+  # ─── Prometheus ───
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    platform: linux/amd64
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - app
+
+  # ─── Grafana ───
+  grafana:
+    image: grafana/grafana:10.0.0
+    platform: linux/amd64
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin1234
+      GF_SMTP_ENABLED: "true"
+      GF_SMTP_HOST: smtp.gmail.com:587
+      GF_SMTP_USER: ${GRAFANA_SMTP_USER:-}        # ★
+      GF_SMTP_PASSWORD: ${GRAFANA_SMTP_PASSWORD:-} # ★
+      GF_SMTP_FROM_ADDRESS: ${GRAFANA_SMTP_USER:-} # ★ 발신자 = 본인 이메일
+      GF_SMTP_FROM_NAME: Grafana Alert
+
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana-data:/var/lib/grafana
+
 volumes:
   mysql-data:
+  grafana-data:  # ★ 추가

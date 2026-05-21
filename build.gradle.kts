@@ -52,6 +52,11 @@ dependencies {
 
 	// ★ Swagger UI
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
+
+	// ★ Spring Actuator (메트릭 엔드포인트)
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
+	// ★ Micrometer Prometheus (메트릭 형식 변환)
+	implementation("io.micrometer:micrometer-registry-prometheus")
 }
 
 tasks.withType<Test> {

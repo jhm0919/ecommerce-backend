@@ -2,7 +2,7 @@
 FROM gradle:8-jdk17 AS builder
 WORKDIR /app
 COPY . .
-RUN ./gradlew bootJar --no-daemon
+RUN gradle bootJar --no-daemon
 
 # ─── 실행 단계 ───
 FROM eclipse-temurin:17-jre
