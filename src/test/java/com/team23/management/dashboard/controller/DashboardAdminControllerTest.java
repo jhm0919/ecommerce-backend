@@ -161,4 +161,47 @@ class DashboardAdminControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    @DisplayName("[refunds] GET /api/admin/dashboard/refunds - 정상 조회 200")
+    void getRefunds_returns200() throws Exception {
+        mockMvc.perform(get("/api/admin/dashboard/refunds")
+                        .param("startDate", "2026-01-01")
+                        .param("endDate", "2026-01-31")
+                        .param("unit", "DAILY"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.unit").value("DAILY"))
+                .andExpect(jsonPath("$.data.items").isArray());
+    }
+
+    @Test
+    @DisplayName("[refunds] MONTHLY 단위 조회")
+    void refunds_unitMonthly_returns200() throws Exception {
+        mockMvc.perform(get("/api/admin/dashboard/refunds")
+                        .param("startDate", "2026-01-01")
+                        .param("endDate", "2026-03-31")
+                        .param("unit", "MONTHLY"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.unit").value("MONTHLY"));
+    }
+
+    @Test
+    @DisplayName("[refunds] startDate > endDate → 400")
+    void refunds_invalidDateRange_returns400() throws Exception {
+        mockMvc.perform(get("/api/admin/dashboard/refunds")
+                        .param("startDate", "2026-01-10")
+                        .param("endDate", "2026-01-05"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("[refunds] 잘못된 unit 값 → 400")
+    void refunds_invalidUnit_returns400() throws Exception {
+        mockMvc.perform(get("/api/admin/dashboard/refunds")
+                        .param("startDate", "2026-01-01")
+                        .param("endDate", "2026-01-31")
+                        .param("unit", "YEARLY"))
+                .andExpect(status().isBadRequest());
+    }
+
 }
