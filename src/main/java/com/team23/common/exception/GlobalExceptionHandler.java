@@ -8,6 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
 
 /**
  * 전역 예외 처리기.
@@ -71,5 +75,38 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(CommonResponse.createError("서버 내부 오류가 발생했습니다"));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<CommonResponse<?>> handleMissingParameter(
+            MissingServletRequestParameterException e, HttpServletRequest request
+    ) {
+        log.warn("Missing parameter: name={}, path={}", e.getParameterName(), request.getRequestURI());
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(CommonResponse.createError("필수 파라미터가 누락되었습니다: " + e.getParameterName()));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<CommonResponse<?>> handleTypeMismatch(
+            MethodArgumentTypeMismatchException e, HttpServletRequest request
+    ) {
+        log.warn("Type mismatch: name={}, value={}, path={}", e.getName(), e.getValue(), request.getRequestURI());
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(CommonResponse.createError("파라미터 형식이 올바르지 않습니다: " + e.getName()));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<CommonResponse<?>> handleMessageNotReadable(
+            HttpMessageNotReadableException e, HttpServletRequest request
+    ) {
+        log.warn("Malformed request body: path={}", request.getRequestURI());
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(CommonResponse.createError("요청 본문이 올바르지 않습니다"));
     }
 }
