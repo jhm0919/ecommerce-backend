@@ -3,6 +3,7 @@ package com.team23.customer.auth.domain;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 
@@ -136,14 +137,15 @@ class RefreshTokenTest {
 
         @Test
         @DisplayName("만료된 토큰은 사용 불가")
-        void expiredTokenIsNotUsable() throws InterruptedException {
-            // 1초 후 만료되는 토큰
+        void expiredTokenIsNotUsable() {
             RefreshToken token = RefreshToken.issue(
-                    1L, VALID_HASH, LocalDateTime.now().plusNanos(1)
+                    1L, VALID_HASH, LocalDateTime.now().plusDays(14)
             );
 
-            // 만료 보장
-            Thread.sleep(10);
+            // 만료 시점을 과거로 강제 (Reflection)
+            ReflectionTestUtils.setField(
+                    token, "expiresAt", LocalDateTime.now().minusSeconds(1)
+            );
 
             assertThat(token.isExpired()).isTrue();
             assertThat(token.isUsable()).isFalse();
