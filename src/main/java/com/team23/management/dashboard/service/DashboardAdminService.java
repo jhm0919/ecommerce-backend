@@ -35,12 +35,12 @@ public class DashboardAdminService {
 
         // 날짜 범위 변환 (00:00:00 ~ 23:59:59)
         LocalDateTime from = startDate.atStartOfDay();
-        LocalDateTime to = endDate.atTime(23, 59, 59);
+        LocalDateTime toExclusive = endDate.plusDays(1).atStartOfDay();
 
         // 집계 단위별 쿼리 호출
         List<Object[]> rawResults = (unit == AggregationUnit.DAILY)
-                ? orderRepository.findDailySales(from, to)
-                : orderRepository.findMonthlySales(from, to);
+                ? orderRepository.findDailySales(from, toExclusive)
+                : orderRepository.findMonthlySales(from, toExclusive);
 
         // Object[] → DTO 변환
         List<SalesTimeSeriesItem> items = rawResults.stream()

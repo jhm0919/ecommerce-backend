@@ -175,4 +175,39 @@ class DashboardAdminServiceTest {
         assertThat(response.items().get(1).date()).isEqualTo("2026-02");
         assertThat(response.items().get(1).revenue()).isEqualByComparingTo(new BigDecimal("80000"));
     }
+
+    @Test
+    @DisplayName("endDate 의 23:59:59.999 에 생성된 주문도 집계에 포함")
+    void boundaryTime_isIncluded() {
+        // 2026-01-01 23:59:59.999 (거의 자정 직전)
+        insertOrder(new BigDecimal("10000"), OrderStatus.PENDING,
+                LocalDateTime.of(2026, 1, 1, 23, 59, 59, 999_000_000));
+
+        SalesTimeSeriesResponse response = dashboardAdminService.getSalesTimeSeries(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 1, 1),   // 같은 날
+                AggregationUnit.DAILY
+        );
+
+        assertThat(response.totalOrderCount()).isEqualTo(1);
+        assertThat(response.totalRevenue())
+                .isEqualByComparingTo(new BigDecimal("10000"));
+    }
+
+    @Test
+    @DisplayName("다음 날 00:00:00 에 생성된 주문은 포함 안 됨 (배타적 경계)")
+    void nextDayStart_isExcluded() {
+        // 2026-01-02 00:00:00 (다음 날 정각)
+        insertOrder(new BigDecimal("10000"), OrderStatus.PENDING,
+                LocalDateTime.of(2026, 1, 2, 0, 0, 0));
+
+        SalesTimeSeriesResponse response = dashboardAdminService.getSalesTimeSeries(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 1, 1),   // 1월 1일만 조회
+                AggregationUnit.DAILY
+        );
+
+        assertThat(response.totalOrderCount()).isZero();
+        assertThat(response.items()).isEmpty();
+    }
 }

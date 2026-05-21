@@ -94,13 +94,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                 com.team23.customer.order.domain.OrderStatus.PENDING,
                 com.team23.customer.order.domain.OrderStatus.CONFIRMED
             )
-              AND o.createdAt BETWEEN :from AND :to
+              AND o.createdAt >= :from AND o.createdAt < :to
             GROUP BY FUNCTION('DATE', o.createdAt)
             ORDER BY orderDate ASC
             """)
     List<Object[]> findDailySales(
             @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime to
+            @Param("to") LocalDateTime toExclusive
     );
 
     /**
@@ -117,12 +117,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                 com.team23.customer.order.domain.OrderStatus.PENDING,
                 com.team23.customer.order.domain.OrderStatus.CONFIRMED
             )
-              AND o.createdAt BETWEEN :from AND :to
+              AND o.createdAt >= :from AND o.createdAt < :to
             GROUP BY FUNCTION('DATE_FORMAT', o.createdAt, '%Y-%m')
             ORDER BY yearMonth ASC
             """)
     List<Object[]> findMonthlySales(
             @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime to
+            @Param("to") LocalDateTime toExclusive
     );
 }
