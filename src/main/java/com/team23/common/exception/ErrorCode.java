@@ -84,7 +84,11 @@ public enum ErrorCode {
     DUPLICATE_BANNER_ORDER(HttpStatus.CONFLICT, "BN001","이미 사용 중인 배너 우선순위입니다"),
     INVALID_BANNER_PERIOD(HttpStatus.BAD_REQUEST, "BN002", "배너 게시 기간이 올바르지 않습니다"),
     BANNER_NOT_FOUND(HttpStatus.NOT_FOUND, "BN003", "배너를 찾을 수 없습니다"),
-    INVALID_BANNER_STATUS(HttpStatus.BAD_REQUEST, "BN004", "처리할 수 없는 배너 상태입니다");
+    INVALID_BANNER_STATUS(HttpStatus.BAD_REQUEST, "BN004", "처리할 수 없는 배너 상태입니다"),
+
+    // Dashboard
+    INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "DB001", "조회 기간이 올바르지 않습니다"),
+    DATE_RANGE_TOO_LONG(HttpStatus.BAD_REQUEST, "DB002", "조회 기간은 최대 365일까지 가능합니다");
 
     private final HttpStatus status;
     private final String code;
