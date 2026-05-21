@@ -2,6 +2,7 @@ package com.team23.management.dashboard.controller;
 
 import com.team23.common.response.CommonResponse;
 import com.team23.management.dashboard.domain.AggregationUnit;
+import com.team23.management.dashboard.dto.PaymentsTimeSeriesResponse;
 import com.team23.management.dashboard.dto.SalesTimeSeriesResponse;
 import com.team23.management.dashboard.service.DashboardAdminService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,4 +44,23 @@ public class DashboardAdminController {
                 CommonResponse.createSuccess(dashboardAdminService.getSalesTimeSeries(startDate, endDate, unit))
         );
     }
+
+    @Operation(summary = "결제 시계열 조회",
+            description = "기간 내 결제 건수, 총액, 평균 금액을 일별 또는 월별로 집계한다. " +
+                    "모든 주문 상태 포함 (CANCELLED 도 결제 시도로 간주). 최대 365일.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "400", description = "기간 오류 / 필수값 누락 / 잘못된 unit")
+    })
+    @GetMapping("/payments")
+    public ResponseEntity<CommonResponse<PaymentsTimeSeriesResponse>> getPayments(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "DAILY") AggregationUnit unit
+    ) {
+        return ResponseEntity.ok(
+                CommonResponse.createSuccess(dashboardAdminService.getPaymentsTimeSeries(startDate, endDate, unit))
+        );
+    }
+
 }
