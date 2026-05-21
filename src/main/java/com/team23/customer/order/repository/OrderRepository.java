@@ -79,4 +79,50 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
+
+    /**
+     * 일별 매출 집계 (PENDING + CONFIRMED 만, CANCELLED 제외).
+     *
+     * @return Object[] = [date(java.sql.Date), revenue(BigDecimal), count(Long)]
+     */
+    @Query("""
+            SELECT FUNCTION('DATE', o.createdAt) AS orderDate,
+                   COALESCE(SUM(o.totalAmount.amount), 0),
+                   COUNT(o)
+            FROM Order o
+            WHERE o.status IN (
+                com.team23.customer.order.domain.OrderStatus.PENDING,
+                com.team23.customer.order.domain.OrderStatus.CONFIRMED
+            )
+              AND o.createdAt BETWEEN :from AND :to
+            GROUP BY FUNCTION('DATE', o.createdAt)
+            ORDER BY orderDate ASC
+            """)
+    List<Object[]> findDailySales(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to
+    );
+
+    /**
+     * 월별 매출 집계 (PENDING + CONFIRMED 만, CANCELLED 제외).
+     *
+     * @return Object[] = [yearMonth(String "YYYY-MM"), revenue(BigDecimal), count(Long)]
+     */
+    @Query("""
+            SELECT FUNCTION('DATE_FORMAT', o.createdAt, '%Y-%m') AS yearMonth,
+                   COALESCE(SUM(o.totalAmount.amount), 0),
+                   COUNT(o)
+            FROM Order o
+            WHERE o.status IN (
+                com.team23.customer.order.domain.OrderStatus.PENDING,
+                com.team23.customer.order.domain.OrderStatus.CONFIRMED
+            )
+              AND o.createdAt BETWEEN :from AND :to
+            GROUP BY FUNCTION('DATE_FORMAT', o.createdAt, '%Y-%m')
+            ORDER BY yearMonth ASC
+            """)
+    List<Object[]> findMonthlySales(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to
+    );
 }
