@@ -8,6 +8,7 @@ import com.team23.customer.order.dto.OrderDetailResponse;
 import com.team23.customer.order.dto.OrderResponse;
 import com.team23.customer.order.service.OrderService;
 import com.team23.common.security.jwt.AuthPrincipal;
+import io.micrometer.core.annotation.Counted;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -40,6 +41,10 @@ public class OrderController {
             @ApiResponse(responseCode = "400", description = "재고 부족 / 입력값 오류"),
             @ApiResponse(responseCode = "404", description = "상품 또는 SKU 없음")
     })
+    @Counted(
+            value = "order.member.create",
+            description = "회원 주문 생성 요청 수"
+    )
     @PostMapping("/me")
     public ResponseEntity<CommonResponse<OrderDetailResponse>> createMemberOrder(
             @AuthenticationPrincipal AuthPrincipal principal,
@@ -53,6 +58,10 @@ public class OrderController {
 
     @Operation(summary = "내 주문 목록", description = "로그인한 회원의 주문 목록을 조회한다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
+    @Counted(
+            value = "order.member.search",
+            description = "회원 주문 목록 조회 요청 수"
+    )
     @GetMapping("/me")
     public ResponseEntity<CommonResponse<Page<OrderResponse>>> getMyOrders(
             @AuthenticationPrincipal AuthPrincipal principal,
@@ -69,6 +78,10 @@ public class OrderController {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "404", description = "주문 없음")
     })
+    @Counted(
+            value = "order.member.detail",
+            description = "회원 주문 상세 조회 요청 수"
+    )
     @GetMapping("/me/{orderId}")
     public ResponseEntity<CommonResponse<OrderDetailResponse>> getMyOrderDetail(
             @AuthenticationPrincipal AuthPrincipal principal,
@@ -87,6 +100,10 @@ public class OrderController {
             @ApiResponse(responseCode = "400", description = "취소 불가 상태"),
             @ApiResponse(responseCode = "404", description = "주문 없음")
     })
+    @Counted(
+            value = "order.member.cancel",
+            description = "회원 주문 취소 요청 수"
+    )
     @PostMapping("/me/{orderId}/cancel")
     public ResponseEntity<CommonResponse<OrderDetailResponse>> cancelMyOrder(
             @AuthenticationPrincipal AuthPrincipal principal,
@@ -109,6 +126,10 @@ public class OrderController {
             @ApiResponse(responseCode = "400", description = "재고 부족 / 입력값 오류"),
             @ApiResponse(responseCode = "404", description = "상품 또는 SKU 없음")
     })
+    @Counted(
+            value = "order.guest.create",
+            description = "비회원 주문 생성 요청 수"
+    )
     @PostMapping("/guest")
     public ResponseEntity<CommonResponse<OrderDetailResponse>> createGuestOrder(
             @Valid @RequestBody CreateOrderRequest request
@@ -124,6 +145,10 @@ public class OrderController {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "404", description = "주문 없음 또는 연락처 불일치")
     })
+    @Counted(
+            value = "order.guest.search",
+            description = "비회원 주문 조회 요청 수"
+    )
     @GetMapping("/guest")
     public ResponseEntity<CommonResponse<OrderDetailResponse>> getGuestOrder(
             @RequestParam String orderNumber,
