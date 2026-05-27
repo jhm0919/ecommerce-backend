@@ -150,11 +150,6 @@ public class ProductAdminService {
 
         product.decreaseSkuStock(skuId, quantity);
 
-        // 품절 이벤트
-        if (sku.getStock() == 0) {
-            eventPublisher.publishEvent(SkuSoldOutEvent.of(product, sku));
-        }
-
         // 이력 이벤트
         eventPublisher.publishEvent(StockChangedEvent.of(
                 product, sku,

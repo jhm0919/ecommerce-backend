@@ -3,6 +3,7 @@ package com.team23.customer.stockhistory.service;
 import com.team23.customer.product.domain.StockChangedEvent;
 import com.team23.customer.stockhistory.domain.StockChangeType;
 import com.team23.customer.stockhistory.domain.StockHistory;
+import com.team23.customer.stockhistory.domain.StockHistoryRecordedEvent;
 import com.team23.customer.stockhistory.repository.StockHistoryRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -12,14 +13,18 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class StockHistoryEventHandlerTest {
 
     @Mock private StockHistoryRepository stockHistoryRepository;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks private StockHistoryEventHandler stockHistoryEventHandler;
 
@@ -34,6 +39,8 @@ class StockHistoryEventHandlerTest {
                     1L, "티셔츠", 100L, "SKU-1-001", "색상=검정",
                     StockChangeType.ORDER, 3, 50, 47, 1001L
             );
+            given(stockHistoryRepository.save(any(StockHistory.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
 
             stockHistoryEventHandler.handleStockChanged(event);
 
@@ -48,6 +55,11 @@ class StockHistoryEventHandlerTest {
             assertThat(saved.getStockBefore()).isEqualTo(50);
             assertThat(saved.getStockAfter()).isEqualTo(47);
             assertThat(saved.getOrderId()).isEqualTo(1001L);
+
+            ArgumentCaptor<StockHistoryRecordedEvent> eventCaptor =
+                    ArgumentCaptor.forClass(StockHistoryRecordedEvent.class);
+            verify(eventPublisher).publishEvent(eventCaptor.capture());
+            assertThat(eventCaptor.getValue().stockHistory()).isSameAs(saved);
         }
 
         @Test
@@ -57,6 +69,8 @@ class StockHistoryEventHandlerTest {
                     1L, "티셔츠", 100L, "SKU-1-001", "색상=검정",
                     StockChangeType.ADMIN_INCREASE, 10, 40, 50, null
             );
+            given(stockHistoryRepository.save(any(StockHistory.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
 
             stockHistoryEventHandler.handleStockChanged(event);
 
@@ -75,6 +89,8 @@ class StockHistoryEventHandlerTest {
                     1L, "티셔츠", 100L, "SKU-1-001", "색상=검정",
                     StockChangeType.ORDER_CANCEL, 3, 47, 50, 1001L
             );
+            given(stockHistoryRepository.save(any(StockHistory.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
 
             stockHistoryEventHandler.handleStockChanged(event);
 
@@ -95,6 +111,8 @@ class StockHistoryEventHandlerTest {
                     1L, "티셔츠", 100L, "SKU-1-001", "색상=검정",
                     StockChangeType.SKU_CREATED, 30, 0, 30, null
             );
+            given(stockHistoryRepository.save(any(StockHistory.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
 
             stockHistoryEventHandler.handleStockChanged(event);
 

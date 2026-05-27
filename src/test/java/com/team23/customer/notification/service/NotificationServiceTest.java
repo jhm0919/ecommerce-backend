@@ -2,6 +2,8 @@ package com.team23.customer.notification.service;
 
 import com.team23.customer.notification.domain.Notification;
 import com.team23.customer.notification.repository.NotificationRepository;
+import com.team23.customer.stockhistory.domain.StockChangeType;
+import com.team23.customer.stockhistory.domain.StockHistory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,13 +37,36 @@ class NotificationServiceTest {
 
     @BeforeEach
     void setUp() {
-        unreadNotification = Notification.soldOut(
-                1L, "티셔츠", 100L, "SKU-1-001", "색상=검정, 사이즈=S"
-        );
-        readNotification = Notification.soldOut(
-                2L, "바지", 200L, "SKU-2-001", "색상=회색"
-        );
+        unreadNotification = Notification.soldOutFrom(soldOutHistory(
+                1L, "티셔츠", 100L, "SKU-1-001", "색상=검정, 사이즈=S"));
+        readNotification = Notification.soldOutFrom(soldOutHistory(
+                2L, "바지", 200L, "SKU-2-001", "색상=회색"));
         readNotification.markAsRead();
+    }
+
+    private StockHistory soldOutHistory(
+            Long productId,
+            String productName,
+            Long skuId,
+            String skuCode,
+            String skuOptionsSnapshot
+    ) {
+        StockHistory history = StockHistory.of(
+                productId, productName, skuId, skuCode, skuOptionsSnapshot,
+                StockChangeType.ORDER, 1, 1, 0, 1000L
+        );
+        setId(history, skuId + 1000);
+        return history;
+    }
+
+    private static void setId(Object entity, Long id) {
+        try {
+            var idField = entity.getClass().getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(entity, id);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Nested

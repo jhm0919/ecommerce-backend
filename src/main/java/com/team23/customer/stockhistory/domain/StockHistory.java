@@ -94,4 +94,11 @@ public class StockHistory {
         history.orderId = orderId;
         return history;
     }
+
+    public boolean isSoldOutTransition() {
+        return (changeType == StockChangeType.ORDER
+                || changeType == StockChangeType.ADMIN_DECREASE)
+                && stockBefore > 0
+                && stockAfter == 0;
+    }
 }

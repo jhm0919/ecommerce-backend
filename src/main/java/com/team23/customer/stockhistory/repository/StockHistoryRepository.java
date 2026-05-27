@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.Collection;
+
 public interface StockHistoryRepository extends JpaRepository<StockHistory, Long> {
 
     /**
@@ -25,6 +28,20 @@ public interface StockHistoryRepository extends JpaRepository<StockHistory, Long
             @Param("productId") Long productId,
             @Param("skuId") Long skuId,
             @Param("changeType") StockChangeType changeType,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT h FROM StockHistory h
+            WHERE h.stockBefore > 0
+              AND h.stockAfter = 0
+              AND h.changeType IN :changeTypes
+              AND h.occurredAt >= :from
+            ORDER BY h.occurredAt DESC, h.id DESC
+            """)
+    Page<StockHistory> findSoldOutTransitionsSince(
+            @Param("changeTypes") Collection<StockChangeType> changeTypes,
+            @Param("from") LocalDateTime from,
             Pageable pageable
     );
 }

@@ -215,8 +215,8 @@ class ProductAdminServiceTest {
         }
 
         @Test
-        @DisplayName("재고 0이면 SkuSoldOutEvent + StockChangedEvent 둘 다 발행")  // ★ 수정
-        void publishBothEventsWhenSoldOut() {
+        @DisplayName("재고 0이어도 StockChangedEvent만 발행")
+        void publishOnlyStockChangedEventWhenSoldOut() {
             Product product = createProduct();
             setId(product, 1L);
             SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 3);
@@ -226,13 +226,12 @@ class ProductAdminServiceTest {
 
             productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 3→0
 
-            verify(eventPublisher).publishEvent(any(SkuSoldOutEvent.class));
             verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
 
         @Test
-        @DisplayName("재고 남으면 SkuSoldOutEvent는 발행 안 함")  // ★ 수정
-        void noSoldOutEventWhenStockRemains() {
+        @DisplayName("재고 남아도 StockChangedEvent는 발행")
+        void publishStockChangedEventWhenStockRemains() {
             Product product = createProduct();
             setId(product, 1L);
             SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
@@ -242,8 +241,7 @@ class ProductAdminServiceTest {
 
             productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
 
-            verify(eventPublisher, never()).publishEvent(any(SkuSoldOutEvent.class));
-            // StockChangedEvent는 발행됨 (위에서 별도 검증)
+            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
     }
 

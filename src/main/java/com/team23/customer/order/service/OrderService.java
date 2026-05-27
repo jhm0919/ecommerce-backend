@@ -13,7 +13,6 @@ import com.team23.customer.order.exception.OrderNotFoundException;
 import com.team23.customer.order.repository.OrderRepository;
 import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.SKU;
-import com.team23.customer.product.domain.SkuSoldOutEvent;
 import com.team23.customer.product.domain.StockChangedEvent;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
@@ -189,11 +188,6 @@ public class OrderService {
                 log.warn("Stock decrease failed: productId={}, skuId={}, quantity={}",
                         req.productId(), req.skuId(), req.quantity());
                 throw new InsufficientStockException();
-            }
-
-            // 품절 이벤트 (알림용)
-            if (sku.getStock() == 0) {
-                eventPublisher.publishEvent(SkuSoldOutEvent.of(product, sku));
             }
 
             prepared.add(new PreparedOrderItem(
