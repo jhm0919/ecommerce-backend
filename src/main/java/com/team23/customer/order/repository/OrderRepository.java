@@ -1,6 +1,7 @@
 package com.team23.customer.order.repository;
 
 import com.team23.customer.order.domain.Order;
+import com.team23.customer.order.domain.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
+
+    long countByStatus(OrderStatus status);
 
     /**
      * 주문번호로 조회 (간단).
