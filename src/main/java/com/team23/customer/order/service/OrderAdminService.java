@@ -14,6 +14,7 @@ import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.product.repository.SkuRepository;
+import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -35,6 +36,10 @@ public class OrderAdminService {
     private final SkuRepository skuRepository;
 //    private final PaymentService paymentService;
 
+    @Timed(
+            value = "order.seller.search.time",
+            description = "판매자 주문 조회 처리 시간"
+    )
     @Transactional(readOnly = true)
     public Page<OrderAdminListResponse> search(
             OrderStatus status,
@@ -50,6 +55,10 @@ public class OrderAdminService {
                 .map(OrderAdminListResponse::from);
     }
 
+    @Timed(
+            value = "order.seller.confirm.time",
+            description = "판매자 주문 확정 처리 시간"
+    )
     public OrderAdminConfirmResponse confirm(List<Long> orderIds) {
 
         List<Order> orders = orderIds.stream()
@@ -75,6 +84,10 @@ public class OrderAdminService {
         return new OrderAdminConfirmResponse(orders.size(), confirmedIds);
     }
 
+    @Timed(
+            value = "order.seller.cancel.time",
+            description = "판매자 주문 강제 취소 처리 시간"
+    )
     public OrderAdminCancelResponse cancel(
             Long orderId,
             String cancelReason,
