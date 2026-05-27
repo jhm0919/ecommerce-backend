@@ -114,14 +114,26 @@ management:
     web:
       exposure:
         include: health, info, prometheus, metrics
+
   endpoint:
     prometheus:
       enabled: true
     health:
       show-details: always
+
   metrics:
+    distribution:
+      percentiles-histogram:
+        order.member.create.time: true
+        order.guest.create.time: true
+        order.member.cancel.time: true
+        order.seller.search.time: true
+        order.seller.confirm.time: true
+        order.seller.cancel.time: true
+
     export:
       prometheus:
         enabled: true
     tags:
       application: ecommerce-customer
+

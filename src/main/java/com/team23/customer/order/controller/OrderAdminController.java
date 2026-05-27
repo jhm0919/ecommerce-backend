@@ -4,6 +4,7 @@ import com.team23.common.response.CommonResponse;
 import com.team23.customer.order.domain.OrderStatus;
 import com.team23.customer.order.dto.*;
 import com.team23.customer.order.service.OrderAdminService;
+import io.micrometer.core.annotation.Counted;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,6 +30,10 @@ public class OrderAdminController {
 
     @Operation(summary = "주문 조회", description = "기간 및 상태 필터로 주문 목록 페이지네이션 조회.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
+    @Counted(
+            value = "order.seller.search",
+            description = "판매자 주문 조회 요청 수"
+    )
     @GetMapping
     public ResponseEntity<CommonResponse<Page<OrderAdminListResponse>>> search(
             @RequestParam(required = false) OrderStatus status,
@@ -51,6 +56,10 @@ public class OrderAdminController {
             @ApiResponse(responseCode = "400", description = "PENDING 아닌 주문 포함"),
             @ApiResponse(responseCode = "404", description = "주문 없음")
     })
+    @Counted(
+            value = "order.seller.confirm",
+            description = "판매자 주문 확정 요청 수"
+    )
     @PatchMapping("/confirm")
     public ResponseEntity<CommonResponse<OrderAdminConfirmResponse>> confirm(
             @Valid @RequestBody OrderAdminConfirmRequest request
@@ -69,6 +78,10 @@ public class OrderAdminController {
             @ApiResponse(responseCode = "400", description = "이미 취소된 주문"),
             @ApiResponse(responseCode = "404", description = "주문 없음")
     })
+    @Counted(
+            value = "order.seller.cancel",
+            description = "판매자 주문 강제 취소 요청 수"
+    )
     @PostMapping("/{orderId}/cancel")
     public ResponseEntity<CommonResponse<OrderAdminCancelResponse>> cancel(
             @PathVariable Long orderId,
