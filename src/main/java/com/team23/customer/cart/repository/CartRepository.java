@@ -24,4 +24,15 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
             WHERE c.memberId = :memberId
             """)
     Optional<Cart> findByMemberIdWithItems(@Param("memberId") Long memberId);
+
+    @Query("""
+        SELECT COUNT(c)
+        FROM Cart c
+        WHERE EXISTS (
+            SELECT 1
+            FROM CartItem ci
+            WHERE ci.cart = c
+        )
+    """)
+    long countNonEmptyCarts();
 }

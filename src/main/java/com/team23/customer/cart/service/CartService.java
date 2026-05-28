@@ -8,6 +8,7 @@ import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.SKU;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
+import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class CartService {
     // 조회 (변경 없음)
     // ─────────────────────────────────────
 
+    @Timed(value = "cart.get.time", description = "장바구니 조회 처리 시간")
     @Transactional
     public CartView getMyCart(Long memberId) {
         Cart cart = cartRepository.findByMemberIdWithItems(memberId)
@@ -47,6 +49,7 @@ public class CartService {
      * 같은 SKU가 이미 있으면 수량 합산.
      * 같은 Product라도 SKU가 다르면 별도 항목으로 추가.
      */
+    @Timed(value = "cart.add.time", description = "장바구니 상품 추가 처리 시간")
     @Transactional
     public CartView addItem(Long memberId, Long productId, Long skuId, int quantity) {  // ★ skuId 추가
         Product product = productRepository.findById(productId)
@@ -78,6 +81,7 @@ public class CartService {
     // 수량 변경 (변경 없음)
     // ─────────────────────────────────────
 
+    @Timed(value = "cart.change_quantity.time", description = "장바구니 수량 변경 처리 시간")
     @Transactional
     public CartView changeItemQuantity(Long memberId, Long itemId, int quantity) {
         Cart cart = cartRepository.findByMemberIdWithItems(memberId)
@@ -101,6 +105,7 @@ public class CartService {
     // 항목 삭제 (변경 없음)
     // ─────────────────────────────────────
 
+    @Timed(value = "cart.remove.time", description = "장바구니 상품 삭제 처리 시간")
     @Transactional
     public CartView removeItem(Long memberId, Long itemId) {
         Cart cart = cartRepository.findByMemberIdWithItems(memberId)
@@ -122,6 +127,7 @@ public class CartService {
     // 전체 비우기 (변경 없음)
     // ─────────────────────────────────────
 
+    @Timed(value = "cart.clear.time", description = "장바구니 비우기 처리 시간")
     @Transactional
     public void clearMyCart(Long memberId) {
         cartRepository.findByMemberIdWithItems(memberId)

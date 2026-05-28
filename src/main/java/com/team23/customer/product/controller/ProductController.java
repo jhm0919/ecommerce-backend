@@ -4,6 +4,7 @@ import com.team23.common.response.CommonResponse;
 import com.team23.customer.product.dto.ProductDetailResponse;
 import com.team23.customer.product.dto.ProductSummaryResponse;
 import com.team23.customer.product.service.ProductService;
+import io.micrometer.core.annotation.Counted;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -34,6 +35,10 @@ public class ProductController {
                     "- GET /api/products?page=0&size=20&sort=createdAt,desc"
     )
     @ApiResponse(responseCode = "200", description = "조회 성공")
+    @Counted(
+            value = "product.search",
+            description = "상품 목록 조회 요청 수"
+    )
     @GetMapping
     public ResponseEntity<CommonResponse<Page<ProductSummaryResponse>>> list(
             @RequestParam(required = false) Long categoryId,
@@ -53,6 +58,10 @@ public class ProductController {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "404", description = "상품 없음")
     })
+    @Counted(
+            value = "product.detail",
+            description = "상품 상세 조회 요청 수"
+    )
     @GetMapping("/{id}")
     public ResponseEntity<CommonResponse<ProductDetailResponse>> getDetail(
             @PathVariable Long id

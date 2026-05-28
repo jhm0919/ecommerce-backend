@@ -5,6 +5,7 @@ import com.team23.customer.product.domain.ProductStatus;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.dto.ProductSummaryResponse;
 import com.team23.customer.product.repository.ProductRepository;
+import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,6 +29,10 @@ public class ProductService {
     );
     private static final String SORT_CREATED_AT = "createdAt";
 
+    @Timed(
+            value = "product.search.time",
+            description = "상품 목록 조회 처리 시간"
+    )
     @Transactional(readOnly = true)
     public Page<ProductSummaryResponse> findVisibleProducts(
             Long categoryId,
@@ -48,6 +53,10 @@ public class ProductService {
      * 상품 상세 조회.
      * DISCONTINUED 상품은 사용자에게 노출하지 않으므로 NotFound로 응답.
      */
+    @Timed(
+            value = "product.detail.time",
+            description = "상품 상세 조회 처리 시간"
+    )
     @Transactional(readOnly = true)
     public Product findById(Long id) {
         Product product = productRepository.findByIdWithCategory(id)
