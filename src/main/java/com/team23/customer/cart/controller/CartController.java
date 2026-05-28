@@ -6,6 +6,7 @@ import com.team23.customer.cart.dto.UpdateCartItemRequest;
 import com.team23.customer.cart.service.CartService;
 import com.team23.common.response.CommonResponse;
 import com.team23.common.security.jwt.AuthPrincipal;
+import io.micrometer.core.annotation.Counted;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -31,6 +32,7 @@ public class CartController {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "401", description = "인증 필요")
     })
+    @Counted(value = "cart.get", description = "장바구니 조회 요청 수")
     @GetMapping
     public ResponseEntity<CommonResponse<CartResponse>> getMyCart(
             @AuthenticationPrincipal AuthPrincipal principal
@@ -47,6 +49,7 @@ public class CartController {
             @ApiResponse(responseCode = "400", description = "재고 부족 / 입력값 오류"),
             @ApiResponse(responseCode = "404", description = "상품 또는 SKU 없음")
     })
+    @Counted(value = "cart.add", description = "장바구니 상품 추가 요청 수")
     @PostMapping("/items")
     public ResponseEntity<CommonResponse<CartResponse>> addItem(
             @AuthenticationPrincipal AuthPrincipal principal,
@@ -69,6 +72,7 @@ public class CartController {
             @ApiResponse(responseCode = "400", description = "재고 부족 / 입력값 오류"),
             @ApiResponse(responseCode = "404", description = "항목 없음")
     })
+    @Counted(value = "cart.change_quantity", description = "장바구니 수량 변경 요청 수")
     @PatchMapping("/items/{itemId}")
     public ResponseEntity<CommonResponse<CartResponse>> changeItemQuantity(
             @AuthenticationPrincipal AuthPrincipal principal,
@@ -90,6 +94,7 @@ public class CartController {
             @ApiResponse(responseCode = "200", description = "삭제 성공"),
             @ApiResponse(responseCode = "404", description = "항목 없음")
     })
+    @Counted(value = "cart.remove", description = "장바구니 상품 삭제 요청 수")
     @DeleteMapping("/items/{itemId}")
     public ResponseEntity<CommonResponse<CartResponse>> removeItem(
             @AuthenticationPrincipal AuthPrincipal principal,
@@ -106,6 +111,7 @@ public class CartController {
             @ApiResponse(responseCode = "204", description = "비우기 성공"),
             @ApiResponse(responseCode = "401", description = "인증 필요")
     })
+    @Counted(value = "cart.clear", description = "장바구니 비우기 요청 수")
     @DeleteMapping
     public ResponseEntity<Void> clearMyCart(
             @AuthenticationPrincipal AuthPrincipal principal
