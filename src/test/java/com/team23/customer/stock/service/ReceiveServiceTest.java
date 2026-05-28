@@ -14,7 +14,6 @@ import com.team23.customer.stock.dto.ReceiveStockResponse;
 import com.team23.customer.stock.dto.ReceiveHistoryResponse;
 import com.team23.customer.stock.repository.ReceiveHistoryRepository;
 import jakarta.persistence.EntityManager;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @Transactional
 class ReceiveServiceTest {
     @Autowired
@@ -42,12 +43,6 @@ class ReceiveServiceTest {
     @Autowired CategoryRepository categoryRepository;
     @Autowired ProductRepository productRepository;
     @Autowired EntityManager em;
-
-    @AfterEach
-    void cleanUp() {
-        receiveHistoryRepository.deleteAll();
-        purchaseOrderRepository.deleteAll();
-    }
 
     Long skuId = 0L;
 

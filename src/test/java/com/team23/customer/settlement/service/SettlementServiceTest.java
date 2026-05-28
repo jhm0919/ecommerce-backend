@@ -11,12 +11,13 @@ import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.settlement.dto.SettlementConfirmResponse;
 import com.team23.customer.settlement.dto.SettlementSummaryResponse;
 import com.team23.customer.settlement.repository.SettlementRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -28,6 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
+@ActiveProfiles("test")
+@Transactional
 class SettlementServiceTest {
     @Autowired
     SettlementService settlementService;
@@ -58,14 +61,6 @@ class SettlementServiceTest {
         Product saved = productRepository.saveAndFlush(product);
         this.testProduct = saved;
         this.testSku = saved.getSkus().get(0);
-    }
-
-    @AfterEach
-    void cleanUp() {
-        orderAdminRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        settlementRepository.deleteAll();
     }
 
     // 헬퍼 — CONFIRMED 주문 생성

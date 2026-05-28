@@ -7,6 +7,7 @@ import com.team23.customer.delivery.repository.DeliveryRepository;
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.domain.OrderItem;
 import com.team23.customer.order.dto.CreateOrderRequest;
+import com.team23.customer.order.dto.OrderDetailResponse;
 import com.team23.customer.order.exception.InsufficientStockException;
 import com.team23.customer.order.exception.OrderAccessDeniedException;
 import com.team23.customer.order.exception.OrderNotFoundException;
@@ -43,10 +44,6 @@ public class OrderService {
     // 주문 생성
     // ─────────────────────────────────────
 
-    @Timed(
-            value = "order.member.create.time",
-            description = "회원 주문 생성 처리 시간"
-    )
     @Transactional
     public Order createMemberOrder(Long memberId, CreateOrderRequest request) {
         List<PreparedOrderItem> prepared = prepareItemsAndDecreaseStock(request.items());
@@ -68,9 +65,19 @@ public class OrderService {
     }
 
     @Timed(
-            value = "order.guest.create.time",
-            description = "비회원 주문 생성 처리 시간"
+            value = "order.member.create.time",
+            description = "회원 주문 생성 처리 시간"
     )
+    @Transactional
+    public OrderDetailResponse createMemberOrderDetail(
+            Long memberId,
+            CreateOrderRequest request
+    ) {
+        Order order = createMemberOrder(memberId, request);
+        Delivery delivery = findDeliveryByOrderId(order.getId());
+        return OrderDetailResponse.from(order, delivery);
+    }
+
     @Transactional
     public Order createGuestOrder(CreateOrderRequest request) {
         validateGuestInfo(request);
@@ -95,6 +102,17 @@ public class OrderService {
         log.info("Guest order created: orderId={}, email={}, total={}",
                 order.getId(), request.guestEmail(), order.getTotalAmount());
         return order;
+    }
+
+    @Timed(
+            value = "order.guest.create.time",
+            description = "비회원 주문 생성 처리 시간"
+    )
+    @Transactional
+    public OrderDetailResponse createGuestOrderDetail(CreateOrderRequest request) {
+        Order order = createGuestOrder(request);
+        Delivery delivery = findDeliveryByOrderId(order.getId());
+        return OrderDetailResponse.from(order, delivery);
     }
 
     // ─────────────────────────────────────

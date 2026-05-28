@@ -2,6 +2,7 @@ package com.team23.customer.product.repository;
 
 import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.ProductStatus;
+import com.team23.customer.product.dto.ProductSummaryProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,16 +27,41 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      *
      * <p>Category를 함께 fetch하여 N+1 문제 방지.
      */
-    @Query("""
-            SELECT p FROM Product p
-            JOIN FETCH p.category c
+    @Query(
+            value = """
+            SELECT new com.team23.customer.product.dto.ProductSummaryProjection(
+                p.id,
+                p.name,
+                p.price.amount,
+                p.price.currency,
+                p.mainImageUrl,
+                c.name,
+                p.status,
+                COALESCE(SUM(s.stock), 0)
+            )
+            FROM Product p
+            JOIN p.category c
+            LEFT JOIN p.skus s
             WHERE p.status <> :excludedStatus
               AND (:categoryId IS NULL OR c.id = :categoryId)
               AND (:keyword IS NULL OR
                    LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
                    LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))
-            """)
-    Page<Product> findVisibleProducts(
+            GROUP BY p.id, p.name, p.price.amount, p.price.currency,
+                     p.mainImageUrl, c.name, p.status, p.createdAt
+            """,
+            countQuery = """
+            SELECT COUNT(p)
+            FROM Product p
+            JOIN p.category c
+            WHERE p.status <> :excludedStatus
+              AND (:categoryId IS NULL OR c.id = :categoryId)
+              AND (:keyword IS NULL OR
+                   LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                   LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))
+            """
+    )
+    Page<ProductSummaryProjection> findVisibleProductSummaries(
             @Param("categoryId") Long categoryId,
             @Param("keyword") String keyword,
             @Param("excludedStatus") ProductStatus excludedStatus,
@@ -46,8 +72,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * 상품 상세 조회 (Category 함께).
      */
     @Query("""
-            SELECT p FROM Product p
+            SELECT DISTINCT p FROM Product p
             JOIN FETCH p.category
+            LEFT JOIN FETCH p.skus
             WHERE p.id = :id
             """)
     Optional<Product> findByIdWithCategory(@Param("id") Long id);

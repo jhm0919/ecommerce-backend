@@ -19,16 +19,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
+@ActiveProfiles("test")
 // ★ 클래스 레벨 @Transactional 제거 → 각 테스트 독립 트랜잭션
 class OrderAdminServiceTest {
 
@@ -40,11 +43,14 @@ class OrderAdminServiceTest {
 
     private Product testProduct;
     private SKU testSku;
+    private Category testCategory;
+    private final List<Long> createdOrderIds = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
         Category category = categoryRepository.save(
                 Category.create("신발", "shoe-order"));
+        this.testCategory = category;
         Product product = Product.register(
                 "운동화",
                 new Money(BigDecimal.valueOf(10000), "KRW"),
@@ -60,15 +66,22 @@ class OrderAdminServiceTest {
 
     @AfterEach
     void cleanUp() {
-        orderAdminRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
+        createdOrderIds.forEach(orderId ->
+                orderAdminRepository.findById(orderId)
+                        .ifPresent(orderAdminRepository::delete));
+        productRepository.findById(testProduct.getId())
+                .ifPresent(productRepository::delete);
+        categoryRepository.findById(testCategory.getId())
+                .ifPresent(categoryRepository::delete);
+        createdOrderIds.clear();
     }
 
     private Order createPendingOrder() {
         OrderItem item = OrderItem.of(testProduct, testSku, 1);
         Order order = Order.createForMember(1L, List.of(item));
-        return orderAdminRepository.saveAndFlush(order);
+        Order saved = orderAdminRepository.saveAndFlush(order);
+        createdOrderIds.add(saved.getId());
+        return saved;
     }
 
     private Order createCancelledOrder() {
@@ -218,6 +231,7 @@ class OrderAdminServiceTest {
         OrderItem item = OrderItem.of(freshProduct, freshSku, orderQuantity);
         Order order = Order.createForMember(1L, List.of(item));
         order = orderAdminRepository.saveAndFlush(order);
+        createdOrderIds.add(order.getId());
 
         orderAdminService.cancel(order.getId(), "재고 부족", "OUT_OF_STOCK");
 

@@ -1,7 +1,6 @@
 package com.team23.customer.product.controller;
 
 import com.team23.common.response.CommonResponse;
-import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.dto.ProductDetailResponse;
 import com.team23.customer.product.dto.ProductSummaryResponse;
 import com.team23.customer.product.service.ProductService;
@@ -41,11 +40,11 @@ public class ProductController {
             @RequestParam(required = false) String keyword,
             Pageable pageable
     ) {
-        Page<Product> products = productService.findVisibleProducts(
+        Page<ProductSummaryResponse> products = productService.findVisibleProducts(
                 categoryId, keyword, pageable
         );
         return ResponseEntity.ok(
-                CommonResponse.createSuccess(products.map(ProductSummaryResponse::from))
+                CommonResponse.createSuccess(products)
         );
     }
 
@@ -58,7 +57,7 @@ public class ProductController {
     public ResponseEntity<CommonResponse<ProductDetailResponse>> getDetail(
             @PathVariable Long id
     ) {
-        Product product = productService.findById(id);
+        var product = productService.findById(id);
         return ResponseEntity.ok(
                 CommonResponse.createSuccess(ProductDetailResponse.from(product))
         );

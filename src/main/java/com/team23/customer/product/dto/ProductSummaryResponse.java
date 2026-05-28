@@ -34,4 +34,31 @@ public record ProductSummaryResponse(
                 product.getTotalSkuStock()        // ★ SKU 합계
         );
     }
+
+    public static ProductSummaryResponse from(ProductSummaryProjection projection) {
+        int totalStock = toSafeTotalStock(projection.totalStock());
+
+        return new ProductSummaryResponse(
+                projection.id(),
+                projection.name(),
+                projection.price(),
+                projection.currency(),
+                projection.mainImageUrl(),
+                projection.categoryName(),
+                projection.status(),
+                totalStock > 0,
+                totalStock
+        );
+    }
+
+    private static int toSafeTotalStock(Long totalStock) {
+        long rawTotalStock = totalStock == null ? 0L : totalStock;
+        if (rawTotalStock <= 0L) {
+            return 0;
+        }
+        if (rawTotalStock > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+        }
+        return (int) rawTotalStock;
+    }
 }

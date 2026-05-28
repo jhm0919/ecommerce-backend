@@ -50,10 +50,10 @@ public class OrderController {
             @AuthenticationPrincipal AuthPrincipal principal,
             @Valid @RequestBody CreateOrderRequest request
     ) {
-        Order order = orderService.createMemberOrder(principal.memberId(), request);
-        Delivery delivery = orderService.findDeliveryByOrderId(order.getId());
         return ResponseEntity.status(201)
-                .body(CommonResponse.createSuccess(OrderDetailResponse.from(order, delivery)));
+                .body(CommonResponse.createSuccess(
+                        orderService.createMemberOrderDetail(principal.memberId(), request)
+                ));
     }
 
     @Operation(summary = "내 주문 목록", description = "로그인한 회원의 주문 목록을 조회한다.")
@@ -134,10 +134,10 @@ public class OrderController {
     public ResponseEntity<CommonResponse<OrderDetailResponse>> createGuestOrder(
             @Valid @RequestBody CreateOrderRequest request
     ) {
-        Order order = orderService.createGuestOrder(request);
-        Delivery delivery = orderService.findDeliveryByOrderId(order.getId());
         return ResponseEntity.status(201)
-                .body(CommonResponse.createSuccess(OrderDetailResponse.from(order, delivery)));
+                .body(CommonResponse.createSuccess(
+                        orderService.createGuestOrderDetail(request)
+                ));
     }
 
     @Operation(summary = "비회원 주문 조회", description = "주문번호 + 연락처(이메일 또는 전화번호)로 조회.")

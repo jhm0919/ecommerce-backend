@@ -3,14 +3,12 @@ package com.team23.customer.purchaseorder.service;
 import com.team23.customer.product.domain.*;
 import com.team23.customer.product.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
-import com.team23.customer.product.repository.SkuRepository;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
 import com.team23.customer.purchaseorder.domain.PurchaseOrderStatus;
 import com.team23.customer.purchaseorder.dto.PurchaseOrderListResponse;
 import com.team23.customer.purchaseorder.exception.PurchaseOrderException;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
 import jakarta.persistence.EntityManager;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -27,29 +25,19 @@ import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@ActiveProfiles("test")
 class PurchaseOrderServiceTest {
     @Autowired PurchaseOrderService purchaseOrderService;
     @Autowired
     PurchaseOrderRepository purchaseOrderRepository;
-    @Autowired
-    SkuRepository skuRepository;
     @Autowired
     ProductRepository productRepository;
     @Autowired
     CategoryRepository categoryRepository;
     @Autowired
     EntityManager em;
-
-    @AfterEach
-    void cleanUp() {
-        productRepository.deleteAll();
-        skuRepository.deleteAll();
-        purchaseOrderRepository.deleteAll();
-        categoryRepository.deleteAll();
-    }
 
     Long skuId = 0L;
 

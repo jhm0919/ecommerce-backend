@@ -1,0 +1,10 @@
+app:
+  seed:
+    performance:
+      enabled: ${PERFORMANCE_SEED_ENABLED:false}
+      category-count: ${PERFORMANCE_SEED_CATEGORY_COUNT:30}
+      product-count: ${PERFORMANCE_SEED_PRODUCT_COUNT:10000}
+      skus-per-product: ${PERFORMANCE_SEED_SKUS_PER_PRODUCT:3}
+      order-sku-stock: ${PERFORMANCE_SEED_ORDER_SKU_STOCK:1000000}
+      cancel-order-count: ${PERFORMANCE_SEED_CANCEL_ORDER_COUNT:1000}
+      cancel-member-id: ${PERFORMANCE_SEED_CANCEL_MEMBER_ID:1}

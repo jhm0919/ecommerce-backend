@@ -6,6 +6,8 @@ import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.ProductStatus;
 import com.team23.customer.product.domain.SKU;
 import com.team23.customer.product.domain.SkuOption;
+import com.team23.customer.product.dto.ProductSummaryProjection;
+import com.team23.customer.product.dto.ProductSummaryResponse;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -19,8 +21,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,16 +62,16 @@ class ProductServiceTest {
         @DisplayName("필터 없이 전체 조회")
         void allProducts() {
             Pageable pageable = PageRequest.of(0, 20);
-            Page<Product> mockPage = new PageImpl<>(List.of(createProduct()));
+            Page<ProductSummaryProjection> mockPage = new PageImpl<>(List.of(createSummary()));
 
-            given(productRepository.findVisibleProducts(
+            given(productRepository.findVisibleProductSummaries(
                     eq(null), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
                     .willReturn(mockPage);
 
-            Page<Product> result = productService.findVisibleProducts(null, null, pageable);
+            Page<ProductSummaryResponse> result = productService.findVisibleProducts(null, null, pageable);
 
             assertThat(result.getContent()).hasSize(1);
-            verify(productRepository).findVisibleProducts(
+            verify(productRepository).findVisibleProductSummaries(
                     null, null, ProductStatus.DISCONTINUED, pageable);
         }
 
@@ -77,14 +81,14 @@ class ProductServiceTest {
             Pageable pageable = PageRequest.of(0, 20);
             Long categoryId = 1L;
 
-            given(productRepository.findVisibleProducts(
+            given(productRepository.findVisibleProductSummaries(
                     eq(categoryId), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
-                    .willReturn(new PageImpl<>(List.of(createProduct())));
+                    .willReturn(new PageImpl<>(List.of(createSummary())));
 
-            Page<Product> result = productService.findVisibleProducts(categoryId, null, pageable);
+            Page<ProductSummaryResponse> result = productService.findVisibleProducts(categoryId, null, pageable);
 
             assertThat(result.getContent()).hasSize(1);
-            verify(productRepository).findVisibleProducts(
+            verify(productRepository).findVisibleProductSummaries(
                     categoryId, null, ProductStatus.DISCONTINUED, pageable);
         }
 
@@ -93,14 +97,14 @@ class ProductServiceTest {
         void searchByKeyword() {
             Pageable pageable = PageRequest.of(0, 20);
 
-            given(productRepository.findVisibleProducts(
+            given(productRepository.findVisibleProductSummaries(
                     eq(null), eq("티셔츠"), eq(ProductStatus.DISCONTINUED), eq(pageable)))
-                    .willReturn(new PageImpl<>(List.of(createProduct())));
+                    .willReturn(new PageImpl<>(List.of(createSummary())));
 
-            Page<Product> result = productService.findVisibleProducts(null, "티셔츠", pageable);
+            Page<ProductSummaryResponse> result = productService.findVisibleProducts(null, "티셔츠", pageable);
 
             assertThat(result.getContent()).hasSize(1);
-            verify(productRepository).findVisibleProducts(
+            verify(productRepository).findVisibleProductSummaries(
                     null, "티셔츠", ProductStatus.DISCONTINUED, pageable);
         }
 
@@ -110,14 +114,14 @@ class ProductServiceTest {
             Pageable pageable = PageRequest.of(0, 20);
             Long categoryId = 1L;
 
-            given(productRepository.findVisibleProducts(
+            given(productRepository.findVisibleProductSummaries(
                     eq(categoryId), eq("티셔츠"), eq(ProductStatus.DISCONTINUED), eq(pageable)))
-                    .willReturn(new PageImpl<>(List.of(createProduct())));
+                    .willReturn(new PageImpl<>(List.of(createSummary())));
 
-            Page<Product> result = productService.findVisibleProducts(categoryId, "티셔츠", pageable);
+            Page<ProductSummaryResponse> result = productService.findVisibleProducts(categoryId, "티셔츠", pageable);
 
             assertThat(result.getContent()).hasSize(1);
-            verify(productRepository).findVisibleProducts(
+            verify(productRepository).findVisibleProductSummaries(
                     categoryId, "티셔츠", ProductStatus.DISCONTINUED, pageable);
         }
 
@@ -126,13 +130,13 @@ class ProductServiceTest {
         void trimKeyword() {
             Pageable pageable = PageRequest.of(0, 20);
 
-            given(productRepository.findVisibleProducts(
+            given(productRepository.findVisibleProductSummaries(
                     eq(null), eq("티셔츠"), eq(ProductStatus.DISCONTINUED), eq(pageable)))
                     .willReturn(new PageImpl<>(List.of()));
 
             productService.findVisibleProducts(null, "  티셔츠  ", pageable);
 
-            verify(productRepository).findVisibleProducts(
+            verify(productRepository).findVisibleProductSummaries(
                     null, "티셔츠", ProductStatus.DISCONTINUED, pageable);
         }
 
@@ -141,14 +145,62 @@ class ProductServiceTest {
         void emptyKeywordBecomesNull() {
             Pageable pageable = PageRequest.of(0, 20);
 
-            given(productRepository.findVisibleProducts(
+            given(productRepository.findVisibleProductSummaries(
                     eq(null), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
                     .willReturn(new PageImpl<>(List.of()));
 
             productService.findVisibleProducts(null, "   ", pageable);
 
-            verify(productRepository).findVisibleProducts(
+            verify(productRepository).findVisibleProductSummaries(
                     null, null, ProductStatus.DISCONTINUED, pageable);
+        }
+
+        @Test
+        @DisplayName("createdAt 정렬은 허용한다")
+        void allowCreatedAtSort() {
+            Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+            given(productRepository.findVisibleProductSummaries(
+                    eq(null), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
+                    .willReturn(new PageImpl<>(List.of(createSummary())));
+
+            Page<ProductSummaryResponse> result = productService.findVisibleProducts(null, null, pageable);
+
+            assertThat(result.getContent()).hasSize(1);
+            verify(productRepository).findVisibleProductSummaries(
+                    null, null, ProductStatus.DISCONTINUED, pageable);
+        }
+
+        @Test
+        @DisplayName("허용되지 않은 정렬 필드는 거부한다")
+        void rejectUnsupportedSortField() {
+            Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "name"));
+
+            assertThatThrownBy(() -> productService.findVisibleProducts(null, null, pageable))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Unsupported product sort field");
+        }
+
+        @Test
+        @DisplayName("재고 합계가 int 범위를 초과하면 최대값으로 응답")
+        void totalStockOverflowUsesMaxInteger() {
+            ProductSummaryResponse response = ProductSummaryResponse.from(
+                    createSummaryWithTotalStock((long) Integer.MAX_VALUE + 1)
+            );
+
+            assertThat(response.totalStock()).isEqualTo(Integer.MAX_VALUE);
+            assertThat(response.inStock()).isTrue();
+        }
+
+        @Test
+        @DisplayName("재고 합계가 null이면 0으로 응답")
+        void totalStockNullBecomesZero() {
+            ProductSummaryResponse response = ProductSummaryResponse.from(
+                    createSummaryWithTotalStock(null)
+            );
+
+            assertThat(response.totalStock()).isZero();
+            assertThat(response.inStock()).isFalse();
         }
     }
 
@@ -221,5 +273,22 @@ class ProductServiceTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private ProductSummaryProjection createSummary() {
+        return createSummaryWithTotalStock(10L);
+    }
+
+    private ProductSummaryProjection createSummaryWithTotalStock(Long totalStock) {
+        return new ProductSummaryProjection(
+                1L,
+                "베이직 티셔츠",
+                BigDecimal.valueOf(29900),
+                "KRW",
+                "https://example.com/image.jpg",
+                "남성 상의",
+                ProductStatus.ACTIVE,
+                totalStock
+        );
     }
 }

@@ -92,6 +92,9 @@ app:
   cors:
     allowed-origins:
       - http://localhost:3000
+  seed:
+    performance:
+      enabled: false
 
 # ─────────────────────────────────────
 # Swagger / OpenAPI

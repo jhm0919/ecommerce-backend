@@ -8,8 +8,6 @@ import com.team23.customer.product.domain.*;
 import com.team23.customer.product.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.settlement.dto.SettlementConfirmRequest;
-import com.team23.customer.settlement.repository.SettlementRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
@@ -25,7 +25,6 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -33,6 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Transactional
 class SettlementControllerTest {
 
     @Autowired
@@ -43,8 +44,6 @@ class SettlementControllerTest {
     CategoryRepository categoryRepository;
     @Autowired
     ProductRepository productRepository;
-    @Autowired
-    SettlementRepository settlementRepository;
     @Autowired
     ObjectMapper objectMapper;
 
@@ -67,14 +66,6 @@ class SettlementControllerTest {
         Product saved = productRepository.saveAndFlush(product);
         this.testProduct = saved;
         this.testSku = saved.getSkus().get(0);
-    }
-
-    @AfterEach
-    void cleanUp() {
-        settlementRepository.deleteAll();   // 1. 정산 먼저
-        orderAdminRepository.deleteAll();   // 2. 주문
-        productRepository.deleteAll();      // 3. 상품 (SKU cascade 삭제)
-        categoryRepository.deleteAll();     // 4. 카테고리 마지막
     }
 
     private void createConfirmedOrder() {
