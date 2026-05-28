@@ -14,7 +14,7 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-    open-in-view: false
+    open-in-view: true
     properties:
       hibernate:
         format_sql: true
@@ -130,6 +130,13 @@ management:
         order.seller.search.time: true
         order.seller.confirm.time: true
         order.seller.cancel.time: true
+        product.search.time: true
+        product.detail.time: true
+        cart.get.time: true
+        cart.add.time: true
+        cart.change_quantity.time: true
+        cart.remove.time: true
+        cart.clear.time: true
 
     export:
       prometheus:
