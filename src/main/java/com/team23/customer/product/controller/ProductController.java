@@ -48,10 +48,14 @@ public class ProductController {
     public ResponseEntity<CommonResponse<Page<ProductSummaryResponse>>> list(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
-            Pageable pageable
+            Pageable pageable,
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @CookieValue(name = "session-id", required = false) String sessionId
     ) {
+        Long memberId = (principal != null) ? principal.memberId() : null;
+
         Page<ProductSummaryResponse> products = productService.findVisibleProducts(
-                categoryId, keyword, pageable
+                categoryId, keyword, pageable, memberId, sessionId // memberId, sessionId 추가
         );
         return ResponseEntity.ok(
                 CommonResponse.createSuccess(products)

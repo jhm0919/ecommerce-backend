@@ -38,12 +38,15 @@ public class ProductService {
     )
     @Transactional(readOnly = true)
     public Page<ProductSummaryResponse> findVisibleProducts(
-            Long categoryId,
-            String keyword,
-            Pageable pageable
+            Long categoryId, String keyword, Pageable pageable, Long memberId, String sessionId
     ) {
         String normalizedKeyword = normalizeKeyword(keyword);
         Pageable sanitizedPageable = sanitizePageable(pageable);
+
+        // 검색 행동 로그 이벤트 발행 (검색어가 비어있지 않은 경우)
+        if (keyword != null && !keyword.isBlank()) {
+            eventPublisher.publishEvent(BehaviorLogEvent.search(this, memberId, sessionId, keyword));
+        }
 
         return productRepository.findVisibleProductSummaries(
                 categoryId,
