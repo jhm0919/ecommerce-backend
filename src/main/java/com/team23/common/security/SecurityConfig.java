@@ -85,6 +85,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/orders/guest").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/orders/guest").permitAll()
+                        .requestMatchers("/api/ai/**").permitAll()
                         .requestMatchers("/api/seller/me/**").hasRole("SELLER")
                         .requestMatchers("/api/seller/**").permitAll()
                         // ───── 어드민 - 판매자 입점 신청 ─────

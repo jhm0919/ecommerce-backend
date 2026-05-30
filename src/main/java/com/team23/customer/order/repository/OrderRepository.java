@@ -209,4 +209,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime toExclusive
     );
+
+    List<Order> findTop5ByMemberIdOrderByCreatedAtDesc(Long memberId);
 }
