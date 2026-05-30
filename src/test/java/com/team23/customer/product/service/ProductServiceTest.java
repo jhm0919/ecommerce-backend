@@ -68,7 +68,7 @@ class ProductServiceTest {
                     eq(null), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
                     .willReturn(mockPage);
 
-            Page<ProductSummaryResponse> result = productService.findVisibleProducts(null, null, pageable);
+            Page<ProductSummaryResponse> result = productService.findVisibleProducts(null, null, pageable, null, null);
 
             assertThat(result.getContent()).hasSize(1);
             verify(productRepository).findVisibleProductSummaries(
@@ -85,7 +85,7 @@ class ProductServiceTest {
                     eq(categoryId), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
                     .willReturn(new PageImpl<>(List.of(createSummary())));
 
-            Page<ProductSummaryResponse> result = productService.findVisibleProducts(categoryId, null, pageable);
+            Page<ProductSummaryResponse> result = productService.findVisibleProducts(categoryId, null, pageable, null, null);
 
             assertThat(result.getContent()).hasSize(1);
             verify(productRepository).findVisibleProductSummaries(
@@ -101,7 +101,7 @@ class ProductServiceTest {
                     eq(null), eq("티셔츠"), eq(ProductStatus.DISCONTINUED), eq(pageable)))
                     .willReturn(new PageImpl<>(List.of(createSummary())));
 
-            Page<ProductSummaryResponse> result = productService.findVisibleProducts(null, "티셔츠", pageable);
+            Page<ProductSummaryResponse> result = productService.findVisibleProducts(null, "티셔츠", pageable, null, null);
 
             assertThat(result.getContent()).hasSize(1);
             verify(productRepository).findVisibleProductSummaries(
@@ -118,7 +118,7 @@ class ProductServiceTest {
                     eq(categoryId), eq("티셔츠"), eq(ProductStatus.DISCONTINUED), eq(pageable)))
                     .willReturn(new PageImpl<>(List.of(createSummary())));
 
-            Page<ProductSummaryResponse> result = productService.findVisibleProducts(categoryId, "티셔츠", pageable);
+            Page<ProductSummaryResponse> result = productService.findVisibleProducts(categoryId, "티셔츠", pageable, null, null);
 
             assertThat(result.getContent()).hasSize(1);
             verify(productRepository).findVisibleProductSummaries(
@@ -134,7 +134,7 @@ class ProductServiceTest {
                     eq(null), eq("티셔츠"), eq(ProductStatus.DISCONTINUED), eq(pageable)))
                     .willReturn(new PageImpl<>(List.of()));
 
-            productService.findVisibleProducts(null, "  티셔츠  ", pageable);
+            productService.findVisibleProducts(null, "  티셔츠  ", pageable, null, null);
 
             verify(productRepository).findVisibleProductSummaries(
                     null, "티셔츠", ProductStatus.DISCONTINUED, pageable);
@@ -149,7 +149,7 @@ class ProductServiceTest {
                     eq(null), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
                     .willReturn(new PageImpl<>(List.of()));
 
-            productService.findVisibleProducts(null, "   ", pageable);
+            productService.findVisibleProducts(null, "   ", pageable, null, null);
 
             verify(productRepository).findVisibleProductSummaries(
                     null, null, ProductStatus.DISCONTINUED, pageable);
@@ -164,7 +164,7 @@ class ProductServiceTest {
                     eq(null), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
                     .willReturn(new PageImpl<>(List.of(createSummary())));
 
-            Page<ProductSummaryResponse> result = productService.findVisibleProducts(null, null, pageable);
+            Page<ProductSummaryResponse> result = productService.findVisibleProducts(null, null, pageable, null, null);
 
             assertThat(result.getContent()).hasSize(1);
             verify(productRepository).findVisibleProductSummaries(
@@ -176,7 +176,7 @@ class ProductServiceTest {
         void rejectUnsupportedSortField() {
             Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "name"));
 
-            assertThatThrownBy(() -> productService.findVisibleProducts(null, null, pageable))
+            assertThatThrownBy(() -> productService.findVisibleProducts(null, null, pageable, null, null))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Unsupported product sort field");
         }
@@ -216,7 +216,7 @@ class ProductServiceTest {
             given(productRepository.findByIdWithCategory(1L))
                     .willReturn(Optional.of(product));
 
-            Product result = productService.findById(1L);
+            Product result = productService.findById(1L, null, null);
 
             assertThat(result).isEqualTo(product);
         }
@@ -234,7 +234,7 @@ class ProductServiceTest {
             given(productRepository.findByIdWithCategory(1L))
                     .willReturn(Optional.of(product));
 
-            Product result = productService.findById(1L);
+            Product result = productService.findById(1L, null, null);
 
             assertThat(result.getStatus()).isEqualTo(ProductStatus.SOLD_OUT);
         }
@@ -248,7 +248,7 @@ class ProductServiceTest {
             given(productRepository.findByIdWithCategory(1L))
                     .willReturn(Optional.of(product));
 
-            assertThatThrownBy(() -> productService.findById(1L))
+            assertThatThrownBy(() -> productService.findById(1L, null, null))
                     .isInstanceOf(ProductNotFoundException.class);
         }
 
@@ -258,7 +258,7 @@ class ProductServiceTest {
             given(productRepository.findByIdWithCategory(999L))
                     .willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> productService.findById(999L))
+            assertThatThrownBy(() -> productService.findById(999L, null, null))
                     .isInstanceOf(ProductNotFoundException.class);
         }
     }

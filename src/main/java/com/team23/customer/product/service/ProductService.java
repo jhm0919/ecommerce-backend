@@ -1,5 +1,6 @@
 package com.team23.customer.product.service;
 
+import com.team23.customer.ai.behavior.event.BehaviorLogEvent;
 import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.ProductStatus;
 import com.team23.customer.product.exception.ProductNotFoundException;
@@ -8,6 +9,7 @@ import com.team23.customer.product.repository.ProductRepository;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +25,7 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ApplicationEventPublisher eventPublisher; // 이벤트 발행기 주입
     private static final List<ProductStatus> CUSTOMER_VISIBLE = List.of(
             ProductStatus.ACTIVE,
             ProductStatus.SOLD_OUT
@@ -35,12 +38,15 @@ public class ProductService {
     )
     @Transactional(readOnly = true)
     public Page<ProductSummaryResponse> findVisibleProducts(
-            Long categoryId,
-            String keyword,
-            Pageable pageable
+            Long categoryId, String keyword, Pageable pageable, Long memberId, String sessionId
     ) {
         String normalizedKeyword = normalizeKeyword(keyword);
         Pageable sanitizedPageable = sanitizePageable(pageable);
+
+        // 검색 행동 로그 이벤트 발행 (검색어가 비어있지 않은 경우)
+        if (keyword != null && !keyword.isBlank()) {
+            eventPublisher.publishEvent(BehaviorLogEvent.search(this, memberId, sessionId, keyword));
+        }
 
         return productRepository.findVisibleProductSummaries(
                 categoryId,
@@ -58,14 +64,16 @@ public class ProductService {
             description = "상품 상세 조회 처리 시간"
     )
     @Transactional(readOnly = true)
-    public Product findById(Long id) {
-        Product product = productRepository.findByIdWithCategory(id)
-                .orElseThrow(() -> new ProductNotFoundException(id));
+    public Product findById(Long id, Long memberId, String sessionId) {
+        Product product = productRepository.findByIdWithCategory(id).orElseThrow(() -> new ProductNotFoundException(id));
 
         // DISCONTINUED 상품은 사용자에게 "없는 것처럼" 응답
         if (!product.isVisibleToCustomer()) {
             throw new ProductNotFoundException(id);
         }
+
+        // 행동 로그 이벤트 발행
+        eventPublisher.publishEvent(BehaviorLogEvent.productView(this, memberId, sessionId, product.getId()));
 
         return product;
     }

@@ -39,6 +39,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-websocket-test")
+	testImplementation("org.awaitility:awaitility:4.2.0")
 	testCompileOnly("org.projectlombok:lombok")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testAnnotationProcessor("org.projectlombok:lombok")
@@ -59,6 +60,7 @@ dependencies {
 	implementation("io.micrometer:micrometer-registry-prometheus")
 
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
+
 }
 
 tasks.withType<Test> {

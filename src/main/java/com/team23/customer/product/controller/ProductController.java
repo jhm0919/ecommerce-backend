@@ -1,6 +1,8 @@
 package com.team23.customer.product.controller;
 
 import com.team23.common.response.CommonResponse;
+import com.team23.common.security.jwt.AuthPrincipal;
+import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.dto.ProductDetailResponse;
 import com.team23.customer.product.dto.ProductSummaryResponse;
 import com.team23.customer.product.service.ProductService;
@@ -14,7 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @Tag(name = "상품", description = "상품 조회 API")
 @Slf4j
@@ -43,10 +48,14 @@ public class ProductController {
     public ResponseEntity<CommonResponse<Page<ProductSummaryResponse>>> list(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
-            Pageable pageable
+            Pageable pageable,
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @CookieValue(name = "session-id", required = false) String sessionId
     ) {
+        Long memberId = (principal != null) ? principal.memberId() : null;
+
         Page<ProductSummaryResponse> products = productService.findVisibleProducts(
-                categoryId, keyword, pageable
+                categoryId, keyword, pageable, memberId, sessionId // memberId, sessionId 추가
         );
         return ResponseEntity.ok(
                 CommonResponse.createSuccess(products)
@@ -64,9 +73,15 @@ public class ProductController {
     )
     @GetMapping("/{id}")
     public ResponseEntity<CommonResponse<ProductDetailResponse>> getDetail(
-            @PathVariable Long id
+            @PathVariable Long id,
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @CookieValue(name = "session-id", required = false) String sessionId
     ) {
-        var product = productService.findById(id);
+        // 로그인 사용자는 memberId, 비로그인 사용자는 null
+        Long memberId = (principal != null) ? principal.memberId() : null;
+
+        var product = productService.findById(id, memberId, sessionId);
+
         return ResponseEntity.ok(
                 CommonResponse.createSuccess(ProductDetailResponse.from(product))
         );

@@ -1,5 +1,6 @@
 package com.team23.customer.ai.chat.service;
 
+import com.team23.customer.ai.behavior.domain.UserBehaviorLog;
 import com.team23.customer.ai.behavior.repository.UserBehaviorLogRepository;
 import com.team23.customer.ai.chat.dto.FastApiChatRequest;
 import com.team23.customer.cart.domain.Cart;
@@ -64,13 +65,22 @@ public class AiChatDataCollector {
 
     // ─── 각 데이터 수집 ───────────────────────────────────────
     private List<FastApiChatRequest.BehaviorLogDto> collectBehaviorLogs(Long memberId, String sessionId) {
-        if (memberId == null) {
-            return List.of();   // 비로그인: 빈 리스트
+        List<UserBehaviorLog> logs;
+        if (memberId != null) { // 회원일 때
+            logs = behaviorLogRepository.findTop20ByMemberIdOrderByCreatedAtDesc(memberId);
+        } else { // 비회원일 때
+            if (sessionId == null || sessionId.isBlank()) return List.of();
+            logs = behaviorLogRepository.findTop20BySessionIdOrderByCreatedAtDesc(sessionId);
         }
 
-        // TODO: 추후 이슈에서 실제 행동 로그 수집 추가
-        // 현재는 빈 리스트 반환
-        return List.of();
+        return logs.stream()
+                .map(log -> new FastApiChatRequest.BehaviorLogDto(
+                        log.getActionType().name(),
+                        log.getProductId(),
+                        log.getKeyword(),
+                        log.getCreatedAt()
+                ))
+                .toList();
     }
 
     private List<FastApiChatRequest.CartItemDto> collectCartItems(Long memberId) {
