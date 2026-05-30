@@ -82,8 +82,32 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     boolean existsByCategoryId(Long categoryId);
 
     // 후보 상품 (재고 있는 최신 20개)
-    List<Product> findTop20ByStockGreaterThanOrderByCreatedAtDesc(int stock);
+    @Query(
+            value = """
+            SELECT p.*
+            FROM products p
+            LEFT JOIN skus s ON s.product_id = p.id
+            GROUP BY p.id
+            HAVING COALESCE(SUM(s.stock), 0) > :stock
+            ORDER BY p.created_at DESC
+            LIMIT 20
+            """,
+            nativeQuery = true
+    )
+    List<Product> findTop20ByStockGreaterThanOrderByCreatedAtDesc(@Param("stock") int stock);
 
     // Fallback 용 (재고 있는 최신 3개)
-    List<Product> findTop3ByStockGreaterThanOrderByCreatedAtDesc(int stock);
+    @Query(
+            value = """
+            SELECT p.*
+            FROM products p
+            LEFT JOIN skus s ON s.product_id = p.id
+            GROUP BY p.id
+            HAVING COALESCE(SUM(s.stock), 0) > :stock
+            ORDER BY p.created_at DESC
+            LIMIT 3
+            """,
+            nativeQuery = true
+    )
+    List<Product> findTop3ByStockGreaterThanOrderByCreatedAtDesc(@Param("stock") int stock);
 }
