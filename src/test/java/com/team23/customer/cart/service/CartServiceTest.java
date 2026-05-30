@@ -103,7 +103,7 @@ class CartServiceTest {
                     .willReturn(Optional.of(cart));
             given(productRepository.findAllById(any())).willReturn(List.of(product));
 
-            CartService.CartView view = cartService.addItem(MEMBER_ID, PRODUCT_ID, SKU_ID, 2);
+            CartService.CartView view = cartService.addItem(MEMBER_ID, null, PRODUCT_ID, SKU_ID, 2);
 
             assertThat(view.cart().getItemCount()).isEqualTo(1);
             assertThat(view.cart().getTotalQuantity()).isEqualTo(2);
@@ -120,7 +120,7 @@ class CartServiceTest {
                     .willReturn(Optional.of(cart));
             given(productRepository.findAllById(any())).willReturn(List.of(product));
 
-            CartService.CartView view = cartService.addItem(MEMBER_ID, PRODUCT_ID, SKU_ID, 3);
+            CartService.CartView view = cartService.addItem(MEMBER_ID, null, PRODUCT_ID, SKU_ID, 3);
 
             assertThat(view.cart().getItemCount()).isEqualTo(1);
             assertThat(view.cart().getTotalQuantity()).isEqualTo(5);  // 2 + 3
@@ -131,7 +131,7 @@ class CartServiceTest {
         void rejectUnknownProduct() {
             given(productRepository.findById(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, 999L, SKU_ID, 1))
+            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, null, 999L, SKU_ID, 1))
                     .isInstanceOf(ProductNotFoundException.class);
         }
 
@@ -140,7 +140,7 @@ class CartServiceTest {
         void rejectUnknownSku() {
             given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
 
-            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, PRODUCT_ID, 999L, 1))
+            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, null, PRODUCT_ID, 999L, 1))
                     .isInstanceOf(IllegalArgumentException.class);
         }
 
@@ -151,7 +151,7 @@ class CartServiceTest {
 
             given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
 
-            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, PRODUCT_ID, SKU_ID, 1))
+            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, null, PRODUCT_ID, SKU_ID, 1))
                     .isInstanceOf(ProductNotPurchasableException.class);
         }
 
@@ -165,7 +165,7 @@ class CartServiceTest {
                     .willAnswer(inv -> inv.getArgument(0));
             given(productRepository.findAllById(any())).willReturn(List.of(product));
 
-            CartService.CartView view = cartService.addItem(MEMBER_ID, PRODUCT_ID, SKU_ID, 1);
+            CartService.CartView view = cartService.addItem(MEMBER_ID, null, PRODUCT_ID, SKU_ID, 1);
 
             assertThat(view.cart().getItemCount()).isEqualTo(1);
             verify(cartRepository).save(any(Cart.class));
