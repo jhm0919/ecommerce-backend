@@ -1,5 +1,6 @@
 package com.team23.customer.cart.service;
 
+import com.team23.customer.ai.behavior.event.BehaviorLogEvent;
 import com.team23.customer.cart.domain.Cart;
 import com.team23.customer.cart.exception.CartItemNotFoundException;
 import com.team23.customer.cart.exception.ProductNotPurchasableException;
@@ -11,6 +12,7 @@ import com.team23.customer.product.repository.ProductRepository;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,7 @@ public class CartService {
 
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
+    private final ApplicationEventPublisher eventPublisher; // 이벤트 발행기 주입
 
     // ─────────────────────────────────────
     // 조회 (변경 없음)
@@ -51,7 +54,7 @@ public class CartService {
      */
     @Timed(value = "cart.add.time", description = "장바구니 상품 추가 처리 시간")
     @Transactional
-    public CartView addItem(Long memberId, Long productId, Long skuId, int quantity) {  // ★ skuId 추가
+    public CartView addItem(Long memberId, String sessionId, Long productId, Long skuId, int quantity) {  // ★ skuId 추가
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
@@ -65,6 +68,7 @@ public class CartService {
             throw new ProductNotPurchasableException(productId);
         }
 
+
         Cart cart = cartRepository.findByMemberIdWithItems(memberId)
                 .orElseGet(() -> cartRepository.save(Cart.createFor(memberId)));
 
@@ -74,6 +78,10 @@ public class CartService {
                 memberId, productId, skuId, quantity);
 
         Map<Long, Product> productMap = loadProductsForCart(cart);
+
+        // 행동 로그 이벤트 발행
+        eventPublisher.publishEvent(BehaviorLogEvent.addToCart(this, memberId, sessionId, productId, quantity, skuId));
+
         return new CartView(cart, productMap);
     }
 

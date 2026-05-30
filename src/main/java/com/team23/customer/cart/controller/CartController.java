@@ -53,10 +53,12 @@ public class CartController {
     @PostMapping("/items")
     public ResponseEntity<CommonResponse<CartResponse>> addItem(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @Valid @RequestBody AddCartItemRequest request
+            @Valid @RequestBody AddCartItemRequest request,
+            @CookieValue(name = "session-id", required = false) String sessionId
     ) {
         CartService.CartView view = cartService.addItem(
                 principal.memberId(),
+                sessionId, // sessionId 추가
                 request.productId(),
                 request.skuId(),
                 request.quantity()
