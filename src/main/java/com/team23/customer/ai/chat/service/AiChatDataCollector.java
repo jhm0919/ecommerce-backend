@@ -66,9 +66,10 @@ public class AiChatDataCollector {
     // ─── 각 데이터 수집 ───────────────────────────────────────
     private List<FastApiChatRequest.BehaviorLogDto> collectBehaviorLogs(Long memberId, String sessionId) {
         List<UserBehaviorLog> logs;
-        if (memberId == null) { // 회원일 때
+        if (memberId != null) { // 회원일 때
             logs = behaviorLogRepository.findTop20ByMemberIdOrderByCreatedAtDesc(memberId);
         } else { // 비회원일 때
+            if (sessionId == null || sessionId.isBlank()) return List.of();
             logs = behaviorLogRepository.findTop20BySessionIdOrderByCreatedAtDesc(sessionId);
         }
 
