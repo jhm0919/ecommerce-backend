@@ -80,4 +80,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findByIdWithCategory(@Param("id") Long id);
 
     boolean existsByCategoryId(Long categoryId);
+
+    // 후보 상품 (재고 있는 최신 20개)
+    List<Product> findTop20ByStockGreaterThanOrderByCreatedAtDesc(int stock);
+
+    // Fallback 용 (재고 있는 최신 3개)
+    List<Product> findTop3ByStockGreaterThanOrderByCreatedAtDesc(int stock);
 }
