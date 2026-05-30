@@ -48,11 +48,12 @@ public class OrderController {
     @PostMapping("/me")
     public ResponseEntity<CommonResponse<OrderDetailResponse>> createMemberOrder(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @Valid @RequestBody CreateOrderRequest request
+            @Valid @RequestBody CreateOrderRequest request,
+            @CookieValue(name = "session-id", required = false) String sessionId
     ) {
         return ResponseEntity.status(201)
                 .body(CommonResponse.createSuccess(
-                        orderService.createMemberOrderDetail(principal.memberId(), request)
+                        orderService.createMemberOrderDetail(principal.memberId(), sessionId, request)  // sessionId 추가
                 ));
     }
 

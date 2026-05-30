@@ -1,5 +1,6 @@
 package com.team23.customer.order.service;
 
+import com.team23.customer.ai.behavior.event.BehaviorLogEvent;
 import com.team23.customer.delivery.domain.Address;
 import com.team23.customer.delivery.domain.Delivery;
 import com.team23.customer.delivery.domain.Receiver;
@@ -71,10 +72,16 @@ public class OrderService {
     @Transactional
     public OrderDetailResponse createMemberOrderDetail(
             Long memberId,
+            String sessionId,  // ★ sessionId 추가
             CreateOrderRequest request
+
     ) {
         Order order = createMemberOrder(memberId, request);
         Delivery delivery = findDeliveryByOrderId(order.getId());
+
+        // 행동 로그 이벤트 발행
+        eventPublisher.publishEvent(BehaviorLogEvent.createOrder(this, memberId, sessionId, order.getOrderNumber()));
+
         return OrderDetailResponse.from(order, delivery);
     }
 
