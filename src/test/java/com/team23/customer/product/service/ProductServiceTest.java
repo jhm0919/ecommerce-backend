@@ -10,6 +10,7 @@ import com.team23.customer.product.dto.ProductSummaryProjection;
 import com.team23.customer.product.dto.ProductSummaryResponse;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -37,8 +39,16 @@ import static org.mockito.Mockito.verify;
 class ProductServiceTest {
 
     @Mock private ProductRepository productRepository;
+    @Mock private ApplicationEventPublisher eventPublisher; // Mock 객체 추가
 
-    @InjectMocks private ProductService productService;
+//    @InjectMocks private ProductService productService;
+private ProductService productService; // 필드만 선언합니다.
+
+    @BeforeEach
+    void setUp() {
+        // 테스트 시작 전에 서비스 객체를 수동으로 생성합니다.
+        productService = new ProductService(productRepository, eventPublisher);
+    }
 
     private Category createCategory() {
         return Category.create("남성 상의", "men-tops");

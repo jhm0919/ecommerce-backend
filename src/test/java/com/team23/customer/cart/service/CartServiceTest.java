@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -35,8 +36,10 @@ class CartServiceTest {
 
     @Mock private CartRepository cartRepository;
     @Mock private ProductRepository productRepository;
+    @Mock private ApplicationEventPublisher eventPublisher; // Mock 객체는 그대로 둡니다.
 
-    @InjectMocks private CartService cartService;
+//    @InjectMocks private CartService cartService;
+    private CartService cartService; // 필드만 선언합니다.
 
     private static final Long MEMBER_ID = 1L;
     private static final Long PRODUCT_ID = 100L;
@@ -47,6 +50,9 @@ class CartServiceTest {
 
     @BeforeEach
     void setUp() {
+        // 테스트 시작 전에 서비스 객체를 수동으로 생성하고 모든 Mock을 주입합니다.
+        cartService = new CartService(cartRepository, productRepository, eventPublisher);
+
         Category category = Category.create("의류", "clothing");
         product = Product.register(
                 "티셔츠", Money.krw(29900), "설명", "img", category
