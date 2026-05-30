@@ -30,7 +30,8 @@ spring:
               - openid
               - email
               - profile
-
+  main:
+    web-application-type: servlet # MVC 유지
 #          kakao:
 #            client-id: ${KAKAO_CLIENT_ID:dummy-kakao-id}        # ★ 기본값
 #            client-secret: ${KAKAO_CLIENT_SECRET:dummy-secret}  # ★ 기본값
@@ -96,6 +97,10 @@ app:
     performance:
       enabled: false
 
+  fastapi:
+    base-url: ${FASTAPI_BASE_URL:http://localhost:8080}
+    timeout-seconds: 5
+
 # ─────────────────────────────────────
 # Swagger / OpenAPI
 # ─────────────────────────────────────
@@ -146,4 +151,6 @@ management:
         enabled: true
     tags:
       application: ecommerce-customer
+
+
 
