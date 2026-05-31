@@ -1,5 +1,6 @@
 package com.team23.management.seller.service;
 
+import com.team23.common.email.EmailService;
 import com.team23.common.exception.BusinessException;
 import com.team23.customer.seller.domain.ApplicationStatus;
 import com.team23.customer.seller.domain.Seller;
@@ -15,11 +16,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class SellerApplicationAdminServiceTest {
@@ -28,6 +33,9 @@ class SellerApplicationAdminServiceTest {
     @Autowired SellerApplicationRepository sellerApplicationRepository;
     @Autowired SellerRepository sellerRepository;
     @Autowired PasswordEncoder passwordEncoder;
+
+    @MockitoBean
+    EmailService emailService;  // ← 실제 이메일 발송 차단
 
     @BeforeEach
     void setUp() {
@@ -149,5 +157,50 @@ class SellerApplicationAdminServiceTest {
         assertThatThrownBy(() ->
                 sellerApplicationAdminService.reject(app.getId(), null)
         ).isInstanceOf(BusinessException.class);
+    }
+
+
+
+    @Test
+    @DisplayName("승인 시 이메일 발송 호출")
+    void approve_sendsEmail() {
+        // Given
+        SellerApplication app = createPendingApplication("test@example.com");
+
+        // When
+        sellerApplicationAdminService.approve(app.getId());
+
+        // Then
+        verify(emailService, times(1)).sendHtml(
+                eq("test@example.com"),
+                contains("입점 신청이 승인되었습니다"),
+                anyString()
+        );
+    }
+
+    @Test
+    @DisplayName("이메일 발송 실패해도 승인은 성공")
+    void approve_emailFails_approvalSucceeds() {
+        // Given
+        SellerApplication app = createPendingApplication("test@example.com");
+        doThrow(new RuntimeException("SMTP 연결 실패"))
+                .when(emailService).sendHtml(any(), any(), any());
+
+        // When & Then — 예외 없이 승인 성공
+        assertThatCode(() -> sellerApplicationAdminService.approve(app.getId())).doesNotThrowAnyException();
+
+        // Seller 계정도 생성됨
+        assertThat(sellerRepository.findAll()).hasSize(1);
+    }
+
+    // ─── 헬퍼 ───────────────────────────────────────────────
+
+    private SellerApplication createPendingApplication(String email) {
+        SellerApplication app = SellerApplication.apply(
+                "테스트 상사", "1234567890", "2024-서울-0001",
+                "소매업", "의류", "홍길동",
+                email, "02-1234-5678", "010-1234-5678"
+        );
+        return sellerApplicationRepository.save(app);
     }
 }
