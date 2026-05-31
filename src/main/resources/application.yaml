@@ -30,6 +30,20 @@ spring:
               - openid
               - email
               - profile
+
+  mail:
+    host: stmp.gmail
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
   main:
     web-application-type: servlet # MVC 유지
 #          kakao:
@@ -100,6 +114,11 @@ app:
   fastapi:
     base-url: ${FASTAPI_BASE_URL:http://localhost:8080}
     timeout-seconds: 5
+
+  mail:
+    from: ${MAIL_USERNAME}
+    from-name: "이커머스 플랫폼"
+
 
 # ─────────────────────────────────────
 # Swagger / OpenAPI

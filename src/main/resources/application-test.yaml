@@ -20,6 +20,12 @@ spring:
             client-id: test-client-id
             client-secret: test-client-secret
 
+  mail:
+    host: localhost
+    port: 3025
+    username: test
+    password: test
+
 app:
   auth:
     cookie:
