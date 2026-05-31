@@ -32,7 +32,7 @@ spring:
               - profile
 
   mail:
-    host: stmp.gmail
+    host: smtp.gmail.com
     port: 587
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
