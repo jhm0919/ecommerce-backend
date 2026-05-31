@@ -3,6 +3,7 @@ package com.team23.management.seller.service;
 import com.team23.common.email.EmailService;
 import com.team23.management.seller.email.SellerApprovalEmailTemplate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.team23.common.exception.BusinessException;
@@ -19,6 +20,7 @@ import com.team23.management.seller.dto.SellerApplicationListResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -65,17 +67,24 @@ public class SellerApplicationAdminService {
         Seller saved = sellerRepository.save(seller);
 
         // 4. 이메일 발송 (비동기 — 실패해도 승인에 영향 없음)
-        String emailContent = SellerApprovalEmailTemplate.build(
-                app.getBusinessName(),
-                app.getManagerName(),
-                credential.loginId(),
-                credential.rawPassword()
-        );
-        emailService.sendHtml(
-                app.getManagerEmail(),
-                "[이커머스 플랫폼] 입점 신청이 승인되었습니다",
-                emailContent
-        );
+        // ★★★ 수정된 부분 시작 ★★★
+        try {
+            String emailContent = SellerApprovalEmailTemplate.build(
+                    app.getBusinessName(),
+                    app.getManagerName(),
+                    credential.loginId(),
+                    credential.rawPassword()
+            );
+            emailService.sendHtml(
+                    app.getManagerEmail(),
+                    "[이커머스 플랫폼] 입점 신청이 승인되었습니다",
+                    emailContent
+            );
+        } catch (Exception e) {
+            // 이메일 발송 실패는 전체 승인 프로세스에 영향을 주지 않아야 함.
+            // 에러 로그만 남기고 정상 진행한다.
+            log.error("판매자 승인 이메일 발송 실패: applicationId={}, managerEmail={}", applicationId, app.getManagerEmail(), e);
+        }
 
         // 5. 응답 반환 (임시 비밀번호 원문은 응답에도 포함)
         return new ApproveApplicationResponse(
