@@ -1,5 +1,7 @@
 package com.team23.management.seller.service;
 
+import com.team23.common.email.EmailService;
+import com.team23.management.seller.email.SellerApprovalEmailTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +17,6 @@ import com.team23.management.seller.domain.TemporaryCredentialGenerator;
 import com.team23.management.seller.dto.ApproveApplicationResponse;
 import com.team23.management.seller.dto.SellerApplicationListResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.util.List;
 
 @Service
@@ -26,6 +27,7 @@ public class SellerApplicationAdminService {
     private final SellerRepository sellerRepository;
     private final TemporaryCredentialGenerator temporaryCredentialGenerator;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     // ───── 목록 조회 ─────
     @Transactional(readOnly = true)
@@ -62,7 +64,20 @@ public class SellerApplicationAdminService {
         );
         Seller saved = sellerRepository.save(seller);
 
-        // 4. 임시 비밀번호 원문은 응답에만 (DB엔 해시만)
+        // 4. 이메일 발송 (비동기 — 실패해도 승인에 영향 없음)
+        String emailContent = SellerApprovalEmailTemplate.build(
+                app.getBusinessName(),
+                app.getManagerName(),
+                credential.loginId(),
+                credential.rawPassword()
+        );
+        emailService.sendHtml(
+                app.getManagerEmail(),
+                "[이커머스 플랫폼] 입점 신청이 승인되었습니다",
+                emailContent
+        );
+
+        // 5. 응답 반환 (임시 비밀번호 원문은 응답에도 포함)
         return new ApproveApplicationResponse(
                 app.getId(),
                 saved.getId(),
