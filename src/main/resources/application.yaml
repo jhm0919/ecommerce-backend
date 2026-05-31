@@ -112,7 +112,7 @@ app:
       enabled: false
 
   fastapi:
-    base-url: ${FASTAPI_BASE_URL:http://localhost:8080}
+    base-url: ${FASTAPI_BASE_URL:http://localhost:8000}
     timeout-seconds: 5
 
   mail:
