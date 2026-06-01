@@ -97,21 +97,32 @@ public class ProductAdminService {
      */
     @Transactional
     public SKU addSku(Long productId, List<SkuOption> options, int initialStock) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
+        Product product = productRepository.findById(productId).orElseThrow(() -> new ProductNotFoundException(productId));
 
-        SKU sku = product.addSku(options, initialStock);
+        // 1. 메모리상에서 SKU를 추가합니다.
+        SKU newSku = product.addSku(options, initialStock);
 
+        // 2. ★★★ 변경된 Product를 즉시 저장(save)하여 SKU의 ID를 생성받습니다. ★★★
+        Product savedProduct = productRepository.save(product);
+
+        // 3. 저장 후 반환된 Product 객체에서, ID가 부여된 SKU를 다시 찾습니다.
+        //    (newSku의 skuCode는 고유하므로, 이를 이용해 찾을 수 있습니다.)
+        SKU savedSku = savedProduct.getSkus().stream()
+                .filter(s -> s.getSkuCode().equals(newSku.getSkuCode()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Failed to find saved SKU"));
+
+        // 4. 이제 ID가 있는 savedSku 객체로 이벤트를 발행합니다.
         eventPublisher.publishEvent(StockChangedEvent.of(
-                product, sku,
+                savedProduct, savedSku,
                 StockChangeType.SKU_CREATED,
                 initialStock,
-                0,            // stockBefore = 0 (새로 생성)
-                initialStock, // stockAfter = initialStock
+                0,
+                initialStock,
                 null
         ));
 
-        return sku;
+        return savedSku;
     }
 
     /**
