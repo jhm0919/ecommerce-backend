@@ -86,7 +86,7 @@ logging:
     org.hibernate.orm.jdbc.bind: TRACE
   pattern:
 #    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{traceId:-}] %logger{36} - %msg%n"
-    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%-5level) [%clr(%X{traceId:-}){yellow}] %clr(%logger{36}){cyan} - %msg%n"
+#    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%-5level) [%clr(%X{traceId:-}){yellow}] %clr(%logger{36}){cyan} - %msg%n"
 
 app:
   jwt:
