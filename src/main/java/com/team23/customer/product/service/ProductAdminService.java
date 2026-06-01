@@ -2,6 +2,7 @@ package com.team23.customer.product.service;
 
 import com.team23.customer.product.domain.*;
 import com.team23.customer.product.dto.ProductCreateRequest;
+import com.team23.customer.product.dto.ProductDetailResponse;
 import com.team23.customer.product.dto.ProductUpdateRequest;
 import com.team23.customer.product.exception.CategoryNotFoundException;
 import com.team23.customer.product.exception.ProductNotFoundException;
@@ -53,7 +54,7 @@ public class ProductAdminService {
      * 상품 정보를 수정한다 (PATCH 의미).
      */
     @Transactional
-    public Product update(Long productId, ProductUpdateRequest request) {
+    public ProductDetailResponse update(Long productId, ProductUpdateRequest request) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
@@ -74,7 +75,7 @@ public class ProductAdminService {
         }
 
         log.info("Product updated: id={}", productId);
-        return product;
+        return ProductDetailResponse.from(product);
     }
 
     // ★ increaseStock(Long, int) 메서드 제거
@@ -97,21 +98,32 @@ public class ProductAdminService {
      */
     @Transactional
     public SKU addSku(Long productId, List<SkuOption> options, int initialStock) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
+        Product product = productRepository.findById(productId).orElseThrow(() -> new ProductNotFoundException(productId));
 
-        SKU sku = product.addSku(options, initialStock);
+        // 1. 메모리상에서 SKU를 추가합니다.
+        SKU newSku = product.addSku(options, initialStock);
 
+        // 2. ★★★ 변경된 Product를 즉시 저장(save)하여 SKU의 ID를 생성받습니다. ★★★
+        Product savedProduct = productRepository.save(product);
+
+        // 3. 저장 후 반환된 Product 객체에서, ID가 부여된 SKU를 다시 찾습니다.
+        //    (newSku의 skuCode는 고유하므로, 이를 이용해 찾을 수 있습니다.)
+        SKU savedSku = savedProduct.getSkus().stream()
+                .filter(s -> s.getSkuCode().equals(newSku.getSkuCode()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Failed to find saved SKU"));
+
+        // 4. 이제 ID가 있는 savedSku 객체로 이벤트를 발행합니다.
         eventPublisher.publishEvent(StockChangedEvent.of(
-                product, sku,
+                savedProduct, savedSku,
                 StockChangeType.SKU_CREATED,
                 initialStock,
-                0,            // stockBefore = 0 (새로 생성)
-                initialStock, // stockAfter = initialStock
+                0,
+                initialStock,
                 null
         ));
 
-        return sku;
+        return savedSku;
     }
 
     /**

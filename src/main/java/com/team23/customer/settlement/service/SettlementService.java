@@ -62,9 +62,22 @@ public class SettlementService {
     }
 
     private SettlementItem toSettlementItem(Order order) {
+        // 1. order.getTotalAmount()가 null인지 확인합니다.
+        if (order.getTotalAmount() == null || order.getTotalAmount().getAmount() == null) {
+            // null일 경우 모든 금액을 0으로 처리하는 SettlementItem을 반환합니다.
+            return new SettlementItem(
+                        order.getId(),
+                        order.getOrderNumber(),
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO,
+                        order.getUpdatedAt()
+            );
+        }
+        // 2. null이 아닐 경우에만 정상 로직을 수행합니다.
         BigDecimal amount = order.getTotalAmount().getAmount();
         BigDecimal fee = amount.multiply(BigDecimal.valueOf(FEE_RATE))
-                .setScale(0, RoundingMode.HALF_UP); // 원 단위 반올림
+                .setScale(0, RoundingMode.HALF_UP);
         BigDecimal settlement = amount.subtract(fee);
 
         return new SettlementItem(
@@ -73,7 +86,7 @@ public class SettlementService {
                 amount,
                 fee,
                 settlement,
-                order.getUpdatedAt()   // 확정 시점
+                order.getUpdatedAt()
         );
     }
 

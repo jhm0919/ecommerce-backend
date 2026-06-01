@@ -53,9 +53,10 @@ public class ProductAdminController {
             @PathVariable Long id,
             @Valid @RequestBody ProductUpdateRequest request
     ) {
-        Product product = productAdminService.update(id, request);
+        // 1. 서비스로부터 DTO를 직접 받습니다.
+        ProductDetailResponse responseDto = productAdminService.update(id, request);
         return ResponseEntity.ok(
-                CommonResponse.createSuccess(ProductDetailResponse.from(product))
+                CommonResponse.createSuccess(responseDto) // 2. 받은 DTO를 그대로 응답으로 보냅니다.
         );
     }
 
