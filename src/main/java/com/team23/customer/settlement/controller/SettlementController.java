@@ -18,7 +18,7 @@ import java.time.LocalDate;
 
 @Tag(name = "정산 관리", description = "판매자 정산 내역 조회 및 확정 API")
 @RestController
-@RequestMapping("/api/seller/settlements")
+@RequestMapping("/api/admin/policy/settlement")
 @RequiredArgsConstructor
 public class SettlementController {
 

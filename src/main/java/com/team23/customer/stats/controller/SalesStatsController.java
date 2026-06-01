@@ -31,24 +31,24 @@ public class SalesStatsController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "400", description = "날짜 범위 오류 (from > to 또는 1년 초과)")
+            @ApiResponse(responseCode = "400", description = "날짜 범위 오류 (startDate > endDate 또는 1년 초과)")
     })
     @GetMapping("/sales")
     public ResponseEntity<CommonResponse<SalesStatsResponse>> getSalesStats(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
-        validateDateRange(from, to);
+        validateDateRange(startDate, endDate);
         return ResponseEntity.ok(
-                CommonResponse.createSuccess(salesStatsService.getSalesStats(from, to))
+                CommonResponse.createSuccess(salesStatsService.getSalesStats(startDate, endDate))
         );
     }
 
-    private void validateDateRange(LocalDate from, LocalDate to) {
-        if (from.isAfter(to)) {
-            throw new IllegalArgumentException("from은 to보다 이전이어야 합니다");
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("startDate은 endDate보다 이전이어야 합니다");
         }
-        if (from.plusDays(365).isBefore(to)) {
+        if (startDate.plusDays(365).isBefore(endDate)) {
             throw new IllegalArgumentException("조회 기간은 최대 1년입니다");
         }
     }
