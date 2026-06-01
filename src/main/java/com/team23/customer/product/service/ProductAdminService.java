@@ -2,6 +2,7 @@ package com.team23.customer.product.service;
 
 import com.team23.customer.product.domain.*;
 import com.team23.customer.product.dto.ProductCreateRequest;
+import com.team23.customer.product.dto.ProductDetailResponse;
 import com.team23.customer.product.dto.ProductUpdateRequest;
 import com.team23.customer.product.exception.CategoryNotFoundException;
 import com.team23.customer.product.exception.ProductNotFoundException;
@@ -53,7 +54,7 @@ public class ProductAdminService {
      * 상품 정보를 수정한다 (PATCH 의미).
      */
     @Transactional
-    public Product update(Long productId, ProductUpdateRequest request) {
+    public ProductDetailResponse update(Long productId, ProductUpdateRequest request) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
@@ -74,7 +75,7 @@ public class ProductAdminService {
         }
 
         log.info("Product updated: id={}", productId);
-        return product;
+        return ProductDetailResponse.from(product);
     }
 
     // ★ increaseStock(Long, int) 메서드 제거
