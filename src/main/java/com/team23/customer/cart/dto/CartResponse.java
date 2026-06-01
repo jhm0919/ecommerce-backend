@@ -26,6 +26,7 @@ public record CartResponse(
     public record CartItemResponse(
             Long itemId,
             Long productId,
+            Long skuId, // 추가
             String productName,
             String productImageUrl,
             BigDecimal currentPrice,
@@ -43,6 +44,7 @@ public record CartResponse(
                 return new CartItemResponse(
                         item.getId(),
                         item.getProductId(),
+                        item.getSkuId(), // ★★★ 2. skuId 값 추가
                         item.getProductName(),  // 스냅샷 사용
                         item.getProductImageUrl(),
                         null,
@@ -59,6 +61,7 @@ public record CartResponse(
             return new CartItemResponse(
                     item.getId(),
                     item.getProductId(),
+                    item.getSkuId(), // ★★★ 3. skuId 값 추가
                     product.getName(),  // 현재 이름 (스냅샷보다 우선)
                     product.getMainImageUrl(),  // 현재 이미지
                     currentPrice.getAmount(),
