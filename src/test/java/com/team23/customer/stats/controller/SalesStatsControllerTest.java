@@ -33,25 +33,25 @@ class SalesStatsControllerTest {
     class DateValidation {
 
         @Test
-        @DisplayName("from이 to보다 늦으면 예외")
+        @DisplayName("startDate이 endDate보다 늦으면 예외")
         void rejectFromAfterTo() {
-            LocalDate from = LocalDate.of(2026, 5, 12);
-            LocalDate to = LocalDate.of(2026, 5, 1);  // from > to
+            LocalDate startDate = LocalDate.of(2026, 5, 12);
+            LocalDate endDate = LocalDate.of(2026, 5, 1);  // startDate > endDate
 
             assertThatThrownBy(() ->
-                    salesStatsController.getSalesStats(from, to))
+                    salesStatsController.getSalesStats(startDate, endDate))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("from");
+                    .hasMessageContaining("startDate");
         }
 
         @Test
         @DisplayName("1년 초과 기간은 예외")
         void rejectOverOneYear() {
-            LocalDate from = LocalDate.of(2025, 1, 1);
-            LocalDate to = LocalDate.of(2026, 5, 12);  // 1년 이상
+            LocalDate startDate = LocalDate.of(2025, 1, 1);
+            LocalDate endDate = LocalDate.of(2026, 5, 12);  // 1년 이상
 
             assertThatThrownBy(() ->
-                    salesStatsController.getSalesStats(from, to))
+                    salesStatsController.getSalesStats(startDate, endDate))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("1년");
         }
@@ -72,14 +72,14 @@ class SalesStatsControllerTest {
         @Test
         @DisplayName("정상 기간 조회")
         void normalRange() {
-            LocalDate from = LocalDate.of(2026, 5, 1);
-            LocalDate to = LocalDate.of(2026, 5, 12);
+            LocalDate startDate = LocalDate.of(2026, 5, 1);
+            LocalDate endDate = LocalDate.of(2026, 5, 12);
 
-            given(salesStatsService.getSalesStats(from, to))
+            given(salesStatsService.getSalesStats(startDate, endDate))
                     .willReturn(mockResponse);
 
             assertThatCode(() ->
-                    salesStatsController.getSalesStats(from, to))
+                    salesStatsController.getSalesStats(startDate, endDate))
                     .doesNotThrowAnyException();
         }
     }

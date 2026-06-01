@@ -2,6 +2,7 @@ package com.team23.customer.product.service;
 
 import com.team23.customer.product.domain.*;
 import com.team23.customer.product.dto.ProductCreateRequest;
+import com.team23.customer.product.dto.ProductDetailResponse;
 import com.team23.customer.product.dto.ProductUpdateRequest;
 import com.team23.customer.product.exception.CategoryNotFoundException;
 import com.team23.customer.product.exception.ProductNotFoundException;
@@ -107,10 +108,10 @@ class ProductAdminServiceTest {
             Product product = createProduct();
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            Product result = productAdminService.update(1L,
+            ProductDetailResponse result = productAdminService.update(1L,
                     new ProductUpdateRequest("새 이름", null, null, null, null, null));
 
-            assertThat(result.getName()).isEqualTo("새 이름");
+            assertThat(result.name()).isEqualTo("새 이름");
         }
 
         @Test
@@ -252,14 +253,30 @@ class ProductAdminServiceTest {
         @Test
         @DisplayName("SKU 추가 시 SKU_CREATED 이벤트 발행")
         void publishSkuCreatedEvent() {
+            // given
             Product product = createProduct();
             setId(product, 1L);
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
+            // ★★★ 이 부분이 핵심입니다 ★★★
+            // productRepository.save()가 호출되면, 인자로 받은 product 객체를 그대로 반환하도록 설정합니다.
+            // 이렇게 해야 savedProduct가 null이 되지 않습니다.
+            given(productRepository.save(any(Product.class)))
+                    .willAnswer(invocation -> {
+                        Product savedProduct = invocation.getArgument(0);
+                        // 실제 DB처럼, 저장된 SKU에 ID를 부여하는 것을 흉내 냅니다.
+                        if (!savedProduct.getSkus().isEmpty()) {
+                            setId(savedProduct.getSkus().get(0), 200L); // 임의의 SKU ID 부여
+                        }
+                        return savedProduct;
+                    });
+
+            // when
             productAdminService.addSku(1L,
                     List.of(new SkuOption("색상", "검정")), 10);
 
+            // then
             verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
     }
