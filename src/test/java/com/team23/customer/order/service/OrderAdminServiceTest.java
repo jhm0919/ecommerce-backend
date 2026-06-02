@@ -37,8 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestPropertySource(locations = "classpath:application-test.yaml")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-@Transactional
+//@Transactional
 class OrderAdminServiceTest {
 
     @Autowired OrderAdminService orderAdminService;
@@ -54,6 +53,10 @@ class OrderAdminServiceTest {
 
     @BeforeEach
     void setUp() {
+        productRepository.deleteAll();
+        categoryRepository.deleteAll();
+        orderAdminRepository.deleteAll();
+
         Category category = categoryRepository.save(
                 Category.create("신발", "shoe-order"));
         this.testCategory = category;
