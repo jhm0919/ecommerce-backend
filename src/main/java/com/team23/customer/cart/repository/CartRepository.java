@@ -2,6 +2,7 @@ package com.team23.customer.cart.repository;
 
 import com.team23.customer.cart.domain.Cart;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -35,4 +36,13 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
         )
     """)
     long countNonEmptyCarts();
+
+    /**
+     * 특정 상품 ID를 포함하는 모든 장바구니 항목을 삭제한다.
+     * 상품 단종 시 호출된다.
+     * @param productId 단종된 상품의 ID
+     */
+    @Modifying
+    @Query("DELETE FROM CartItem ci WHERE ci.productId = :productId")
+    void deleteAllItemsByProductId(@Param("productId") Long productId);
 }
