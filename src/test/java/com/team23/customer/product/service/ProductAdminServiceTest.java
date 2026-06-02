@@ -1,5 +1,6 @@
 package com.team23.customer.product.service;
 
+import com.team23.customer.cart.repository.CartRepository;
 import com.team23.customer.product.domain.*;
 import com.team23.customer.product.dto.ProductCreateRequest;
 import com.team23.customer.product.dto.ProductDetailResponse;
@@ -8,6 +9,7 @@ import com.team23.customer.product.exception.CategoryNotFoundException;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,8 +36,22 @@ class ProductAdminServiceTest {
     @Mock private ProductRepository productRepository;
     @Mock private CategoryRepository categoryRepository;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private CartRepository cartRepository; // 1. CartRepository Mock 객체 추가
 
-    @InjectMocks private ProductAdminService productAdminService;
+//    @InjectMocks private ProductAdminService productAdminService;
+private ProductAdminService productAdminService; // 3. 필드만 선언
+
+    @BeforeEach
+        // 4. @BeforeEach 셋업 메서드 추가 (또는 기존 메서드에 추가)
+    void setUp() {
+        // 5. 서비스 객체를 수동으로 생성하고 모든 Mock을 주입합니다.
+        productAdminService = new ProductAdminService(
+                productRepository,
+                categoryRepository,
+                cartRepository,
+                eventPublisher
+        );
+    }
 
     private Category createCategory() {
         return Category.create("남성 상의", "men-tops");
@@ -286,14 +302,19 @@ class ProductAdminServiceTest {
     class Discontinue {
 
         @Test
-        @DisplayName("상품을 단종 처리할 수 있다")
+        @DisplayName("상품을 단종 처리하고, 장바구니에서 해당 상품을 삭제한다")
         void discontinueNormal() {
+            // given
             Product product = createProduct();
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
+            // when
             productAdminService.discontinue(1L);
 
+            // then
             assertThat(product.getStatus().name()).isEqualTo("DISCONTINUED");
+            // cartRepository의 deleteAllItemsByProductId 메서드가 1L을 인자로 하여 한 번 호출되었는지 검증
+            verify(cartRepository).deleteAllItemsByProductId(1L);
         }
     }
 

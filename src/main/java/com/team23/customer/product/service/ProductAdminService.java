@@ -1,5 +1,6 @@
 package com.team23.customer.product.service;
 
+import com.team23.customer.cart.repository.CartRepository;
 import com.team23.customer.product.domain.*;
 import com.team23.customer.product.dto.ProductCreateRequest;
 import com.team23.customer.product.dto.ProductDetailResponse;
@@ -24,6 +25,7 @@ public class ProductAdminService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final CartRepository cartRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -86,11 +88,15 @@ public class ProductAdminService {
      */
     @Transactional
     public void discontinue(Long productId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
+        Product product = productRepository.findById(productId).orElseThrow(() -> new ProductNotFoundException(productId));
 
         product.discontinue();
         log.info("Product discontinued: id={}", productId);
+
+        // 2. ★★★ 모든 장바구니에서 해당 상품 아이템을 삭제 ★★★
+        cartRepository.deleteAllItemsByProductId(productId);
+        log.info("해당 상품이 장바구니에서 삭제되었습니다.: productId={}", productId);
+
     }
 
     /**
