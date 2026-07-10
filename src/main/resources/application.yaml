@@ -34,8 +34,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME:dummy@gmail.com}
-    password: ${MAIL_PASSWORD:dummy_password}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -90,7 +90,7 @@ logging:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:dev-only-secret-key-must-be-at-least-256-bits-long-for-hs256}
+    secret: ${JWT_SECRET}
     access-token-validity-seconds: 1800
     refresh-token-validity-seconds: 1209600
   async:
@@ -116,7 +116,7 @@ app:
     timeout-seconds: 5
 
   mail:
-    from: ${MAIL_USERNAME:dummy@gmail.com}
+    from: ${MAIL_USERNAME}
     from-name: "이커머스 플랫폼"
 
 

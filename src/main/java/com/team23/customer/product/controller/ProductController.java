@@ -2,9 +2,8 @@ package com.team23.customer.product.controller;
 
 import com.team23.common.response.CommonResponse;
 import com.team23.common.security.jwt.AuthPrincipal;
-import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.dto.ProductDetailResponse;
-import com.team23.customer.product.dto.ProductSummaryResponse;
+import com.team23.customer.product.dto.response.ProductDetailResponse;
+import com.team23.customer.product.dto.response.ProductListResponse;
 import com.team23.customer.product.service.ProductService;
 import io.micrometer.core.annotation.Counted;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,8 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @Tag(name = "상품", description = "상품 조회 API")
 @Slf4j
@@ -45,20 +42,21 @@ public class ProductController {
             description = "상품 목록 조회 요청 수"
     )
     @GetMapping
-    public ResponseEntity<CommonResponse<Page<ProductSummaryResponse>>> list(
+    public ResponseEntity<CommonResponse<Page<ProductListResponse>>> list(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
             Pageable pageable,
             @AuthenticationPrincipal AuthPrincipal principal,
             @CookieValue(name = "session-id", required = false) String sessionId
     ) {
+//        Long memberId = principal.memberId();
         Long memberId = (principal != null) ? principal.memberId() : null;
 
-        Page<ProductSummaryResponse> products = productService.findVisibleProducts(
+        Page<ProductListResponse> productList = productService.findProductList(
                 categoryId, keyword, pageable, memberId, sessionId // memberId, sessionId 추가
         );
         return ResponseEntity.ok(
-                CommonResponse.createSuccess(products)
+                CommonResponse.createSuccess(productList)
         );
     }
 

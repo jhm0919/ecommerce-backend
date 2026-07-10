@@ -1,5 +1,6 @@
 package com.team23.customer.product.domain;
 
+import com.team23.customer.category.domain.Category;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

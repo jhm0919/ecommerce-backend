@@ -1,5 +1,6 @@
 package com.team23.customer.auth.domain;
 
+import com.team23.common.security.auth.domain.TokenHasher;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

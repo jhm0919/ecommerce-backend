@@ -1,7 +1,8 @@
 package com.team23.customer.stock.service;
 
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.product.domain.*;
-import com.team23.customer.product.repository.CategoryRepository;
+import com.team23.customer.category.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
 import com.team23.customer.purchaseorder.domain.PurchaseOrderStatus;
@@ -50,18 +51,18 @@ class ReceiveServiceTest {
     void setUp() {
         // given - SKU (팀원 Product + SKU 구조로 만들기)
         Category category = categoryRepository.save(Category.create("신발", "sho"));
-        Product product = Product.register("운동화", new Money(BigDecimal.valueOf(10000), "KRW"), "설명", "url", category);
+        Product product = Product.register("운동화", BigDecimal.valueOf(10000), "설명", "url", category);
         productRepository.save(product);
 
         // SKU 추가 (Product 통해서)
         List<SkuOption> options = List.of(new SkuOption("색상", "blue"));
-        SKU sku = product.addSku(options, 100);
+        Sku sku = product.addSku(options, 100);
         Product saved = productRepository.save(product);// cascade로 sku 저장
 
         em.flush();
         em.clear();
 
-        this.skuId = saved.getSkus().get(0).getId();
+        this.skuId = saved.getSkuses().get(0).getId();
     }
 
 

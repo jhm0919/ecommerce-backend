@@ -27,7 +27,6 @@ public class CookieIssuer {
                 .domain(cookieProperties.domain())
                 .maxAge(Duration.ofSeconds(cookieProperties.maxAgeSeconds()))
                 .build();
-
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 

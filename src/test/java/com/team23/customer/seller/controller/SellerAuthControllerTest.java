@@ -1,6 +1,6 @@
 package com.team23.customer.seller.controller;
 
-import com.team23.customer.auth.repository.RefreshTokenRepository;
+import com.team23.common.security.auth.repository.RefreshTokenRepository;
 import com.team23.customer.seller.domain.Seller;
 import com.team23.customer.seller.dto.SellerLoginRequest;
 import com.team23.customer.seller.repository.SellerRepository;
@@ -16,7 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;

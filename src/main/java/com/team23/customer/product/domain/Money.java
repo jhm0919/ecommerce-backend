@@ -3,6 +3,7 @@ package com.team23.customer.product.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -23,68 +24,69 @@ import java.util.Objects;
  * <p>JPA에서 {@code @Embeddable}로 다른 엔티티에 임베드된다.
  */
 @Embeddable
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)  // JPA 전용
 public class Money implements Comparable<Money> {
 
     @Column(name = "amount", precision = 19, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "currency", length = 3)
-    private String currency;
+//    @Column(name = "currency", length = 3)
+//    private String currency;
 
-    public static final Money ZERO_KRW = new Money(BigDecimal.ZERO, "KRW");
+    public static final Money ZERO = new Money(BigDecimal.ZERO);
 
-    public Money(BigDecimal amount, String currency) {
+    public Money(BigDecimal amount) {
         Objects.requireNonNull(amount, "amount must not be null");
-        Objects.requireNonNull(currency, "currency must not be null");
+//        Objects.requireNonNull(currency, "currency must not be null");
         if (amount.signum() < 0) {
             throw new IllegalArgumentException("Money cannot be negative: " + amount);
         }
-        validateCurrencyCode(currency);  // ★ 변경
+//        validateCurrencyCode(currency);  // ★ 변경
         this.amount = amount;
-        this.currency = currency;
     }
 
-    /**
-     * ISO 4217 표준 통화 코드인지 검증.
-     * Java 표준 라이브러리의 Currency 클래스 활용.
-     */
-    private static void validateCurrencyCode(String code) {
-        try {
-            Currency.getInstance(code);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid currency code: " + code, e);
-        }
-    }
+
+//    /**
+//     * ISO 4217 표준 통화 코드인지 검증.
+//     * Java 표준 라이브러리의 Currency 클래스 활용.
+//     */
+//    private static void validateCurrencyCode(String code) {
+//        try {
+//            Currency.getInstance(code);
+//        } catch (IllegalArgumentException e) {
+//            throw new IllegalArgumentException("Invalid currency code: " + code, e);
+//        }
+//    }
 
     /**
      * KRW 단축 생성자.
      * 사용 예: {@code Money.krw(10000)}
      */
-    public static Money krw(long amount) {
-        return new Money(BigDecimal.valueOf(amount), "KRW");
+    public static Money construct(long amount) {
+        return new Money(BigDecimal.valueOf(amount));
     }
 
     /**
      * 두 금액을 더한다. 통화가 다르면 예외.
      */
     public Money add(Money other) {
-        ensureSameCurrency(other);
-        return new Money(this.amount.add(other.amount), this.currency);
+//        ensureSameCurrency(other);
+        return new Money(this.amount.add(other.amount));
     }
 
     /**
      * 두 금액을 뺀다. 결과가 음수가 되면 예외.
      */
     public Money subtract(Money other) {
-        ensureSameCurrency(other);
+//        ensureSameCurrency(other);
         BigDecimal result = this.amount.subtract(other.amount);
         if (result.signum() < 0) {
             throw new IllegalStateException(
                     "Cannot subtract: result would be negative ("
                             + this.amount + " - " + other.amount + ")");
         }
-        return new Money(result, this.currency);
+        return new Money(result);
     }
 
     /**
@@ -95,14 +97,14 @@ public class Money implements Comparable<Money> {
         if (multiplier < 0) {
             throw new IllegalArgumentException("Multiplier cannot be negative: " + multiplier);
         }
-        return new Money(this.amount.multiply(BigDecimal.valueOf(multiplier)), this.currency);
+        return new Money(this.amount.multiply(BigDecimal.valueOf(multiplier)));
     }
 
     /**
      * 다른 금액보다 큰지 비교.
      */
     public boolean isGreaterThan(Money other) {
-        ensureSameCurrency(other);
+//        ensureSameCurrency(other);
         return this.amount.compareTo(other.amount) > 0;
     }
 
@@ -113,22 +115,19 @@ public class Money implements Comparable<Money> {
         return this.amount.signum() == 0;
     }
 
-    private void ensureSameCurrency(Money other) {
-        Objects.requireNonNull(other, "other Money must not be null");
-        if (!this.currency.equals(other.currency)) {
-            throw new IllegalArgumentException(
-                    "Currency mismatch: " + this.currency + " vs " + other.currency);
-        }
-    }
+//    private void ensureSameCurrency(Money other) {
+//        Objects.requireNonNull(other, "other Money must not be null");
+//        if (!this.currency.equals(other.currency)) {
+//            throw new IllegalArgumentException(
+//                    "Currency mismatch: " + this.currency + " vs " + other.currency);
+//        }
+//    }
 
     @Override
     public int compareTo(Money other) {
-        ensureSameCurrency(other);
+//        ensureSameCurrency(other);
         return this.amount.compareTo(other.amount);
     }
-
-    public BigDecimal getAmount() { return amount; }
-    public String getCurrency() { return currency; }
 
     /**
      * 값 동등성: 같은 통화의 같은 금액이면 같은 객체로 취급.
@@ -138,16 +137,16 @@ public class Money implements Comparable<Money> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Money money)) return false;
-        return amount.compareTo(money.amount) == 0 && currency.equals(money.currency);
+        return amount.compareTo(money.amount) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(amount.stripTrailingZeros(), currency);
+        return Objects.hash(amount.stripTrailingZeros());
     }
 
     @Override
     public String toString() {
-        return amount.toPlainString() + " " + currency;
+        return amount.toPlainString();
     }
 }

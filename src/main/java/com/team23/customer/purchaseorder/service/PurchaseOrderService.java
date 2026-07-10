@@ -3,7 +3,7 @@ package com.team23.customer.purchaseorder.service;
 import com.team23.common.exception.ErrorCode;
 import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.ProductStatus;
-import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.Sku;
 import com.team23.customer.product.repository.SkuRepository;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
 import com.team23.customer.purchaseorder.domain.PurchaseOrderStatus;
@@ -32,7 +32,7 @@ public class PurchaseOrderService {
                                 String supplierContact,
                                 LocalDate expectedAt) {
         // 1. SKU 조회 + 존재 검증
-        SKU sku = skuRepository.findById(skuId)
+        Sku sku = skuRepository.findById(skuId)
                 .orElseThrow(() -> new PurchaseOrderException(
                         ErrorCode.SKU_NOT_FOUND, "skuId=" + skuId));
 

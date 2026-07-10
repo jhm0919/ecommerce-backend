@@ -2,9 +2,14 @@ package com.team23.customer.product.controller;
 
 import com.team23.common.response.CommonResponse;
 import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.Sku;
 import com.team23.customer.product.domain.SkuOption;
-import com.team23.customer.product.dto.*;
+import com.team23.customer.product.dto.request.AddSkuRequest;
+import com.team23.customer.product.dto.request.AdjustStockRequest;
+import com.team23.customer.product.dto.request.ProductCreateRequest;
+import com.team23.customer.product.dto.request.ProductUpdateRequest;
+import com.team23.customer.product.dto.response.ProductDetailResponse;
+import com.team23.customer.product.dto.response.SkuResponse;
 import com.team23.customer.product.service.ProductAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -86,7 +91,7 @@ public class ProductAdminController {
                 .map(opt -> new SkuOption(opt.name(), opt.value()))
                 .toList();
 
-        SKU sku = productAdminService.addSku(productId, options, request.initialStock());
+        Sku sku = productAdminService.addSku(productId, options, request.initialStock());
         return ResponseEntity.status(201)
                 .body(CommonResponse.createSuccess(SkuResponse.from(sku)));
     }

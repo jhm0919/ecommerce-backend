@@ -1,7 +1,8 @@
 package com.team23.customer.stock.controller;
 
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.product.domain.*;
-import com.team23.customer.product.repository.CategoryRepository;
+import com.team23.customer.category.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
 import com.team23.customer.purchaseorder.repository.PurchaseOrderRepository;
@@ -26,7 +27,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -60,7 +60,7 @@ class StockControllerTest {
                 Category.create("바지", "pants"));
         Product product = Product.register(
                 "청바지",
-                new Money(BigDecimal.valueOf(10000), "KRW"),
+                BigDecimal.valueOf(10000),
                 "설명", "url", category);
         productRepository.save(product);
 
@@ -68,7 +68,7 @@ class StockControllerTest {
         product.addSku(options, 100);
         Product saved = productRepository.saveAndFlush(product);
 
-        this.skuId = saved.getSkus().get(0).getId();
+        this.skuId = saved.getSkuses().get(0).getId();
     }
 
     @AfterEach

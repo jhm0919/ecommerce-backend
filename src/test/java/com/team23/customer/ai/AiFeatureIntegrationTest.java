@@ -5,13 +5,13 @@ import com.team23.customer.ai.behavior.repository.UserBehaviorLogRepository;
 import com.team23.customer.ai.chat.dto.FastApiChatRequest;
 import com.team23.customer.ai.chat.service.AiChatDataCollector;
 import com.team23.customer.cart.service.CartService;
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.order.dto.CreateOrderRequest;
 import com.team23.customer.order.service.OrderService;
 import com.team23.customer.product.domain.*;
-import com.team23.customer.product.repository.CategoryRepository;
+import com.team23.customer.category.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.product.service.ProductService;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -71,7 +70,7 @@ public class AiFeatureIntegrationTest {
         Category testCategory = categoryRepository.save(Category.create("테스트 카테고리", "men-tops"));
         Product newProduct = Product.register(
                 "베이직 티셔츠",
-                Money.krw(29900),
+                BigDecimal.valueOf(29900),
                 "100% 면 소재",
                 "https://example.com/image.jpg",
                 testCategory
@@ -80,12 +79,12 @@ public class AiFeatureIntegrationTest {
         Product savedProduct = productRepository.save(newProduct);
 
         // SKU 생성 및 추가
-        SKU sku = savedProduct.addSku(List.of(new SkuOption("사이즈", "L")), 100);
+        Sku sku = savedProduct.addSku(List.of(new SkuOption("사이즈", "L")), 100);
         Product productWithSku = productRepository.save(savedProduct);// SKU가 추가된 상태를 다시 저장
 
         // 3. 생성된 상품의 ID를 테스트 변수에 저장
         this.testProductId = productWithSku.getId();
-        this.testSkuId = productWithSku.getSkus().get(0).getId();
+        this.testSkuId = productWithSku.getSkuses().get(0).getId();
         this.testSessionId = UUID.randomUUID().toString();
     }
 
@@ -123,7 +122,7 @@ public class AiFeatureIntegrationTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        productService.findVisibleProducts(null, keyword, pageable, testMemberId, testSessionId);
+        productService.findProductList(null, keyword, pageable, testMemberId, testSessionId);
 
         // then
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->

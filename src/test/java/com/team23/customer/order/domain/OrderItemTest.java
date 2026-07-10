@@ -1,15 +1,16 @@
 package com.team23.customer.order.domain;
 
-import com.team23.customer.product.domain.Category;
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.product.domain.Money;
 import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.Sku;
 import com.team23.customer.product.domain.SkuOption;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -17,14 +18,14 @@ import static org.assertj.core.api.Assertions.*;
 class OrderItemTest {
 
     private Product product;
-    private SKU sku;
+    private Sku sku;
 
     @BeforeEach
     void setUp() {
         Category category = Category.create("남성 상의", "men-tops");
         product = Product.register(
                 "베이직 티셔츠",
-                Money.krw(29900),
+                BigDecimal.valueOf(29900),
                 "100% 면",
                 "https://example.com/image.jpg",
                 category
@@ -40,7 +41,7 @@ class OrderItemTest {
         OrderItem item = OrderItem.of(product, sku, 2);
 
         assertThat(item.getProductName()).isEqualTo("베이직 티셔츠");
-        assertThat(item.getPriceAtOrder()).isEqualTo(Money.krw(29900));
+        assertThat(item.getPriceAtOrder()).isEqualTo(new Money(BigDecimal.valueOf(29900)));
         assertThat(item.getProductImageUrl()).isEqualTo("https://example.com/image.jpg");
         assertThat(item.getQuantity()).isEqualTo(2);
         assertThat(item.getSkuCode()).isEqualTo("SKU-1-001");
@@ -64,11 +65,11 @@ class OrderItemTest {
         Money originalPrice = item.getPriceAtOrder();
 
         // Product 가격 변경
-        product.changePrice(Money.krw(99900));
+        product.update(null, null, null, BigDecimal.valueOf(99900), null);
 
         // OrderItem 가격은 그대로 (스냅샷)
         assertThat(item.getPriceAtOrder()).isEqualTo(originalPrice);
-        assertThat(item.getPriceAtOrder()).isNotEqualTo(Money.krw(99900));
+        assertThat(item.getPriceAtOrder()).isNotEqualTo(BigDecimal.valueOf(99900));
     }
 
     @Test
@@ -78,7 +79,7 @@ class OrderItemTest {
 
         Money subtotal = item.calculateSubtotal();
 
-        assertThat(subtotal).isEqualTo(Money.krw(89700));  // 29900 × 3
+        assertThat(subtotal).isEqualTo(new Money(BigDecimal.valueOf(89700)));  // 29900 × 3
     }
 
     @Test

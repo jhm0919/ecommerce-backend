@@ -6,9 +6,10 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import com.team23.customer.product.domain.SKU;       // ★ 추가
+import com.team23.customer.product.domain.Sku;       // ★ 추가
 import com.team23.customer.product.domain.SkuOption; // ★ 추가
 
+import java.math.BigDecimal;
 import java.util.ArrayList;  // ★ 추가
 import java.util.List;        // ★ 추가
 
@@ -98,7 +99,7 @@ public class OrderItem {
      * <p>주의: SKU가 Product에 속한 것인지 호출자가 검증해야 한다.
      * 일반적으로 Product에서 SKU를 조회한 후 호출.
      */
-    public static OrderItem of(Product product, SKU sku, int quantity) {
+    public static OrderItem of(Product product, Sku sku, int quantity) {
         Objects.requireNonNull(product, "product must not be null");
         Objects.requireNonNull(sku, "sku must not be null");
         if (quantity <= 0) {

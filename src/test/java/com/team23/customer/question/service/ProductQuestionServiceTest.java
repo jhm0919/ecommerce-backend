@@ -3,7 +3,7 @@ package com.team23.customer.question.service;
 import com.team23.common.exception.BusinessException;
 import com.team23.customer.member.domain.Member;
 import com.team23.customer.member.repository.MemberRepository;
-import com.team23.customer.product.domain.Category;
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.product.domain.Money;
 import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.exception.ProductNotFoundException;
@@ -53,7 +53,7 @@ class ProductQuestionServiceTest {
     void setUp() {
         testProduct = Product.register(
                 "티셔츠",
-                Money.krw(29900),
+                BigDecimal.valueOf(29900),
                 "설명",
                 "https://image.url",
                 Category.create("상의", "tops")

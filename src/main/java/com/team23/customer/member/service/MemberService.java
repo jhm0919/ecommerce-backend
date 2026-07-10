@@ -20,12 +20,12 @@ public class MemberService {
      * 기존 회원이면 프로필 업데이트, 신규면 가입 후 반환한다.
      */
     @Transactional
-    public MemberInfo registerOrLogin(OAuthUserInfo info) {  // ★ 타입 변경
+    public void registerOrLogin(OAuthUserInfo info) {  // ★ 타입 변경
         Member member = memberRepository
                 .findByAuthProviderAndProviderSub(info.provider(), info.providerSub())
                 .map(existing -> updateProfile(existing, info))
-                .orElseGet(() -> register(info));
-        return MemberInfo.from(member);
+                .orElseGet(() -> register(info)); // 회원 생성
+//        return MemberInfo.from(member);
     }
 
     @Transactional(readOnly = true)

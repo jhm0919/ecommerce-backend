@@ -2,7 +2,7 @@ package com.team23.customer.order.controller;
 
 import com.team23.common.exception.BusinessException;
 import com.team23.common.exception.ErrorCode;
-import com.team23.common.security.jwt.JwtProvider;
+import com.team23.common.security.jwt.JwtAuthenticationProvider;
 import com.team23.customer.order.domain.OrderStatus;
 import com.team23.customer.order.dto.OrderAdminCancelRequest;
 import com.team23.customer.order.dto.OrderAdminCancelResponse;
@@ -48,7 +48,8 @@ class OrderAdminControllerTest {
     @Autowired ObjectMapper objectMapper;
 
     @MockitoBean OrderAdminService orderAdminService;
-    @MockitoBean JwtProvider jwtProvider;
+    @MockitoBean
+    JwtAuthenticationProvider jwtAuthenticationProvider;
 
     @Test
     @DisplayName("GET /api/seller/orders - 전체 조회 200")

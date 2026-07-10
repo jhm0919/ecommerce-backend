@@ -32,8 +32,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             SELECT new com.team23.customer.product.dto.ProductSummaryProjection(
                 p.id,
                 p.name,
-                p.price.amount,
-                p.price.currency,
+                p.price,
                 p.mainImageUrl,
                 c.name,
                 p.status,
@@ -47,7 +46,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
               AND (:keyword IS NULL OR
                    LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
                    LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))
-            GROUP BY p.id, p.name, p.price.amount, p.price.currency,
+            GROUP BY p.id, p.name, p.price,
                      p.mainImageUrl, c.name, p.status, p.createdAt
             """,
             countQuery = """
@@ -61,7 +60,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                    LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))
             """
     )
-    Page<ProductSummaryProjection> findVisibleProductSummaries(
+    Page<ProductSummaryProjection> findProductList(
             @Param("categoryId") Long categoryId,
             @Param("keyword") String keyword,
             @Param("excludedStatus") ProductStatus excludedStatus,

@@ -14,7 +14,7 @@ import com.team23.customer.order.exception.OrderAccessDeniedException;
 import com.team23.customer.order.exception.OrderNotFoundException;
 import com.team23.customer.order.repository.OrderRepository;
 import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.Sku;
 import com.team23.customer.product.domain.StockChangedEvent;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
@@ -74,7 +74,6 @@ public class OrderService {
             Long memberId,
             String sessionId,  // ★ sessionId 추가
             CreateOrderRequest request
-
     ) {
         Order order = createMemberOrder(memberId, request);
         Delivery delivery = findDeliveryByOrderId(order.getId());
@@ -186,7 +185,7 @@ public class OrderService {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new ProductNotFoundException(item.getProductId()));
 
-            SKU sku = product.findSkuById(item.getSkuId()).orElseThrow();
+            Sku sku = product.findSkuById(item.getSkuId()).orElseThrow();
             int stockBefore = sku.getStock();
 
             product.increaseSkuStock(item.getSkuId(), item.getQuantity());
@@ -225,7 +224,7 @@ public class OrderService {
             Product product = productRepository.findById(req.productId())
                     .orElseThrow(() -> new ProductNotFoundException(req.productId()));
 
-            SKU sku = product.findSkuById(req.skuId())
+            Sku sku = product.findSkuById(req.skuId())
                     .orElseThrow(() -> new IllegalArgumentException(
                             "SKU not found in product: productId=" + req.productId()
                                     + ", skuId=" + req.skuId()));
@@ -310,7 +309,7 @@ public class OrderService {
     private record PreparedOrderItem(
             OrderItem orderItem,
             Product product,
-            SKU sku,
+            Sku sku,
             int stockBefore,
             int stockAfter,
             int quantity

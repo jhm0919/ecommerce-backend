@@ -1,5 +1,6 @@
 package com.team23.customer.product.domain;
 
+import com.team23.customer.category.domain.Category;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -8,6 +9,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,11 +28,7 @@ import java.util.Optional;
  * 주문 이력 보존 등을 위해 물리적 삭제는 하지 않는다.
  */
 @Entity
-@Table(name = "products", indexes = {
-        @Index(name = "idx_product_status", columnList = "status"),
-        @Index(name = "idx_product_category", columnList = "category_id"),
-        @Index(name = "idx_product_created_at", columnList = "created_at")
-})
+@Table(name = "products")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
@@ -72,7 +70,7 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
-    private List<SKU> skus = new ArrayList<>();
+    private List<Sku> skus = new ArrayList<>();
 
     @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false)
@@ -88,26 +86,27 @@ public class Product {
 
     /**
      * 새 상품을 등록한다.
-     *
-     * <p>등록 직후 status는 ACTIVE.
+     * 등록 직후 status는 ACTIVE.
      * 재고는 SKU 추가 후 SKU 단위로 관리된다.
      */
     public static Product register(
             String name,
-            Money price,
+            BigDecimal price,
             String description,
             String mainImageUrl,
             Category category
     ) {
+        Money money = new Money(price);
+
         validateName(name);
-        validatePrice(price);
+        validatePrice(money);
         validateDescription(description);
         validateImageUrl(mainImageUrl);
         validateCategory(category);
 
         Product product = new Product();
         product.name = name.trim();
-        product.price = price;
+        product.price = money;
         product.description = (description == null) ? null : description.trim();
         product.mainImageUrl = mainImageUrl;
         product.category = category;
@@ -119,7 +118,12 @@ public class Product {
     // 비즈니스 메서드 - 정보 수정 (변경 없음)
     // ─────────────────────────────────────
 
-    public void updateInfo(String name, String description, String mainImageUrl) {
+    public void update(String name,
+                       String description,
+                       String mainImageUrl,
+                       BigDecimal price,
+                       Category category
+    ) {
         if (name != null) {
             validateName(name);
             this.name = name.trim();
@@ -132,19 +136,18 @@ public class Product {
             validateImageUrl(mainImageUrl);
             this.mainImageUrl = mainImageUrl;
         }
-    }
-
-    public void changePrice(Money newPrice) {
-        if (this.status == ProductStatus.DISCONTINUED) {
-            throw new IllegalStateException("Cannot change price of discontinued product");
+        if (price != null) {
+            if (this.status == ProductStatus.DISCONTINUED) {
+                throw new IllegalStateException("Cannot change price of discontinued product");
+            }
+            Money money = new Money(price);
+            validatePrice(money);
+            this.price = money;
         }
-        validatePrice(newPrice);
-        this.price = newPrice;
-    }
-
-    public void changeCategory(Category newCategory) {
-        validateCategory(newCategory);
-        this.category = newCategory;
+        if (category != null) {
+            validateCategory(category);
+            this.category = category;
+        }
     }
 
     // ─────────────────────────────────────
@@ -181,7 +184,7 @@ public class Product {
     // SKU 관리 (변경 없음)
     // ─────────────────────────────────────
 
-    public SKU addSku(List<SkuOption> options, int initialStock) {
+    public Sku addSku(List<SkuOption> options, int initialStock) {
         if (this.id == null) {
             throw new IllegalStateException(
                     "Product must be persisted before adding SKUs");
@@ -204,7 +207,7 @@ public class Product {
         int sequence = skus.size() + 1;
         String skuCode = SkuCodeGenerator.generate(this.id, sequence);
 
-        SKU sku = SKU.create(skuCode, options, initialStock);
+        Sku sku = Sku.create(skuCode, options, initialStock);
         sku.assignToProduct(this);
         this.skus.add(sku);
 
@@ -212,7 +215,7 @@ public class Product {
     }
 
     public void decreaseSkuStock(Long skuId, int quantity) {
-        SKU sku = findSku(skuId);
+        Sku sku = findSku(skuId);
         sku.decreaseStock(quantity);
 
         boolean allEmpty = skus.stream().allMatch(s -> s.getStock() == 0);
@@ -225,7 +228,7 @@ public class Product {
         if (this.status == ProductStatus.DISCONTINUED) {
             throw new IllegalStateException("Cannot restock discontinued product");
         }
-        SKU sku = findSku(skuId);
+        Sku sku = findSku(skuId);
         sku.increaseStock(quantity);
 
         if (this.status == ProductStatus.SOLD_OUT) {
@@ -234,7 +237,7 @@ public class Product {
     }
 
     public void removeSku(Long skuId) {
-        SKU sku = findSku(skuId);
+        Sku sku = findSku(skuId);
         if (sku.getStock() > 0) {
             throw new IllegalStateException(
                     "Cannot remove SKU with stock: skuId=" + skuId);
@@ -244,15 +247,15 @@ public class Product {
 
     public int getTotalSkuStock() {
         return skus.stream()
-                .mapToInt(SKU::getStock)
+                .mapToInt(Sku::getStock)
                 .sum();
     }
 
-    public List<SKU> getSkus() {
+    public List<Sku> getSkuses() {
         return List.copyOf(skus);
     }
 
-    public Optional<SKU> findSkuById(Long skuId) {
+    public Optional<Sku> findSkuById(Long skuId) {
         return skus.stream()
                 .filter(sku -> sku.getId() != null && sku.getId().equals(skuId))
                 .findFirst();
@@ -297,7 +300,7 @@ public class Product {
         Objects.requireNonNull(category, "category must not be null");
     }
 
-    private SKU findSku(Long skuId) {
+    private Sku findSku(Long skuId) {
         return skus.stream()
                 .filter(sku -> sku.getId() != null && sku.getId().equals(skuId))
                 .findFirst()

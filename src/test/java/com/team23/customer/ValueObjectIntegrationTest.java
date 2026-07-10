@@ -37,9 +37,9 @@ class ValueObjectIntegrationTest {
     @Test
     @DisplayName("주문 금액 계산 시나리오 (Money 활용)")
     void calculateOrderTotal() {
-        Money product1Price = Money.krw(15000);
-        Money product2Price = Money.krw(8000);
-        Money shippingFee = Money.krw(3000);
+        Money product1Price = Money.construct(15000);
+        Money product2Price = Money.construct(8000);
+        Money shippingFee = Money.construct(3000);
 
         // 상품 합계 (수량 고려)
         Money product1Subtotal = product1Price.multiply(2);  // 30000
@@ -49,6 +49,6 @@ class ValueObjectIntegrationTest {
         // 최종 금액
         Money finalAmount = productTotal.add(shippingFee);  // 41000
 
-        assertThat(finalAmount).isEqualTo(Money.krw(41000));
+        assertThat(finalAmount).isEqualTo(Money.construct(41000));
     }
 }

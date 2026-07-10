@@ -1,11 +1,13 @@
 package com.team23.customer.product.domain;
 
+import com.team23.customer.category.domain.Category;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -13,18 +15,18 @@ import static org.assertj.core.api.Assertions.*;
 class ProductTest {
 
     private Category category;
-    private Money validPrice;
+    private BigDecimal price;
 
     @BeforeEach
     void setUp() {
         category = Category.create("남성 상의", "men-tops");
-        validPrice = Money.krw(29900);
+        price = BigDecimal.valueOf(10000);
     }
 
     private Product createProduct() {
         return Product.register(
                 "베이직 티셔츠",
-                validPrice,
+                price,
                 "100% 면 소재",
                 "https://example.com/image.jpg",
                 category
@@ -44,16 +46,18 @@ class ProductTest {
         void registerAlwaysActive() {
             Product product = createProduct();
 
+            BigDecimal price = BigDecimal.valueOf(10000);
+
             assertThat(product.getStatus()).isEqualTo(ProductStatus.ACTIVE);
             assertThat(product.getName()).isEqualTo("베이직 티셔츠");
-            assertThat(product.getPrice()).isEqualTo(validPrice);
+            assertThat(product.getPrice()).isEqualTo(new Money(price));
         }
 
         @Test
         @DisplayName("name이 null이면 예외")
         void rejectNullName() {
             assertThatThrownBy(() -> Product.register(
-                    null, validPrice, "desc", "img", category))
+                    null, price, "desc", "img", category))
                     .isInstanceOf(NullPointerException.class);
         }
 
@@ -61,7 +65,7 @@ class ProductTest {
         @DisplayName("name이 blank면 예외")
         void rejectBlankName() {
             assertThatThrownBy(() -> Product.register(
-                    "  ", validPrice, "desc", "img", category))
+                    "  ", price, "desc", "img", category))
                     .isInstanceOf(IllegalArgumentException.class);
         }
 
@@ -77,7 +81,7 @@ class ProductTest {
         @DisplayName("category가 null이면 예외")
         void rejectNullCategory() {
             assertThatThrownBy(() -> Product.register(
-                    "이름", validPrice, "desc", "img", null))
+                    "이름", price, "desc", "img", null))
                     .isInstanceOf(NullPointerException.class);
         }
 
@@ -85,7 +89,7 @@ class ProductTest {
         @DisplayName("description은 null도 가능 (선택 사항)")
         void allowNullDescription() {
             Product product = Product.register(
-                    "이름", validPrice, null, "img", category);
+                    "이름", price, null, "img", category);
 
             assertThat(product.getDescription()).isNull();
         }
@@ -104,7 +108,7 @@ class ProductTest {
         void decreaseNormal() {
             Product product = createProduct();
             setId(product, 1L);
-            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
             setId(sku, 100L);
 
             product.decreaseSkuStock(100L, 3);
@@ -118,8 +122,8 @@ class ProductTest {
         void autoSoldOutWhenAllEmpty() {
             Product product = createProduct();
             setId(product, 1L);
-            SKU sku1 = product.addSku(List.of(new SkuOption("색상", "검정")), 5);
-            SKU sku2 = product.addSku(List.of(new SkuOption("색상", "흰색")), 3);
+            Sku sku1 = product.addSku(List.of(new SkuOption("색상", "검정")), 5);
+            Sku sku2 = product.addSku(List.of(new SkuOption("색상", "흰색")), 3);
             setId(sku1, 100L);
             setId(sku2, 200L);
 
@@ -134,8 +138,8 @@ class ProductTest {
         void stayActiveIfAnyStockRemains() {
             Product product = createProduct();
             setId(product, 1L);
-            SKU sku1 = product.addSku(List.of(new SkuOption("색상", "검정")), 5);
-            SKU sku2 = product.addSku(List.of(new SkuOption("색상", "흰색")), 3);
+            Sku sku1 = product.addSku(List.of(new SkuOption("색상", "검정")), 5);
+            Sku sku2 = product.addSku(List.of(new SkuOption("색상", "흰색")), 3);
             setId(sku1, 100L);
             setId(sku2, 200L);
 
@@ -154,7 +158,7 @@ class ProductTest {
         void increaseNormal() {
             Product product = createProduct();
             setId(product, 1L);
-            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 5);
+            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 5);
             setId(sku, 100L);
 
             product.increaseSkuStock(100L, 10);
@@ -167,7 +171,7 @@ class ProductTest {
         void soldOutToActive() {
             Product product = createProduct();
             setId(product, 1L);
-            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 1);
+            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 1);
             setId(sku, 100L);
             product.decreaseSkuStock(100L, 1);  // SOLD_OUT
             assertThat(product.getStatus()).isEqualTo(ProductStatus.SOLD_OUT);
@@ -213,7 +217,7 @@ class ProductTest {
         void discontinueSoldOut() {
             Product product = createProduct();
             setId(product, 1L);
-            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 1);
+            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 1);
             setId(sku, 100L);
             product.decreaseSkuStock(100L, 1);  // SOLD_OUT
             assertThat(product.getStatus()).isEqualTo(ProductStatus.SOLD_OUT);
@@ -247,7 +251,7 @@ class ProductTest {
         void updateNameOnly() {
             Product product = createProduct();
 
-            product.updateInfo("새 이름", null, null);
+            product.update("새 이름", null, null, null, null);
 
             assertThat(product.getName()).isEqualTo("새 이름");
             assertThat(product.getDescription()).isEqualTo("100% 면 소재");
@@ -259,7 +263,7 @@ class ProductTest {
         void updateDescriptionOnly() {
             Product product = createProduct();
 
-            product.updateInfo(null, "새 설명", null);
+            product.update(null, "새 설명", null, null, null);
 
             assertThat(product.getName()).isEqualTo("베이직 티셔츠");
             assertThat(product.getDescription()).isEqualTo("새 설명");
@@ -278,11 +282,11 @@ class ProductTest {
         @DisplayName("가격을 변경할 수 있다")
         void changePriceNormal() {
             Product product = createProduct();
-            Money newPrice = Money.krw(39900);
+            BigDecimal newPrice = BigDecimal.valueOf(39900);
 
-            product.changePrice(newPrice);
+            product.update(null, null, null, newPrice, null);
 
-            assertThat(product.getPrice()).isEqualTo(newPrice);
+            assertThat(product.getPrice()).isEqualTo(new Money(newPrice));
         }
 
         @Test
@@ -291,8 +295,11 @@ class ProductTest {
             Product product = createProduct();
             product.discontinue();
 
-            assertThatThrownBy(() -> product.changePrice(Money.krw(39900)))
-                    .isInstanceOf(IllegalStateException.class);
+            BigDecimal newPrice = BigDecimal.valueOf(39900);
+
+            assertThatThrownBy(() -> product.update(
+                    null, null, null, newPrice, null
+                    )).isInstanceOf(IllegalStateException.class);
         }
     }
 

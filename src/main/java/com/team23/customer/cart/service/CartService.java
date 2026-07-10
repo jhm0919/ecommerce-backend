@@ -6,7 +6,7 @@ import com.team23.customer.cart.exception.CartItemNotFoundException;
 import com.team23.customer.cart.exception.ProductNotPurchasableException;
 import com.team23.customer.cart.repository.CartRepository;
 import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.Sku;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
 import io.micrometer.core.annotation.Timed;
@@ -59,7 +59,7 @@ public class CartService {
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
         // ★ SKU 조회 + 검증 (이 Product의 SKU인지 — Aggregate 경계 보호)
-        SKU sku = product.findSkuById(skuId)
+        Sku sku = product.findSkuById(skuId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "SKU not found in product: productId=" + productId + ", skuId=" + skuId));
 

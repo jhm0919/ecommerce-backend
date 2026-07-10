@@ -1,11 +1,12 @@
 package com.team23.customer.settlement.controller;
 
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.domain.OrderAdmin;
 import com.team23.customer.order.domain.OrderItem;
 import com.team23.customer.order.repository.OrderAdminRepository;
 import com.team23.customer.product.domain.*;
-import com.team23.customer.product.repository.CategoryRepository;
+import com.team23.customer.category.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.settlement.dto.SettlementConfirmRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +50,7 @@ class SettlementControllerTest {
 
 
     private Product testProduct;
-    private SKU testSku;
+    private Sku testSku;
 
     @BeforeEach
     void setUp() {
@@ -57,7 +58,7 @@ class SettlementControllerTest {
                 Category.create("신발", "shoe-settle-ctrl"));
         Product product = Product.register(
                 "운동화",
-                new Money(BigDecimal.valueOf(10000), "KRW"),
+                BigDecimal.valueOf(10000),
                 "설명", "url", category);
         productRepository.save(product);
 
@@ -65,7 +66,7 @@ class SettlementControllerTest {
         product.addSku(options, 100);
         Product saved = productRepository.saveAndFlush(product);
         this.testProduct = saved;
-        this.testSku = saved.getSkus().get(0);
+        this.testSku = saved.getSkuses().get(0);
     }
 
     private void createConfirmedOrder() {

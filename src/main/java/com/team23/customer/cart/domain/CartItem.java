@@ -1,7 +1,7 @@
 package com.team23.customer.cart.domain;
 
 import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.Sku;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -65,7 +65,7 @@ public class CartItem {
      * <p>SKU 옵션 정보는 저장하지 않는다.
      * 조회 시 skuId로 SKU를 참조해 옵션을 표시한다.
      */
-    static CartItem of(Product product, SKU sku, int quantity) {
+    static CartItem of(Product product, Sku sku, int quantity) {
         Objects.requireNonNull(product, "product must not be null");
         Objects.requireNonNull(sku, "sku must not be null");
         validateQuantity(quantity);

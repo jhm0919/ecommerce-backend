@@ -1,7 +1,7 @@
 package com.team23.customer.seller.service;
 
-import com.team23.customer.auth.dto.TokenPair;
-import com.team23.customer.auth.service.AuthService;
+import com.team23.common.security.auth.dto.TokenPair;
+import com.team23.common.security.auth.service.AuthService;
 import com.team23.common.exception.BusinessException;
 import com.team23.common.exception.ErrorCode;
 import com.team23.customer.seller.domain.Seller;
@@ -40,8 +40,8 @@ public class SellerAuthService {
             };
         }
 
-        // 4. 토큰 발급 — 팀원 AuthService 재사용
-        return authService.issueTokens(
+        // 4. 토큰 발급 AuthService 재사용
+        return authService.createToken(
                 seller.getId(),
                 seller.getLoginId(),  // providerSub 자리에 loginId
                 "SELLER"

@@ -1,9 +1,9 @@
 package com.team23.customer.auth.controller;
 
-import com.team23.customer.auth.repository.RefreshTokenRepository;
-import com.team23.customer.auth.domain.TokenHasher;
-import com.team23.customer.auth.dto.TokenPair;
-import com.team23.customer.auth.service.AuthService;
+import com.team23.common.security.auth.repository.RefreshTokenRepository;
+import com.team23.common.security.auth.domain.TokenHasher;
+import com.team23.common.security.auth.dto.TokenPair;
+import com.team23.common.security.auth.service.AuthService;
 import com.team23.customer.member.domain.AuthProvider;
 import com.team23.customer.member.domain.Member;
 import com.team23.customer.member.repository.MemberRepository;
@@ -52,7 +52,7 @@ class AuthControllerIntegrationTest {
                         "ko"
                 )
         );
-        initialTokens = authService.issueTokens(
+        initialTokens = authService.createToken(
                 testMember.getId(),
                 testMember.getProviderSub(),
                 testMember.getRole().name()

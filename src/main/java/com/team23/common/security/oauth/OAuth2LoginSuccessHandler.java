@@ -1,8 +1,8 @@
 package com.team23.common.security.oauth;
 
 
-import com.team23.customer.auth.dto.TokenPair;
-import com.team23.customer.auth.service.AuthService;
+import com.team23.common.security.auth.dto.TokenPair;
+import com.team23.common.security.auth.service.AuthService;
 import com.team23.customer.member.domain.AuthProvider;
 import com.team23.customer.member.domain.Member;
 import com.team23.customer.member.exception.MemberNotFoundException;
@@ -52,7 +52,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 .orElseThrow(() -> new MemberNotFoundException(providerSub));
 
         // 3. 토큰 발급 (AuthService에 위임)  ★ 핵심 변경
-        TokenPair tokens = authService.issueTokens(member.getId(), providerSub, member.getRole().name());
+        TokenPair tokens = authService.createToken(member.getId(), providerSub, member.getRole().name());
 
         // 4. RT를 쿠키로
         cookieIssuer.addRefreshTokenCookie(response, tokens.refreshToken());

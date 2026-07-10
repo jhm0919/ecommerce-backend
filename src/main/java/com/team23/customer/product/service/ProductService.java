@@ -3,8 +3,9 @@ package com.team23.customer.product.service;
 import com.team23.customer.ai.behavior.event.BehaviorLogEvent;
 import com.team23.customer.product.domain.Product;
 import com.team23.customer.product.domain.ProductStatus;
+import com.team23.customer.product.dto.ProductSummaryProjection;
 import com.team23.customer.product.exception.ProductNotFoundException;
-import com.team23.customer.product.dto.ProductSummaryResponse;
+import com.team23.customer.product.dto.response.ProductListResponse;
 import com.team23.customer.product.repository.ProductRepository;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class ProductService {
             description = "상품 목록 조회 처리 시간"
     )
     @Transactional(readOnly = true)
-    public Page<ProductSummaryResponse> findVisibleProducts(
+    public Page<ProductListResponse> findProductList(
             Long categoryId, String keyword, Pageable pageable, Long memberId, String sessionId
     ) {
         String normalizedKeyword = normalizeKeyword(keyword);
@@ -48,12 +49,12 @@ public class ProductService {
             eventPublisher.publishEvent(BehaviorLogEvent.search(this, memberId, sessionId, keyword));
         }
 
-        return productRepository.findVisibleProductSummaries(
+        return productRepository.findProductList(
                 categoryId,
                 normalizedKeyword,
                 ProductStatus.DISCONTINUED,
                 sanitizedPageable
-        ).map(ProductSummaryResponse::from);
+        ).map(ProductListResponse::from);
     }
     /**
      * 상품 상세 조회.

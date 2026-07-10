@@ -18,7 +18,6 @@ public record OrderDetailResponse(
         String orderNumber,
         OrderStatus status,
         BigDecimal totalAmount,
-        String currency,
         List<OrderItemResponse> items,
         DeliveryResponse delivery,
         LocalDateTime createdAt,
@@ -28,7 +27,6 @@ public record OrderDetailResponse(
             Long productId,
             String productName,
             BigDecimal priceAmount,
-            String currency,
             String productImageUrl,
             int quantity,
             BigDecimal subtotal
@@ -38,7 +36,6 @@ public record OrderDetailResponse(
                     item.getProductId(),
                     item.getProductName(),
                     item.getPriceAtOrder().getAmount(),
-                    item.getPriceAtOrder().getCurrency(),
                     item.getProductImageUrl(),
                     item.getQuantity(),
                     item.calculateSubtotal().getAmount()
@@ -79,7 +76,6 @@ public record OrderDetailResponse(
                 order.getOrderNumber(),
                 order.getStatus(),
                 order.getTotalAmount().getAmount(),
-                order.getTotalAmount().getCurrency(),
                 order.getItems().stream()
                         .map(OrderItemResponse::from)
                         .toList(),

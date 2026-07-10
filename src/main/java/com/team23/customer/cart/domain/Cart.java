@@ -1,7 +1,7 @@
 package com.team23.customer.cart.domain;
 
 import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.Sku;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -73,7 +73,7 @@ public class Cart {
      * 같은 SKU가 이미 있으면 수량을 증가시킨다.
      * 같은 Product라도 SKU(옵션)가 다르면 별도 항목으로 추가된다.
      */
-    public void addItem(Product product, SKU sku, int quantity) {  // ★ SKU 추가
+    public void addItem(Product product, Sku sku, int quantity) {  // ★ SKU 추가
         Objects.requireNonNull(product, "product must not be null");
         Objects.requireNonNull(sku, "sku must not be null");
 

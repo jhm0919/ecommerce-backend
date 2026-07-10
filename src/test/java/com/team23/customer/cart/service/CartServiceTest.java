@@ -4,10 +4,10 @@ import com.team23.customer.cart.domain.Cart;
 import com.team23.customer.cart.exception.CartItemNotFoundException;
 import com.team23.customer.cart.exception.ProductNotPurchasableException;
 import com.team23.customer.cart.repository.CartRepository;
-import com.team23.customer.product.domain.Category;
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.product.domain.Money;
 import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.Sku;
 import com.team23.customer.product.domain.SkuOption;
 import com.team23.customer.product.exception.ProductNotFoundException;
 import com.team23.customer.product.repository.ProductRepository;
@@ -16,12 +16,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,7 +46,7 @@ class CartServiceTest {
     private static final Long SKU_ID = 200L;
 
     private Product product;
-    private SKU sku;
+    private Sku sku;
 
     @BeforeEach
     void setUp() {
@@ -55,7 +55,7 @@ class CartServiceTest {
 
         Category category = Category.create("의류", "clothing");
         product = Product.register(
-                "티셔츠", Money.krw(29900), "설명", "img", category
+                "티셔츠", BigDecimal.valueOf(29900), "설명", "img", category
         );
         setId(product, PRODUCT_ID);
         sku = product.addSku(List.of(new SkuOption("색상", "검정")), 50);

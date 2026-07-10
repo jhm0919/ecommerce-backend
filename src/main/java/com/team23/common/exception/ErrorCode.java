@@ -13,16 +13,16 @@ public enum ErrorCode {
 
     // Product
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "상품을 찾을 수 없습니다"),
-    CATEGORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "P002", "카테고리를 찾을 수 없습니다"),
-    DUPLICATE_CATEGORY(HttpStatus.CONFLICT, "P003", "이미 존재하는 카테고리입니다"),
 
     // Category
-    CATEGORY_HAS_PRODUCTS(HttpStatus.BAD_REQUEST, "P004", "상품이 존재하는 카테고리는 삭제할 수 없습니다"),
+    CATEGORY_HAS_PRODUCTS(HttpStatus.BAD_REQUEST, "CAT001", "상품이 존재하는 카테고리는 삭제할 수 없습니다"),
+    CATEGORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "CAT002", "카테고리를 찾을 수 없습니다"),
+    DUPLICATE_CATEGORY(HttpStatus.CONFLICT, "CAT003", "이미 존재하는 카테고리입니다"),
 
     // Order
-    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "O001", "주문을 찾을 수 없습니다"),
-    INSUFFICIENT_STOCK(HttpStatus.BAD_REQUEST, "O002", "재고가 부족합니다"),
-    ORDER_ACCESS_DENIED(HttpStatus.NOT_FOUND, "O003", "주문을 찾을 수 없습니다"),  // 의도적 NOT_FOUND
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORD001", "주문을 찾을 수 없습니다"),
+    INSUFFICIENT_STOCK(HttpStatus.BAD_REQUEST, "ORD002", "재고가 부족합니다"),
+    ORDER_ACCESS_DENIED(HttpStatus.NOT_FOUND, "ORD003", "주문을 찾을 수 없습니다"),  // 의도적 NOT_FOUND
 
     // Cart
     CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "C001", "장바구니 항목을 찾을 수 없습니다"),
@@ -32,8 +32,8 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "유효하지 않은 Refresh Token입니다"),
 
     // Common
-    INVALID_INPUT(HttpStatus.BAD_REQUEST, "C001", "잘못된 입력입니다"),
-    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C999", "서버 오류가 발생했습니다"),
+    INVALID_INPUT(HttpStatus.BAD_REQUEST, "CMN001", "잘못된 입력입니다"),
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CMN999", "서버 오류가 발생했습니다"),
 
     // Purchase Order
     SKU_NOT_FOUND(HttpStatus.NOT_FOUND, "SK001", "SKU를 찾을 수 없습니다"),

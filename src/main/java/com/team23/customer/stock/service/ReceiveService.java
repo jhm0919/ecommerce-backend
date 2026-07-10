@@ -2,7 +2,7 @@ package com.team23.customer.stock.service;
 
 import com.team23.common.exception.ErrorCode;
 import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.Sku;
 import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.product.repository.SkuRepository;
 import com.team23.customer.purchaseorder.domain.PurchaseOrder;
@@ -49,7 +49,7 @@ public class ReceiveService {
         }
 
         // 3. SKU 조회
-        SKU sku = skuRepository.findById(po.getSkuId())
+        Sku sku = skuRepository.findById(po.getSkuId())
                 .orElseThrow(() -> new PurchaseOrderException(ErrorCode.SKU_NOT_FOUND, "skuId=" + po.getSkuId()));
 
         // 4. Product 조회 + 재고 증가 (SOLD_OUT → ACTIVE 자동 전환)
@@ -109,7 +109,7 @@ public class ReceiveService {
         }
 
         // 3. SKU 조회
-        SKU sku = skuRepository.findById(history.getSkuId())
+        Sku sku = skuRepository.findById(history.getSkuId())
                 .orElseThrow(() -> new PurchaseOrderException(
                         ErrorCode.SKU_NOT_FOUND));
 
@@ -163,7 +163,7 @@ public class ReceiveService {
         int diff = newQuantity - originalQuantity;   // 양수: 증가 / 음수: 차감
 
         // 4. 감소 방향 — 재고 부족 검증
-        SKU sku = skuRepository.findById(history.getSkuId())
+        Sku sku = skuRepository.findById(history.getSkuId())
                 .orElseThrow(() -> new PurchaseOrderException(
                         ErrorCode.SKU_NOT_FOUND));
 

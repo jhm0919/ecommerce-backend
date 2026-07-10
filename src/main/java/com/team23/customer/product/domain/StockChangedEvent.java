@@ -20,7 +20,7 @@ public record StockChangedEvent(
 ) {
     public static StockChangedEvent of(
             Product product,
-            SKU sku,
+            Sku sku,
             StockChangeType changeType,
             int quantity,
             int stockBefore,

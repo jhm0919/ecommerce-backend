@@ -1,6 +1,7 @@
 package com.team23.customer.order.service;
 
 import com.team23.common.exception.BusinessException;
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.domain.OrderItem;
 import com.team23.customer.order.domain.OrderStatus;
@@ -8,7 +9,7 @@ import com.team23.customer.order.dto.OrderAdminConfirmResponse;
 import com.team23.customer.order.dto.OrderAdminListResponse;
 import com.team23.customer.order.repository.OrderAdminRepository;
 import com.team23.customer.product.domain.*;
-import com.team23.customer.product.repository.CategoryRepository;
+import com.team23.customer.category.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
@@ -20,7 +21,6 @@ import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +47,7 @@ class OrderAdminServiceTest {
     @Autowired EntityManager entityManager;  // ★ 추가
 
     private Product testProduct;
-    private SKU testSku;
+    private Sku testSku;
     private Category testCategory;
     private final List<Long> createdOrderIds = new ArrayList<>();
 
@@ -62,7 +62,7 @@ class OrderAdminServiceTest {
         this.testCategory = category;
         Product product = Product.register(
                 "운동화",
-                new Money(BigDecimal.valueOf(10000), "KRW"),
+                BigDecimal.valueOf(10000),
                 "설명", "url", category);
         productRepository.save(product);
 
@@ -70,7 +70,7 @@ class OrderAdminServiceTest {
         product.addSku(options, 100);
         Product saved = productRepository.saveAndFlush(product);
         this.testProduct = saved;
-        this.testSku = saved.getSkus().get(0);
+        this.testSku = saved.getSkuses().get(0);
     }
 
     @AfterEach
@@ -234,7 +234,7 @@ class OrderAdminServiceTest {
         int orderQuantity = 2;
 
         Product freshProduct = productRepository.findById(testProduct.getId()).orElseThrow();
-        SKU freshSku = freshProduct.getSkus().get(0);
+        Sku freshSku = freshProduct.getSkuses().get(0);
         int stockBefore = freshSku.getStock();
 
         OrderItem item = OrderItem.of(freshProduct, freshSku, orderQuantity);
@@ -250,7 +250,7 @@ class OrderAdminServiceTest {
         entityManager.flush();  // ★ dirty 변경사항 DB에 반영
         entityManager.clear();  // ★ 그 다음 캐시 제거
         Product updated = productRepository.findById(testProduct.getId()).orElseThrow();
-        SKU updatedSku = updated.getSkus().get(0);
+        Sku updatedSku = updated.getSkuses().get(0);
         assertThat(updatedSku.getStock()).isEqualTo(stockBefore + orderQuantity);
     }
 

@@ -1,20 +1,20 @@
 package com.team23.customer.product.service;
 
 import com.team23.customer.cart.repository.CartRepository;
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.product.domain.*;
-import com.team23.customer.product.dto.ProductCreateRequest;
-import com.team23.customer.product.dto.ProductDetailResponse;
-import com.team23.customer.product.dto.ProductUpdateRequest;
-import com.team23.customer.product.exception.CategoryNotFoundException;
+import com.team23.customer.product.dto.request.ProductCreateRequest;
+import com.team23.customer.product.dto.response.ProductDetailResponse;
+import com.team23.customer.product.dto.request.ProductUpdateRequest;
+import com.team23.customer.category.exception.CategoryNotFoundException;
 import com.team23.customer.product.exception.ProductNotFoundException;
-import com.team23.customer.product.repository.CategoryRepository;
+import com.team23.customer.category.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -27,7 +27,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -60,7 +59,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
     private Product createProduct() {
         return Product.register(
                 "베이직 티셔츠",
-                Money.krw(29900),
+                BigDecimal.valueOf(29900),
                 "100% 면 소재",
                 "https://example.com/image.jpg",
                 createCategory()
@@ -77,7 +76,6 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
             ProductCreateRequest request = new ProductCreateRequest(
                     "베이직 티셔츠",
                     new BigDecimal("29900"),
-                    "KRW",
                     "100% 면 소재",
                     "https://example.com/image.jpg",
                     1L
@@ -101,7 +99,6 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
             ProductCreateRequest request = new ProductCreateRequest(
                     "베이직 티셔츠",
                     new BigDecimal("29900"),
-                    "KRW",
                     "설명",
                     "https://...",
                     999L
@@ -122,24 +119,13 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
         @DisplayName("이름만 수정할 수 있다")
         void updateNameOnly() {
             Product product = createProduct();
+            Long categoryId = product.getCategory().getId();
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
             ProductDetailResponse result = productAdminService.update(1L,
-                    new ProductUpdateRequest("새 이름", null, null, null, null, null));
+                    new ProductUpdateRequest("새 이름", null, null, null, null));
 
             assertThat(result.name()).isEqualTo("새 이름");
-        }
-
-        @Test
-        @DisplayName("price만 있고 currency 없으면 예외")
-        void rejectPriceWithoutCurrency() {
-            Product product = createProduct();
-            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-
-            assertThatThrownBy(() -> productAdminService.update(1L,
-                    new ProductUpdateRequest(null, new BigDecimal("39900"), null, null, null, null)))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("price and currency");
         }
 
         @Test
@@ -148,7 +134,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
             given(productRepository.findById(999L)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> productAdminService.update(999L,
-                    new ProductUpdateRequest("이름", null, null, null, null, null)))
+                    new ProductUpdateRequest("이름", null, null, null, null)))
                     .isInstanceOf(ProductNotFoundException.class);
         }
     }
@@ -162,7 +148,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
         void increaseSkuStockNormal() {
             Product product = createProduct();
             setId(product, 1L);
-            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
             setId(sku, 100L);
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
@@ -177,7 +163,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
         void publishStockChangedEventOnIncrease() {
             Product product = createProduct();
             setId(product, 1L);
-            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
             setId(sku, 100L);
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
@@ -206,7 +192,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
         void decreaseSkuStockNormal() {
             Product product = createProduct();
             setId(product, 1L);
-            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
             setId(sku, 100L);
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
@@ -221,7 +207,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
         void alwaysPublishStockChangedEvent() {
             Product product = createProduct();
             setId(product, 1L);
-            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
             setId(sku, 100L);
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
@@ -236,7 +222,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
         void publishOnlyStockChangedEventWhenSoldOut() {
             Product product = createProduct();
             setId(product, 1L);
-            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 3);
+            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 3);
             setId(sku, 100L);
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
@@ -251,7 +237,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
         void publishStockChangedEventWhenStockRemains() {
             Product product = createProduct();
             setId(product, 1L);
-            SKU sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
             setId(sku, 100L);
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
@@ -282,8 +268,8 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
                     .willAnswer(invocation -> {
                         Product savedProduct = invocation.getArgument(0);
                         // 실제 DB처럼, 저장된 SKU에 ID를 부여하는 것을 흉내 냅니다.
-                        if (!savedProduct.getSkus().isEmpty()) {
-                            setId(savedProduct.getSkus().get(0), 200L); // 임의의 SKU ID 부여
+                        if (!savedProduct.getSkuses().isEmpty()) {
+                            setId(savedProduct.getSkuses().get(0), 200L); // 임의의 SKU ID 부여
                         }
                         return savedProduct;
                     });

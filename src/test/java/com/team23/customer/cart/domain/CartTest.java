@@ -1,9 +1,9 @@
 package com.team23.customer.cart.domain;
 
-import com.team23.customer.product.domain.Category;
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.product.domain.Money;
 import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.Sku;
 import com.team23.customer.product.domain.SkuOption;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -19,25 +20,25 @@ class CartTest {
 
     private Product product1;
     private Product product2;
-    private SKU sku1;   // product1의 SKU (검정/S)
-    private SKU sku1b;  // product1의 다른 SKU (흰색/M) — 같은 상품 다른 옵션 테스트용
-    private SKU sku2;   // product2의 SKU
+    private Sku sku1;   // product1의 SKU (검정/S)
+    private Sku sku1B;  // product1의 다른 SKU (흰색/M) — 같은 상품 다른 옵션 테스트용
+    private Sku sku2;   // product2의 SKU
 
     @BeforeEach
     void setUp() {
         Category category = Category.create("의류", "clothing");
 
         product1 = Product.register(
-                "티셔츠", Money.krw(29900), "설명", "img1", category
+                "티셔츠", BigDecimal.valueOf(29900), "설명", "img1", category
         );
         setId(product1, 1L);
         sku1 = product1.addSku(List.of(new SkuOption("색상", "검정")), 50);
         setId(sku1, 100L);
-        sku1b = product1.addSku(List.of(new SkuOption("색상", "흰색")), 30);
-        setId(sku1b, 101L);
+        sku1B = product1.addSku(List.of(new SkuOption("색상", "흰색")), 30);
+        setId(sku1B, 101L);
 
         product2 = Product.register(
-                "바지", Money.krw(49900), "설명", "img2", category
+                "바지", BigDecimal.valueOf(49900), "설명", "img2", category
         );
         setId(product2, 2L);
         sku2 = product2.addSku(List.of(new SkuOption("색상", "회색")), 40);
@@ -99,7 +100,7 @@ class CartTest {
             Cart cart = Cart.createFor(1L);
             cart.addItem(product1, sku1, 2);   // 티셔츠 검정
 
-            cart.addItem(product1, sku1b, 1);  // 티셔츠 흰색
+            cart.addItem(product1, sku1B, 1);  // 티셔츠 흰색
 
             assertThat(cart.getItemCount()).isEqualTo(2);  // 별도 항목
             assertThat(cart.getTotalQuantity()).isEqualTo(3);

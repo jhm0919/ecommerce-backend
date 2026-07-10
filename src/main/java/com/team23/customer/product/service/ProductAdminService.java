@@ -1,13 +1,14 @@
 package com.team23.customer.product.service;
 
 import com.team23.customer.cart.repository.CartRepository;
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.product.domain.*;
-import com.team23.customer.product.dto.ProductCreateRequest;
-import com.team23.customer.product.dto.ProductDetailResponse;
-import com.team23.customer.product.dto.ProductUpdateRequest;
-import com.team23.customer.product.exception.CategoryNotFoundException;
+import com.team23.customer.product.dto.request.ProductCreateRequest;
+import com.team23.customer.product.dto.response.ProductDetailResponse;
+import com.team23.customer.product.dto.request.ProductUpdateRequest;
+import com.team23.customer.category.exception.CategoryNotFoundException;
 import com.team23.customer.product.exception.ProductNotFoundException;
-import com.team23.customer.product.repository.CategoryRepository;
+import com.team23.customer.category.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
 import com.team23.customer.stockhistory.domain.StockChangeType;
 import lombok.RequiredArgsConstructor;
@@ -37,11 +38,9 @@ public class ProductAdminService {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new CategoryNotFoundException(request.categoryId()));
 
-        Money price = new Money(request.price(), request.currency());
-
         Product product = Product.register(
                 request.name(),
-                price,
+                request.price(),
                 request.description(),  // ★ stock 제거
                 request.mainImageUrl(),
                 category
@@ -60,21 +59,18 @@ public class ProductAdminService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
-        product.updateInfo(request.name(), request.description(), request.mainImageUrl());
-
-        if (request.price() != null && request.currency() != null) {
-            Money newPrice = new Money(request.price(), request.currency());
-            product.changePrice(newPrice);
-        } else if (request.price() != null || request.currency() != null) {
-            throw new IllegalArgumentException(
-                    "price and currency must be provided together");
-        }
-
+        Category category = null;
         if (request.categoryId() != null) {
-            Category newCategory = categoryRepository.findById(request.categoryId())
+            category = categoryRepository.findById(request.categoryId())
                     .orElseThrow(() -> new CategoryNotFoundException(request.categoryId()));
-            product.changeCategory(newCategory);
         }
+
+        product.update(request.name(),
+                request.description(),
+                request.mainImageUrl(),
+                request.price(),
+                category
+        );
 
         log.info("Product updated: id={}", productId);
         return ProductDetailResponse.from(product);
@@ -103,18 +99,18 @@ public class ProductAdminService {
      * 상품에 SKU를 추가한다.
      */
     @Transactional
-    public SKU addSku(Long productId, List<SkuOption> options, int initialStock) {
+    public Sku addSku(Long productId, List<SkuOption> options, int initialStock) {
         Product product = productRepository.findById(productId).orElseThrow(() -> new ProductNotFoundException(productId));
 
-        // 1. 메모리상에서 SKU를 추가합니다.
-        SKU newSku = product.addSku(options, initialStock);
+        // 1. SKU를 추가합니다.
+        Sku newSku = product.addSku(options, initialStock);
 
         // 2. ★★★ 변경된 Product를 즉시 저장(save)하여 SKU의 ID를 생성받습니다. ★★★
         Product savedProduct = productRepository.save(product);
 
         // 3. 저장 후 반환된 Product 객체에서, ID가 부여된 SKU를 다시 찾습니다.
         //    (newSku의 skuCode는 고유하므로, 이를 이용해 찾을 수 있습니다.)
-        SKU savedSku = savedProduct.getSkus().stream()
+        Sku savedSku = savedProduct.getSkuses().stream()
                 .filter(s -> s.getSkuCode().equals(newSku.getSkuCode()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Failed to find saved SKU"));
@@ -140,7 +136,7 @@ public class ProductAdminService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
-        SKU sku = product.findSkuById(skuId).orElseThrow();
+        Sku sku = product.findSkuById(skuId).orElseThrow();
         int stockBefore = sku.getStock();
 
         product.increaseSkuStock(skuId, quantity);
@@ -163,7 +159,7 @@ public class ProductAdminService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
-        SKU sku = product.findSkuById(skuId).orElseThrow();
+        Sku sku = product.findSkuById(skuId).orElseThrow();
         int stockBefore = sku.getStock();
 
         product.decreaseSkuStock(skuId, quantity);

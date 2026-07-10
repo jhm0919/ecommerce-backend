@@ -1,5 +1,6 @@
 package com.team23.customer.auth.domain;
 
+import com.team23.common.security.auth.domain.RefreshToken;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,8 +15,8 @@ class RefreshTokenTest {
     private static final String VALID_HASH =
             "a".repeat(64);  // 64자 hex 가짜 해시
 
-    private RefreshToken issueValidToken() {
-        return RefreshToken.issue(
+    private RefreshToken createRefreshTokenValidToken() {
+        return RefreshToken.createRefreshToken(
                 1L,
                 VALID_HASH,
                 LocalDateTime.now().plusDays(14)
@@ -31,7 +32,7 @@ class RefreshTokenTest {
         void issueValid() {
             LocalDateTime expiresAt = LocalDateTime.now().plusDays(14);
 
-            RefreshToken token = RefreshToken.issue(1L, VALID_HASH, expiresAt);
+            RefreshToken token = RefreshToken.createRefreshToken(1L, VALID_HASH, expiresAt);
 
             assertThat(token.getMemberId()).isEqualTo(1L);
             assertThat(token.getTokenHash()).isEqualTo(VALID_HASH);
@@ -42,7 +43,7 @@ class RefreshTokenTest {
         @Test
         @DisplayName("memberId가 null이면 예외")
         void rejectNullMemberId() {
-            assertThatThrownBy(() -> RefreshToken.issue(
+            assertThatThrownBy(() -> RefreshToken.createRefreshToken(
                     null, VALID_HASH, LocalDateTime.now().plusDays(14)))
                     .isInstanceOf(NullPointerException.class);
         }
@@ -52,10 +53,10 @@ class RefreshTokenTest {
         void rejectInvalidMemberId() {
             LocalDateTime future = LocalDateTime.now().plusDays(14);
 
-            assertThatThrownBy(() -> RefreshToken.issue(0L, VALID_HASH, future))
+            assertThatThrownBy(() -> RefreshToken.createRefreshToken(0L, VALID_HASH, future))
                     .isInstanceOf(IllegalArgumentException.class);
 
-            assertThatThrownBy(() -> RefreshToken.issue(-1L, VALID_HASH, future))
+            assertThatThrownBy(() -> RefreshToken.createRefreshToken(-1L, VALID_HASH, future))
                     .isInstanceOf(IllegalArgumentException.class);
         }
 
@@ -64,14 +65,14 @@ class RefreshTokenTest {
         void rejectInvalidTokenHashLength() {
             LocalDateTime future = LocalDateTime.now().plusDays(14);
 
-            assertThatThrownBy(() -> RefreshToken.issue(1L, "short", future))
+            assertThatThrownBy(() -> RefreshToken.createRefreshToken(1L, "short", future))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("64 characters");
 
-            assertThatThrownBy(() -> RefreshToken.issue(1L, "a".repeat(63), future))
+            assertThatThrownBy(() -> RefreshToken.createRefreshToken(1L, "a".repeat(63), future))
                     .isInstanceOf(IllegalArgumentException.class);
 
-            assertThatThrownBy(() -> RefreshToken.issue(1L, "a".repeat(65), future))
+            assertThatThrownBy(() -> RefreshToken.createRefreshToken(1L, "a".repeat(65), future))
                     .isInstanceOf(IllegalArgumentException.class);
         }
 
@@ -80,7 +81,7 @@ class RefreshTokenTest {
         void rejectPastExpiresAt() {
             LocalDateTime past = LocalDateTime.now().minusDays(1);
 
-            assertThatThrownBy(() -> RefreshToken.issue(1L, VALID_HASH, past))
+            assertThatThrownBy(() -> RefreshToken.createRefreshToken(1L, VALID_HASH, past))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("future");
         }
@@ -93,7 +94,7 @@ class RefreshTokenTest {
         @Test
         @DisplayName("토큰을 무효화할 수 있다")
         void revokeToken() {
-            RefreshToken token = issueValidToken();
+            RefreshToken token = createRefreshTokenValidToken();
             assertThat(token.isRevoked()).isFalse();
 
             token.revoke();
@@ -105,7 +106,7 @@ class RefreshTokenTest {
         @Test
         @DisplayName("이미 무효화된 토큰은 다시 무효화할 수 없다")
         void cannotRevokeAlreadyRevoked() {
-            RefreshToken token = issueValidToken();
+            RefreshToken token = createRefreshTokenValidToken();
             token.revoke();
 
             assertThatThrownBy(token::revoke)
@@ -121,7 +122,7 @@ class RefreshTokenTest {
         @Test
         @DisplayName("발급 직후의 토큰은 사용 가능")
         void freshTokenIsUsable() {
-            RefreshToken token = issueValidToken();
+            RefreshToken token = createRefreshTokenValidToken();
 
             assertThat(token.isUsable()).isTrue();
         }
@@ -129,7 +130,7 @@ class RefreshTokenTest {
         @Test
         @DisplayName("무효화된 토큰은 사용 불가")
         void revokedTokenIsNotUsable() {
-            RefreshToken token = issueValidToken();
+            RefreshToken token = createRefreshTokenValidToken();
             token.revoke();
 
             assertThat(token.isUsable()).isFalse();
@@ -138,7 +139,7 @@ class RefreshTokenTest {
         @Test
         @DisplayName("만료된 토큰은 사용 불가")
         void expiredTokenIsNotUsable() {
-            RefreshToken token = RefreshToken.issue(
+            RefreshToken token = RefreshToken.createRefreshToken(
                     1L, VALID_HASH, LocalDateTime.now().plusDays(14)
             );
 

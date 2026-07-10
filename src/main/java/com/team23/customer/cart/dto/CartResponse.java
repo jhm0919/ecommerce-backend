@@ -19,7 +19,7 @@ public record CartResponse(
         Long cartId,
         List<CartItemResponse> items,
         BigDecimal totalAmount,
-        String currency,
+//        String currency,
         int itemCount,
         int totalQuantity
 ) {
@@ -30,7 +30,7 @@ public record CartResponse(
             String productName,
             String productImageUrl,
             BigDecimal currentPrice,
-            String currency,
+//            String currency,
             int quantity,
             BigDecimal subtotal,
             boolean available
@@ -48,7 +48,7 @@ public record CartResponse(
                         item.getProductName(),  // 스냅샷 사용
                         item.getProductImageUrl(),
                         null,
-                        null,
+//                        null,
                         item.getQuantity(),
                         null,
                         false
@@ -65,7 +65,7 @@ public record CartResponse(
                     product.getName(),  // 현재 이름 (스냅샷보다 우선)
                     product.getMainImageUrl(),  // 현재 이미지
                     currentPrice.getAmount(),
-                    currentPrice.getCurrency(),
+//                    currentPrice.getCurrency(),
                     item.getQuantity(),
                     subtotal.getAmount(),
                     true
@@ -91,7 +91,7 @@ public record CartResponse(
                 cart.getId(),
                 itemResponses,
                 total != null ? total.getAmount() : BigDecimal.ZERO,
-                total != null ? total.getCurrency() : "KRW",  // 기본 통화
+//                total != null ? total.getCurrency() : "KRW",  // 기본 통화
                 cart.getItemCount(),
                 cart.getTotalQuantity()
         );
@@ -105,7 +105,7 @@ public record CartResponse(
         for (CartItemResponse item : items) {
             if (!item.available()) continue;
 
-            Money subtotal = new Money(item.subtotal(), item.currency());
+            Money subtotal = new Money(item.subtotal());
             total = (total == null) ? subtotal : total.add(subtotal);
         }
         return total;

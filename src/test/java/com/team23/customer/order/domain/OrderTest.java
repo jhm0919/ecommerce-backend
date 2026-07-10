@@ -1,5 +1,6 @@
 package com.team23.customer.order.domain;
 
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.product.domain.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -15,22 +17,22 @@ class OrderTest {
 
     private Product product1;
     private Product product2;
-    private SKU sku1;
-    private SKU sku2;
+    private Sku sku1;
+    private Sku sku2;
 
     @BeforeEach
     void setUp() {
         Category category = Category.create("의류", "clothing");
 
         product1 = Product.register(
-                "티셔츠", Money.krw(29900), "설명", "img1", category
+                "티셔츠", BigDecimal.valueOf(29900), "설명", "img1", category
         );
         setId(product1, 1L);
         sku1 = product1.addSku(List.of(new SkuOption("색상", "검정")), 50);
         setId(sku1, 100L);
 
         product2 = Product.register(
-                "바지", Money.krw(49900), "설명", "img2", category
+                "바지", BigDecimal.valueOf(49900), "설명", "img2", category
         );
         setId(product2, 2L);
         sku2 = product2.addSku(List.of(new SkuOption("색상", "회색")), 30);
@@ -70,7 +72,7 @@ class OrderTest {
             Order order = Order.createForMember(1L, multipleItems());
 
             // 29900 × 2 + 49900 × 1 = 109,700
-            assertThat(order.getTotalAmount()).isEqualTo(Money.krw(109700));
+            assertThat(order.getTotalAmount()).isEqualTo(new Money(BigDecimal.valueOf(109700)));
         }
 
         @Test

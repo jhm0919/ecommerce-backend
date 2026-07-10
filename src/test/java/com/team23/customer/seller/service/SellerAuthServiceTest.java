@@ -1,7 +1,7 @@
 package com.team23.customer.seller.service;
 
-import com.team23.customer.auth.dto.TokenPair;
-import com.team23.customer.auth.repository.RefreshTokenRepository;
+import com.team23.common.security.auth.dto.TokenPair;
+import com.team23.common.security.auth.repository.RefreshTokenRepository;
 import com.team23.common.exception.BusinessException;
 import com.team23.customer.seller.domain.Seller;
 import com.team23.customer.seller.repository.SellerRepository;

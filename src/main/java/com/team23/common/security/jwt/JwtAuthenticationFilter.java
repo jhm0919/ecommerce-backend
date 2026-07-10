@@ -28,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String ACCESS_TOKEN_TYPE = "access";
 
-    private final JwtProvider jwtProvider;
+    private final JwtAuthenticationProvider jwtAuthenticationProvider;
 
     @Override
     protected void doFilterInternal(
@@ -36,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-
+        // 토큰 추출
         String token = extractToken(request);
 
         if (token == null) {
@@ -45,7 +45,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            Claims claims = jwtProvider.parseAndValidate(token);
+            // claims는 jwt의 payload
+            Claims claims = jwtAuthenticationProvider.parseAndValidate(token);
             String tokenType = claims.get("type", String.class);
 
             if (!ACCESS_TOKEN_TYPE.equals(tokenType)) {

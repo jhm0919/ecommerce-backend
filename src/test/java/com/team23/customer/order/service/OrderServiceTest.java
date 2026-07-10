@@ -9,10 +9,10 @@ import com.team23.customer.order.exception.InsufficientStockException;
 import com.team23.customer.order.exception.OrderAccessDeniedException;
 import com.team23.customer.order.exception.OrderNotFoundException;
 import com.team23.customer.order.repository.OrderRepository;
-import com.team23.customer.product.domain.Category;
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.product.domain.Money;
 import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.Sku;
 import com.team23.customer.product.domain.SkuOption;
 import com.team23.customer.product.domain.StockChangedEvent;
 import com.team23.customer.product.repository.ProductRepository;
@@ -27,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,13 +47,13 @@ class OrderServiceTest {
     @InjectMocks private OrderService orderService;
 
     private Product product;
-    private SKU sku;
+    private Sku sku;
 
     @BeforeEach
     void setUp() {
         Category category = Category.create("의류", "clothing");
         product = Product.register(
-                "티셔츠", Money.krw(29900), "설명", "img", category
+                "티셔츠", BigDecimal.valueOf(29900), "설명", "img", category
         );
         setId(product, 1L);
         sku = product.addSku(List.of(new SkuOption("색상", "검정")), 50);
@@ -98,10 +99,10 @@ class OrderServiceTest {
         void rejectInsufficientStock() {
             Category category = Category.create("의류", "clothing");
             Product lowStockProduct = Product.register(
-                    "한정상품", Money.krw(10000), "설명", "img", category
+                    "한정상품", BigDecimal.valueOf(10000), "설명", "img", category
             );
             setId(lowStockProduct, 1L);
-            SKU lowStockSku = lowStockProduct.addSku(
+            Sku lowStockSku = lowStockProduct.addSku(
                     List.of(new SkuOption("색상", "검정")), 1
             );
             setId(lowStockSku, 100L);

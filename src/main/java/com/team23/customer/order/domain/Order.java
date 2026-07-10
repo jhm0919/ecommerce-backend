@@ -9,9 +9,9 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Currency;
 import java.util.List;
 import java.util.Objects;
 
@@ -30,14 +30,7 @@ import java.util.Objects;
  * <p>Order ↔ Delivery 관계는 ID 참조 (Delivery.orderId).
  */
 @Entity
-@Table(name = "orders", indexes = {
-        @Index(name = "idx_order_number", columnList = "order_number", unique = true),
-        @Index(name = "idx_order_member", columnList = "member_id"),
-        @Index(name = "idx_order_status", columnList = "status"),
-        @Index(name = "idx_order_created_at", columnList = "created_at"),
-        @Index(name = "idx_order_guest_email", columnList = "guest_email"),
-        @Index(name = "idx_order_guest_phone", columnList = "guest_phone")
-})
+@Table(name = "orders")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
@@ -62,7 +55,7 @@ public class Order {
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "amount", column = @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)),
-            @AttributeOverride(name = "currency", column = @Column(name = "total_currency", nullable = false, length = 3))
+//            @AttributeOverride(name = "currency", column = @Column(name = "total_currency", nullable = false, length = 3))
     })
     private Money totalAmount;
 
@@ -233,17 +226,17 @@ public class Order {
             throw new IllegalArgumentException("Order must have at least one item");
         }
 
-        // 모든 항목이 같은 통화여야 함
-        Currency firstCurrency = Currency.getInstance(
-                items.get(0).getPriceAtOrder().getCurrency()
-        );
-        for (OrderItem item : items) {
-            Currency currency = Currency.getInstance(item.getPriceAtOrder().getCurrency());
-            if (!firstCurrency.equals(currency)) {
-                throw new IllegalArgumentException(
-                        "All items must have the same currency");
-            }
-        }
+//        // 모든 항목이 같은 통화여야 함
+//        Currency firstCurrency = Currency.getInstance(
+//                items.get(0).getPriceAtOrder().getCurrency()
+//        );
+//        for (OrderItem item : items) {
+//            Currency currency = Currency.getInstance(item.getPriceAtOrder().getCurrency());
+//            if (!firstCurrency.equals(currency)) {
+//                throw new IllegalArgumentException(
+//                        "All items must have the same currency");
+//            }
+//        }
     }
 
     private static void validateGuestEmail(String email) {

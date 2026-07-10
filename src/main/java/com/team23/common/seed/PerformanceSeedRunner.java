@@ -7,12 +7,12 @@ import com.team23.customer.delivery.repository.DeliveryRepository;
 import com.team23.customer.order.domain.Order;
 import com.team23.customer.order.domain.OrderItem;
 import com.team23.customer.order.repository.OrderRepository;
-import com.team23.customer.product.domain.Category;
+import com.team23.customer.category.domain.Category;
 import com.team23.customer.product.domain.Money;
 import com.team23.customer.product.domain.Product;
-import com.team23.customer.product.domain.SKU;
+import com.team23.customer.product.domain.Sku;
 import com.team23.customer.product.domain.SkuOption;
-import com.team23.customer.product.repository.CategoryRepository;
+import com.team23.customer.category.repository.CategoryRepository;
 import com.team23.customer.product.repository.ProductRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,7 +88,7 @@ public class PerformanceSeedRunner implements CommandLineRunner {
 
         log.info("Performance seed completed: orderProductId={}, orderSkuId={}, cancelMemberId={}",
                 orderProduct.getId(),
-                orderProduct.getSkus().get(0).getId(),
+                orderProduct.getSkuses().get(0).getId(),
                 cancelMemberId);
     }
 
@@ -143,7 +144,7 @@ public class PerformanceSeedRunner implements CommandLineRunner {
                     Category category = categories.get((i - 1) % categories.size());
                     Product product = Product.register(
                             catalogProductName(i),
-                            Money.krw(5_000 + (i % 296) * 1_000),
+                            BigDecimal.valueOf(5_000 + (i % 296) * 1_000),
                             catalogDescription(i),
                             "https://example.com/perf/products/" + i + ".jpg",
                             category
@@ -171,7 +172,7 @@ public class PerformanceSeedRunner implements CommandLineRunner {
     private Product seedOrderTestProduct(Category category) {
         Product product = Product.register(
                 ORDER_PRODUCT_NAME,
-                Money.krw(29_900),
+                BigDecimal.valueOf(29_900),
                 "Performance test product for order-create scenario",
                 "https://example.com/perf/order-product.jpg",
                 category
@@ -186,7 +187,7 @@ public class PerformanceSeedRunner implements CommandLineRunner {
     }
 
     private void seedCancelableOrders(Product product) {
-        SKU sku = product.getSkus().get(0);
+        Sku sku = product.getSkuses().get(0);
 
         for (int start = 1; start <= cancelOrderCount; start += CANCEL_ORDER_BATCH_SIZE) {
             final int batchStart = start;
