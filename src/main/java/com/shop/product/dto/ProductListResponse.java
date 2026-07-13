@@ -1,8 +1,7 @@
-package com.shop.product.dto.response;
+package com.shop.product.dto;
 
 import com.shop.product.domain.Product;
 import com.shop.product.domain.ProductStatus;
-import com.shop.product.dto.ProductSummaryProjection;
 
 import java.math.BigDecimal;
 

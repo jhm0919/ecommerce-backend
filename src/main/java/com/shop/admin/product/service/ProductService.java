@@ -1,19 +1,19 @@
-package com.shop.product.service;
+package com.shop.admin.product.service;
 
+import com.shop.admin.product.dto.ProductCreateRequest;
+import com.shop.admin.product.dto.ProductUpdateRequest;
+import com.shop.admin.stockhistory.domain.StockChangeType;
 import com.shop.cart.repository.CartRepository;
 import com.shop.category.domain.Category;
+import com.shop.category.exception.CategoryNotFoundException;
+import com.shop.category.repository.CategoryRepository;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
 import com.shop.product.domain.StockChangedEvent;
-import com.shop.product.dto.request.ProductCreateRequest;
-import com.shop.product.dto.response.ProductDetailResponse;
-import com.shop.product.dto.request.ProductUpdateRequest;
-import com.shop.category.exception.CategoryNotFoundException;
+import com.shop.product.dto.ProductDetailResponse;
 import com.shop.product.exception.ProductNotFoundException;
-import com.shop.category.repository.CategoryRepository;
 import com.shop.product.repository.ProductRepository;
-import com.shop.admin.stockhistory.domain.StockChangeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,8 +25,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ProductAdminService {
-
+public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final CartRepository cartRepository;

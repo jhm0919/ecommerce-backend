@@ -1,4 +1,4 @@
-package com.shop.product.dto.response;
+package com.shop.product.dto;
 
 import com.shop.category.dto.CategoryResponse;
 import com.shop.product.domain.Product;

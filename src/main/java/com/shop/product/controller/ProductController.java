@@ -2,8 +2,8 @@ package com.shop.product.controller;
 
 import com.shop.global.response.CommonResponse;
 import com.shop.product.domain.Product;
-import com.shop.product.dto.response.ProductDetailResponse;
-import com.shop.product.dto.response.ProductListResponse;
+import com.shop.product.dto.ProductDetailResponse;
+import com.shop.product.dto.ProductListResponse;
 import com.shop.product.service.ProductService;
 import io.micrometer.core.annotation.Counted;
 import io.swagger.v3.oas.annotations.Operation;

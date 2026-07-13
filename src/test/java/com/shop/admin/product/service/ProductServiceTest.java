@@ -1,17 +1,17 @@
-package com.shop.product.service;
+package com.shop.admin.product.service;
 
+import com.shop.admin.product.dto.ProductCreateRequest;
+import com.shop.admin.product.dto.ProductUpdateRequest;
 import com.shop.cart.repository.CartRepository;
 import com.shop.category.domain.Category;
+import com.shop.category.exception.CategoryNotFoundException;
+import com.shop.category.repository.CategoryRepository;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
 import com.shop.product.domain.StockChangedEvent;
-import com.shop.product.dto.request.ProductCreateRequest;
-import com.shop.product.dto.response.ProductDetailResponse;
-import com.shop.product.dto.request.ProductUpdateRequest;
-import com.shop.category.exception.CategoryNotFoundException;
+import com.shop.product.dto.ProductDetailResponse;
 import com.shop.product.exception.ProductNotFoundException;
-import com.shop.category.repository.CategoryRepository;
 import com.shop.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,27 +27,26 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class ProductAdminServiceTest {
-
-    @Mock private ProductRepository productRepository;
+class ProductServiceTest {
+    @Mock
+    private ProductRepository productRepository;
     @Mock private CategoryRepository categoryRepository;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private CartRepository cartRepository; // 1. CartRepository Mock 객체 추가
-
-//    @InjectMocks private ProductAdminService productAdminService;
-private ProductAdminService productAdminService; // 3. 필드만 선언
+    private ProductService productService; // 필드만 선언
 
     @BeforeEach
         // 4. @BeforeEach 셋업 메서드 추가 (또는 기존 메서드에 추가)
     void setUp() {
         // 5. 서비스 객체를 수동으로 생성하고 모든 Mock을 주입합니다.
-        productAdminService = new ProductAdminService(
+        productService = new ProductService(
                 productRepository,
                 categoryRepository,
                 cartRepository,
@@ -89,7 +88,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
             given(productRepository.save(any(Product.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
 
-            Product result = productAdminService.register(request);
+            Product result = productService.register(request);
 
             assertThat(result.getName()).isEqualTo("베이직 티셔츠");
             assertThat(result.getStatus().name()).isEqualTo("ACTIVE");
@@ -109,7 +108,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
 
             given(categoryRepository.findById(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> productAdminService.register(request))
+            assertThatThrownBy(() -> productService.register(request))
                     .isInstanceOf(CategoryNotFoundException.class);
         }
     }
@@ -125,7 +124,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
             Long categoryId = product.getCategory().getId();
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            ProductDetailResponse result = productAdminService.update(1L,
+            ProductDetailResponse result = productService.update(1L,
                     new ProductUpdateRequest("새 이름", null, null, null, null));
 
             assertThat(result.name()).isEqualTo("새 이름");
@@ -136,7 +135,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
         void rejectUnknownProduct() {
             given(productRepository.findById(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> productAdminService.update(999L,
+            assertThatThrownBy(() -> productService.update(999L,
                     new ProductUpdateRequest("이름", null, null, null, null)))
                     .isInstanceOf(ProductNotFoundException.class);
         }
@@ -156,7 +155,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            productAdminService.increaseSkuStock(1L, 100L, 5);
+            productService.increaseSkuStock(1L, 100L, 5);
 
             assertThat(sku.getStock()).isEqualTo(15);
         }
@@ -171,7 +170,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            productAdminService.increaseSkuStock(1L, 100L, 5);
+            productService.increaseSkuStock(1L, 100L, 5);
 
             verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
@@ -181,7 +180,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
         void rejectUnknownProduct() {
             given(productRepository.findById(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> productAdminService.increaseSkuStock(999L, 100L, 5))
+            assertThatThrownBy(() -> productService.increaseSkuStock(999L, 100L, 5))
                     .isInstanceOf(ProductNotFoundException.class);
         }
     }
@@ -200,7 +199,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            productAdminService.decreaseSkuStock(1L, 100L, 3);
+            productService.decreaseSkuStock(1L, 100L, 3);
 
             assertThat(sku.getStock()).isEqualTo(7);
         }
@@ -215,7 +214,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
+            productService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
 
             verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
@@ -230,7 +229,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 3→0
+            productService.decreaseSkuStock(1L, 100L, 3);  // 재고 3→0
 
             verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
@@ -245,7 +244,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
+            productService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
 
             verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
@@ -278,7 +277,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
                     });
 
             // when
-            productAdminService.addSku(1L,
+            productService.addSku(1L,
                     List.of(new SkuOption("색상", "검정")), 10);
 
             // then
@@ -298,7 +297,7 @@ private ProductAdminService productAdminService; // 3. 필드만 선언
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
             // when
-            productAdminService.discontinue(1L);
+            productService.discontinue(1L);
 
             // then
             assertThat(product.getStatus().name()).isEqualTo("DISCONTINUED");

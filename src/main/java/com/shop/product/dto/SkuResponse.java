@@ -1,4 +1,4 @@
-package com.shop.product.dto.response;
+package com.shop.product.dto;
 
 import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;

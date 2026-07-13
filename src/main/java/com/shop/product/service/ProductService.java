@@ -3,7 +3,7 @@ package com.shop.product.service;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.ProductStatus;
 import com.shop.product.exception.ProductNotFoundException;
-import com.shop.product.dto.response.ProductListResponse;
+import com.shop.product.dto.ProductListResponse;
 import com.shop.product.repository.ProductRepository;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;

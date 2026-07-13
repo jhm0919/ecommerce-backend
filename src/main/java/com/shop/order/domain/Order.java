@@ -54,7 +54,6 @@ public class Order {
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "amount", column = @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)),
-//            @AttributeOverride(name = "currency", column = @Column(name = "total_currency", nullable = false, length = 3))
     })
     private Money totalAmount;
 

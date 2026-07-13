@@ -7,7 +7,7 @@ import com.shop.product.domain.ProductStatus;
 import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
 import com.shop.product.dto.ProductSummaryProjection;
-import com.shop.product.dto.response.ProductListResponse;
+import com.shop.product.dto.ProductListResponse;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;

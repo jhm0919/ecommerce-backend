@@ -1,10 +1,11 @@
-package com.shop.product.dto.request;
+package com.shop.admin.product.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-public record AdjustStockRequest(
+public record StockUpdateRequest(
         @NotNull
         @Min(value = 1, message = "수량은 1 이상이어야 합니다")
         Integer quantity
-) {}
+) {
+}
