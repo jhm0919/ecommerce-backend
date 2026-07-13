@@ -1,6 +1,0 @@
-package com.team23.admin.settlement.domain;
-
-public enum SettlementStatus {
-    PENDING,    // 정산 대기
-    CONFIRMED   // 정산 확정
-}
