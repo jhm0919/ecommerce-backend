@@ -22,18 +22,18 @@ public class AdminAuthService {
 
     public TokenPair login(String username, String password) {
 
-        // 1. 판매자 조회
+        // 판매자 조회
         Admin admin = adminRepository.findByUsername(username)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SELLER_NOT_FOUND) {
                 });
 
-        // 2. 비밀번호 검증
+        // 비밀번호 검증
         if (!passwordEncoder.matches(password, admin.getPassword())) {
             throw new BusinessException(ErrorCode.SELLER_INVALID_PASSWORD) {
             };
         }
 
-        // 4. 토큰 발급 AuthService 재사용
+        // 토큰 발급 AuthService 재사용
         return authService.createToken(
                 admin.getId(),
                 admin.getUsername(),  // providerSub 자리에 username
