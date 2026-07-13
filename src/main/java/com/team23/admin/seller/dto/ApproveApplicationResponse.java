@@ -1,0 +1,9 @@
+package com.team23.admin.seller.dto;
+
+public record ApproveApplicationResponse(
+        Long applicationId,
+        Long sellerId,
+        String temporaryLoginId,
+        String temporaryPassword
+) {
+}

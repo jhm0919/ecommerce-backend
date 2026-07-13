@@ -1,0 +1,8 @@
+package com.team23.ai.behavior.domain;
+
+public enum ActionType {
+    PRODUCT_VIEW,
+    SEARCH,
+    CART_ADD,
+    ORDER_CREATE
+}

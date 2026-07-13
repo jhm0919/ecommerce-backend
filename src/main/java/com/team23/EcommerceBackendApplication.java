@@ -1,9 +1,9 @@
 package com.team23;
 
-import com.team23.common.config.AsyncProperties;
-import com.team23.common.config.CookieProperties;
-import com.team23.common.config.CorsProperties;
-import com.team23.common.config.JwtProperties;
+import com.team23.global.config.AsyncProperties;
+import com.team23.global.config.CookieProperties;
+import com.team23.global.config.CorsProperties;
+import com.team23.global.config.JwtProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
