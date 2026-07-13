@@ -1,10 +1,10 @@
-package com.shop.category.dto;
+package com.shop.admin.category.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public record CategoryCreateRequest(
+public record CategoryUpdateRequest(
         @NotBlank(message = "이름은 필수입니다")
         @Size(max = 50)
         String name,

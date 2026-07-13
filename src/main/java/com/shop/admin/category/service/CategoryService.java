@@ -1,13 +1,13 @@
-package com.shop.category.service;
+package com.shop.admin.category.service;
 
-import com.shop.global.exception.BusinessException;
-import com.shop.global.exception.ErrorCode;
+import com.shop.admin.category.dto.CategoryCreateRequest;
+import com.shop.admin.category.dto.CategoryUpdateRequest;
 import com.shop.category.domain.Category;
-import com.shop.category.dto.CategoryCreateRequest;
-import com.shop.category.dto.CategoryUpdateRequest;
 import com.shop.category.exception.CategoryNotFoundException;
 import com.shop.category.exception.DuplicateCategoryException;
 import com.shop.category.repository.CategoryRepository;
+import com.shop.global.exception.BusinessException;
+import com.shop.global.exception.ErrorCode;
 import com.shop.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CategoryAdminService {
-
+public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
 
@@ -56,7 +55,7 @@ public class CategoryAdminService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CategoryNotFoundException(categoryId));
 
-        
+
         // patch이기 때문에 null을 걸러야함
         if (request.name() != null) {
             category.rename(request.name());
