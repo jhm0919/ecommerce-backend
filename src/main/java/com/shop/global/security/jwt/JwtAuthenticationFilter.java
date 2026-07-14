@@ -79,7 +79,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         principal,
                         null,
                         // ★ role 기반 권한 부여
-                        List.of(new SimpleGrantedAuthority(role.toSpringSecurityRole()))
+                        List.of(new SimpleGrantedAuthority(role.name()))
                 );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
