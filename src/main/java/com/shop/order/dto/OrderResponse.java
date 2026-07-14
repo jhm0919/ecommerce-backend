@@ -14,7 +14,6 @@ public record OrderResponse(
         String orderNumber,
         OrderStatus status,
         BigDecimal totalAmount,
-//        String currency,
         int itemCount,
         LocalDateTime createdAt
 ) {
@@ -23,7 +22,6 @@ public record OrderResponse(
                 order.getOrderNumber(),
                 order.getStatus(),
                 order.getTotalAmount().getAmount(),
-//                order.getTotalAmount().getCurrency(),
                 order.getItems().size(),
                 order.getCreatedAt()
         );

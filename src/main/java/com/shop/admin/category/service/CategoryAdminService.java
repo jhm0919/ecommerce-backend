@@ -1,7 +1,7 @@
 package com.shop.admin.category.service;
 
-import com.shop.admin.category.dto.CategoryCreateRequest;
-import com.shop.admin.category.dto.CategoryUpdateRequest;
+import com.shop.admin.category.dto.CategoryAdminCreateRequest;
+import com.shop.admin.category.dto.CategoryAdminUpdateRequest;
 import com.shop.category.domain.Category;
 import com.shop.category.exception.CategoryNotFoundException;
 import com.shop.category.exception.DuplicateCategoryException;
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CategoryService {
+public class CategoryAdminService {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
 
@@ -26,7 +26,7 @@ public class CategoryService {
      * 새 카테고리를 등록한다.
      */
     @Transactional
-    public Category create(CategoryCreateRequest request) {
+    public Category create(CategoryAdminCreateRequest request) {
         // 중복 체크
         if (categoryRepository.existsByName(request.name())) {
             throw new DuplicateCategoryException("name", request.name());
@@ -45,7 +45,7 @@ public class CategoryService {
      * 카테고리 정보를 수정한다 (PATCH 의미).
      */
     @Transactional
-    public Category update(Long categoryId, CategoryUpdateRequest request) {
+    public Category update(Long categoryId, CategoryAdminUpdateRequest request) {
         // 엔티티를 조회
         // 그 엔티티는 @Transactional 안에서 영속 상태가 됨
         // rename() / changeSlug()로 필드 값만 바꿈

@@ -1,7 +1,7 @@
 package com.shop.admin.product.service;
 
-import com.shop.admin.product.dto.ProductCreateRequest;
-import com.shop.admin.product.dto.ProductUpdateRequest;
+import com.shop.admin.product.dto.ProductAdminCreateRequest;
+import com.shop.admin.product.dto.ProductAdminUpdateRequest;
 import com.shop.cart.repository.CartRepository;
 import com.shop.category.domain.Category;
 import com.shop.category.exception.CategoryNotFoundException;
@@ -75,7 +75,7 @@ class ProductServiceTest {
         @Test
         @DisplayName("정상적으로 상품을 등록할 수 있다")
         void registerNormal() {
-            ProductCreateRequest request = new ProductCreateRequest(
+            ProductAdminCreateRequest request = new ProductAdminCreateRequest(
                     "베이직 티셔츠",
                     new BigDecimal("29900"),
                     "100% 면 소재",
@@ -98,7 +98,7 @@ class ProductServiceTest {
         @Test
         @DisplayName("존재하지 않는 카테고리면 예외")
         void rejectUnknownCategory() {
-            ProductCreateRequest request = new ProductCreateRequest(
+            ProductAdminCreateRequest request = new ProductAdminCreateRequest(
                     "베이직 티셔츠",
                     new BigDecimal("29900"),
                     "설명",
@@ -125,7 +125,7 @@ class ProductServiceTest {
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
             ProductDetailResponse result = productService.update(1L,
-                    new ProductUpdateRequest("새 이름", null, null, null, null));
+                    new ProductAdminUpdateRequest("새 이름", null, null, null, null));
 
             assertThat(result.name()).isEqualTo("새 이름");
         }
@@ -136,7 +136,7 @@ class ProductServiceTest {
             given(productRepository.findById(999L)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> productService.update(999L,
-                    new ProductUpdateRequest("이름", null, null, null, null)))
+                    new ProductAdminUpdateRequest("이름", null, null, null, null)))
                     .isInstanceOf(ProductNotFoundException.class);
         }
     }

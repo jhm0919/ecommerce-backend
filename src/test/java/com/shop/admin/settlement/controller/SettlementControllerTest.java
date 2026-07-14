@@ -1,10 +1,9 @@
 package com.shop.admin.settlement.controller;
 
 import com.shop.category.domain.Category;
-import com.shop.order.domain.Order;
-import com.shop.order.domain.OrderAdmin;
+import com.shop.admin.order.domain.OrderAdmin;
 import com.shop.order.domain.OrderItem;
-import com.shop.order.repository.OrderAdminRepository;
+import com.shop.admin.order.repository.OrderAdminRepository;
 import com.shop.category.repository.CategoryRepository;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.Sku;
@@ -73,7 +72,7 @@ class SettlementControllerTest {
 
     private void createConfirmedOrder() {
         OrderItem item = OrderItem.of(testProduct, testSku, 1);
-        Order order = Order.createForMember(1L, List.of(item));
+        com.shop.order.domain.Order order = com.shop.order.domain.Order.createForMember(1L, List.of(item));
         orderAdminRepository.save(order);
         OrderAdmin.confirm(order);
         orderAdminRepository.saveAndFlush(order);
@@ -112,7 +111,7 @@ class SettlementControllerTest {
     void getSettlementsNoConfirmedReturnsEmpty() throws Exception {
         // PENDING 주문만 존재
         OrderItem item = OrderItem.of(testProduct, testSku, 1);
-        Order order = Order.createForMember(1L, List.of(item));
+        com.shop.order.domain.Order order = com.shop.order.domain.Order.createForMember(1L, List.of(item));
         orderAdminRepository.saveAndFlush(order);
 
         mockMvc.perform(get("/api/seller/settlements"))

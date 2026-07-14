@@ -1,7 +1,7 @@
 package com.shop.admin.category.service;
 
-import com.shop.admin.category.dto.CategoryCreateRequest;
-import com.shop.admin.category.dto.CategoryUpdateRequest;
+import com.shop.admin.category.dto.CategoryAdminCreateRequest;
+import com.shop.admin.category.dto.CategoryAdminUpdateRequest;
 import com.shop.category.domain.Category;
 import com.shop.category.exception.CategoryNotFoundException;
 import com.shop.category.exception.DuplicateCategoryException;
@@ -23,7 +23,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
@@ -31,14 +30,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class CategoryServiceTest {
+class CategoryAdminServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
     @Mock private ProductRepository productRepository;
 
     @InjectMocks
-    private CategoryService categoryService;
+    private CategoryAdminService categoryAdminService;
 
     // ─────────────────────────────────────
     // 카테고리 등록
@@ -51,15 +50,15 @@ class CategoryServiceTest {
         @Test
         @DisplayName("정상 등록")
         void createNormal() {
-            CategoryCreateRequest request =
-                    new CategoryCreateRequest("남성 상의", "men-tops");
+            CategoryAdminCreateRequest request =
+                    new CategoryAdminCreateRequest("남성 상의", "men-tops");
 
             given(categoryRepository.existsByName("남성 상의")).willReturn(false);
             given(categoryRepository.existsBySlug("men-tops")).willReturn(false);
             given(categoryRepository.save(any(Category.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
 
-            Category result = categoryService.create(request);
+            Category result = categoryAdminService.create(request);
 
             assertThat(result.getName()).isEqualTo("남성 상의");
             assertThat(result.getSlug()).isEqualTo("men-tops");
@@ -69,12 +68,12 @@ class CategoryServiceTest {
         @Test
         @DisplayName("이름 중복이면 예외")
         void rejectDuplicateName() {
-            CategoryCreateRequest request =
-                    new CategoryCreateRequest("남성 상의", "men-tops");
+            CategoryAdminCreateRequest request =
+                    new CategoryAdminCreateRequest("남성 상의", "men-tops");
 
             given(categoryRepository.existsByName("남성 상의")).willReturn(true);
 
-            assertThatThrownBy(() -> categoryService.create(request))
+            assertThatThrownBy(() -> categoryAdminService.create(request))
                     .isInstanceOf(DuplicateCategoryException.class);
 
             verify(categoryRepository, never()).save(any());
@@ -83,13 +82,13 @@ class CategoryServiceTest {
         @Test
         @DisplayName("슬러그 중복이면 예외")
         void rejectDuplicateSlug() {
-            CategoryCreateRequest request =
-                    new CategoryCreateRequest("새 카테고리", "men-tops");
+            CategoryAdminCreateRequest request =
+                    new CategoryAdminCreateRequest("새 카테고리", "men-tops");
 
             given(categoryRepository.existsByName("새 카테고리")).willReturn(false);
             given(categoryRepository.existsBySlug("men-tops")).willReturn(true);
 
-            assertThatThrownBy(() -> categoryService.create(request))
+            assertThatThrownBy(() -> categoryAdminService.create(request))
                     .isInstanceOf(DuplicateCategoryException.class);
 
             verify(categoryRepository, never()).save(any());
@@ -110,8 +109,8 @@ class CategoryServiceTest {
             Category category = Category.create("남성 상의", "men-tops");
             given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
 
-            Category result = categoryService.update(1L,
-                    new CategoryUpdateRequest("새 이름", null));
+            Category result = categoryAdminService.update(1L,
+                    new CategoryAdminUpdateRequest("새 이름", null));
 
             assertThat(result.getName()).isEqualTo("새 이름");
             assertThat(result.getSlug()).isEqualTo("men-tops");  // 변경 없음
@@ -123,8 +122,8 @@ class CategoryServiceTest {
             Category category = Category.create("남성 상의", "men-tops");
             given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
 
-            Category result = categoryService.update(1L,
-                    new CategoryUpdateRequest(null, "new-slug"));
+            Category result = categoryAdminService.update(1L,
+                    new CategoryAdminUpdateRequest(null, "new-slug"));
 
             assertThat(result.getName()).isEqualTo("남성 상의");  // 변경 없음
             assertThat(result.getSlug()).isEqualTo("new-slug");
@@ -136,8 +135,8 @@ class CategoryServiceTest {
             Category category = Category.create("남성 상의", "men-tops");
             given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
 
-            Category result = categoryService.update(1L,
-                    new CategoryUpdateRequest("새 이름", "new-slug"));
+            Category result = categoryAdminService.update(1L,
+                    new CategoryAdminUpdateRequest("새 이름", "new-slug"));
 
             assertThat(result.getName()).isEqualTo("새 이름");
             assertThat(result.getSlug()).isEqualTo("new-slug");
@@ -149,8 +148,8 @@ class CategoryServiceTest {
             Category category = Category.create("남성 상의", "men-tops");
             given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
 
-            Category result = categoryService.update(1L,
-                    new CategoryUpdateRequest(null, null));
+            Category result = categoryAdminService.update(1L,
+                    new CategoryAdminUpdateRequest(null, null));
 
             assertThat(result.getName()).isEqualTo("남성 상의");
             assertThat(result.getSlug()).isEqualTo("men-tops");
@@ -161,8 +160,8 @@ class CategoryServiceTest {
         void rejectUnknownCategory() {
             given(categoryRepository.findById(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> categoryService.update(999L,
-                    new CategoryUpdateRequest("이름", null)))
+            assertThatThrownBy(() -> categoryAdminService.update(999L,
+                    new CategoryAdminUpdateRequest("이름", null)))
                     .isInstanceOf(CategoryNotFoundException.class);
         }
     }
@@ -182,7 +181,7 @@ class CategoryServiceTest {
             given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
             given(productRepository.existsByCategoryId(1L)).willReturn(false);
 
-            assertThatCode(() -> categoryService.delete(1L))
+            assertThatCode(() -> categoryAdminService.delete(1L))
                     .doesNotThrowAnyException();
 
             verify(categoryRepository).delete(category);
@@ -193,7 +192,7 @@ class CategoryServiceTest {
         void rejectUnknownCategory() {
             given(categoryRepository.findById(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> categoryService.delete(999L))
+            assertThatThrownBy(() -> categoryAdminService.delete(999L))
                     .isInstanceOf(CategoryNotFoundException.class);
 
             verify(categoryRepository, never()).delete(any());
@@ -206,7 +205,7 @@ class CategoryServiceTest {
             given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
             given(productRepository.existsByCategoryId(1L)).willReturn(true);
 
-            assertThatThrownBy(() -> categoryService.delete(1L))
+            assertThatThrownBy(() -> categoryAdminService.delete(1L))
                     .isInstanceOfSatisfying(BusinessException.class, ex -> assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.CATEGORY_HAS_PRODUCTS));
 
             // ★ 삭제 호출 안 됨 확인
@@ -222,7 +221,7 @@ class CategoryServiceTest {
             willThrow(new DataIntegrityViolationException("fk"))
                     .given(categoryRepository).flush();
 
-            assertThatThrownBy(() -> categoryService.delete(1L))
+            assertThatThrownBy(() -> categoryAdminService.delete(1L))
                     .isInstanceOfSatisfying(BusinessException.class,
                             ex -> assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.CATEGORY_HAS_PRODUCTS));
 

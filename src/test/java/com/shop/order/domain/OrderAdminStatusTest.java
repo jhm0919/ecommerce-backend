@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class OrderStatusTest {
+class OrderAdminStatusTest {
 
     @Test
     @DisplayName("PENDING은 취소 가능")

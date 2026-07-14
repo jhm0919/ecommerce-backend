@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public record CategoryUpdateRequest(
+public record CategoryAdminCreateRequest(
         @NotBlank(message = "이름은 필수입니다")
         @Size(max = 50)
         String name,

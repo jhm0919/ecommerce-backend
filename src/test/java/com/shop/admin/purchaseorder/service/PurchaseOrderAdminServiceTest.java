@@ -31,7 +31,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class PurchaseOrderServiceTest {
+class PurchaseOrderAdminServiceTest {
     @Autowired
     PurchaseOrderService purchaseOrderService;
     @Autowired

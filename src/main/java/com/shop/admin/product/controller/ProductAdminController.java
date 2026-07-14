@@ -1,9 +1,9 @@
 package com.shop.admin.product.controller;
 
-import com.shop.admin.product.dto.AddSkuRequest;
-import com.shop.admin.product.dto.ProductCreateRequest;
-import com.shop.admin.product.dto.ProductUpdateRequest;
-import com.shop.admin.product.dto.StockUpdateRequest;
+import com.shop.admin.product.dto.SkuAddRequest;
+import com.shop.admin.product.dto.ProductAdminCreateRequest;
+import com.shop.admin.product.dto.ProductAdminUpdateRequest;
+import com.shop.admin.stock.dto.StockUpdateRequest;
 import com.shop.admin.product.service.ProductService;
 import com.shop.global.response.CommonResponse;
 import com.shop.product.domain.Product;
@@ -28,7 +28,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/products")
 @RequiredArgsConstructor
-public class ProductController {
+public class ProductAdminController {
     private final ProductService productService;
 
     @Operation(summary = "상품 등록", description = "새 상품을 등록한다.")
@@ -39,7 +39,7 @@ public class ProductController {
     })
     @PostMapping
     public ResponseEntity<CommonResponse<ProductDetailResponse>> register(
-            @Valid @RequestBody ProductCreateRequest request
+            @Valid @RequestBody ProductAdminCreateRequest request
     ) {
         Product product = productService.register(request);
         return ResponseEntity.status(201)
@@ -55,7 +55,7 @@ public class ProductController {
     @PatchMapping("/{id}")
     public ResponseEntity<CommonResponse<ProductDetailResponse>> update(
             @PathVariable Long id,
-            @Valid @RequestBody ProductUpdateRequest request
+            @Valid @RequestBody ProductAdminUpdateRequest request
     ) {
         // 1. 서비스로부터 DTO를 직접 받습니다.
         ProductDetailResponse responseDto = productService.update(id, request);
@@ -84,7 +84,7 @@ public class ProductController {
     @PostMapping("/{productId}/skus")
     public ResponseEntity<CommonResponse<SkuResponse>> addSku(
             @PathVariable Long productId,
-            @Valid @RequestBody AddSkuRequest request
+            @Valid @RequestBody SkuAddRequest request
     ) {
         List<SkuOption> options = request.options().stream()
                 .map(opt -> new SkuOption(opt.name(), opt.value()))

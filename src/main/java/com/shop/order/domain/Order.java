@@ -223,18 +223,6 @@ public class Order {
         if (items.isEmpty()) {
             throw new IllegalArgumentException("Order must have at least one item");
         }
-
-//        // 모든 항목이 같은 통화여야 함
-//        Currency firstCurrency = Currency.getInstance(
-//                items.get(0).getPriceAtOrder().getCurrency()
-//        );
-//        for (OrderItem item : items) {
-//            Currency currency = Currency.getInstance(item.getPriceAtOrder().getCurrency());
-//            if (!firstCurrency.equals(currency)) {
-//                throw new IllegalArgumentException(
-//                        "All items must have the same currency");
-//            }
-//        }
     }
 
     private static void validateGuestEmail(String email) {

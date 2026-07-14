@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
-class PurchaseOrderTest {
+class PurchaseOrderAdminTest {
     @Test
     @DisplayName("정상 생성")
     void create_success() {

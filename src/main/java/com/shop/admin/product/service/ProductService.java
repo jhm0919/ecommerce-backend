@@ -1,7 +1,7 @@
 package com.shop.admin.product.service;
 
-import com.shop.admin.product.dto.ProductCreateRequest;
-import com.shop.admin.product.dto.ProductUpdateRequest;
+import com.shop.admin.product.dto.ProductAdminCreateRequest;
+import com.shop.admin.product.dto.ProductAdminUpdateRequest;
 import com.shop.admin.stockhistory.domain.StockChangeType;
 import com.shop.cart.repository.CartRepository;
 import com.shop.category.domain.Category;
@@ -36,7 +36,7 @@ public class ProductService {
      * 재고는 SKU 추가 후 SKU 단위로 관리된다.
      */
     @Transactional
-    public Product register(ProductCreateRequest request) {
+    public Product register(ProductAdminCreateRequest request) {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new CategoryNotFoundException(request.categoryId()));
 
@@ -57,7 +57,7 @@ public class ProductService {
      * 상품 정보를 수정한다 (PATCH 의미).
      */
     @Transactional
-    public ProductDetailResponse update(Long productId, ProductUpdateRequest request) {
+    public ProductDetailResponse update(Long productId, ProductAdminUpdateRequest request) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 

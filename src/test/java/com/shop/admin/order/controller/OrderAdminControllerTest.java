@@ -1,15 +1,15 @@
-package com.shop.order.controller;
+package com.shop.admin.order.controller;
 
 import com.shop.global.exception.BusinessException;
 import com.shop.global.exception.ErrorCode;
 import com.shop.global.security.jwt.JwtAuthenticationProvider;
 import com.shop.order.domain.OrderStatus;
-import com.shop.order.dto.OrderAdminCancelRequest;
-import com.shop.order.dto.OrderAdminCancelResponse;
-import com.shop.order.dto.OrderAdminConfirmRequest;
-import com.shop.order.dto.OrderAdminConfirmResponse;
-import com.shop.order.dto.OrderAdminListResponse;
-import com.shop.order.service.OrderAdminService;
+import com.shop.admin.order.dto.OrderAdminCancelRequest;
+import com.shop.admin.order.dto.OrderAdminCancelResponse;
+import com.shop.admin.order.dto.OrderAdminConfirmRequest;
+import com.shop.admin.order.dto.OrderAdminConfirmResponse;
+import com.shop.admin.order.dto.OrderAdminListResponse;
+import com.shop.admin.order.service.OrderAdminService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +47,8 @@ class OrderAdminControllerTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
 
-    @MockitoBean OrderAdminService orderAdminService;
+    @MockitoBean
+    OrderAdminService orderAdminService;
     @MockitoBean
     JwtAuthenticationProvider jwtAuthenticationProvider;
 

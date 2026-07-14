@@ -1,8 +1,8 @@
 package com.shop.admin.category.controller;
 
-import com.shop.admin.category.dto.CategoryCreateRequest;
-import com.shop.admin.category.dto.CategoryUpdateRequest;
-import com.shop.admin.category.service.CategoryService;
+import com.shop.admin.category.dto.CategoryAdminCreateRequest;
+import com.shop.admin.category.dto.CategoryAdminUpdateRequest;
+import com.shop.admin.category.service.CategoryAdminService;
 import com.shop.category.domain.Category;
 import com.shop.category.dto.CategoryResponse;
 import com.shop.global.response.CommonResponse;
@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/admin/categories")
 @RequiredArgsConstructor
-public class CategoryController {
-    private final CategoryService categoryService;
+public class CategoryAdminController {
+    private final CategoryAdminService categoryAdminService;
 
     @Operation(summary = "카테고리 등록", description = "새 카테고리를 등록한다.")
     @ApiResponses({
@@ -29,9 +29,9 @@ public class CategoryController {
     })
     @PostMapping
     public ResponseEntity<CommonResponse<CategoryResponse>> create(
-            @Valid @RequestBody CategoryCreateRequest request
+            @Valid @RequestBody CategoryAdminCreateRequest request
     ) {
-        Category category = categoryService.create(request);
+        Category category = categoryAdminService.create(request);
         return ResponseEntity.status(201)
                 .body(CommonResponse.createSuccess(CategoryResponse.from(category)));
     }
@@ -45,9 +45,9 @@ public class CategoryController {
     @PatchMapping("/{id}")
     public ResponseEntity<CommonResponse<CategoryResponse>> update(
             @PathVariable Long id,
-            @Valid @RequestBody CategoryUpdateRequest request
+            @Valid @RequestBody CategoryAdminUpdateRequest request
     ) {
-        Category category = categoryService.update(id, request);
+        Category category = categoryAdminService.update(id, request);
         return ResponseEntity.ok(
                 CommonResponse.createSuccess(CategoryResponse.from(category))
         );
@@ -61,7 +61,7 @@ public class CategoryController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        categoryService.delete(id);
+        categoryAdminService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

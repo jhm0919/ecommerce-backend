@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
-class OrderItemTest {
+class OrderAdminItemTest {
 
     private Product product;
     private Sku sku;

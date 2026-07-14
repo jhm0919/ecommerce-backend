@@ -1,15 +1,14 @@
-package com.shop.order.service;
+package com.shop.admin.order.service;
 
 import com.shop.global.exception.BusinessException;
 import com.shop.global.exception.ErrorCode;
-import com.shop.order.domain.Order;
-import com.shop.order.domain.OrderAdmin;
+import com.shop.admin.order.domain.OrderAdmin;
 import com.shop.order.domain.OrderItem;
 import com.shop.order.domain.OrderStatus;
-import com.shop.order.dto.OrderAdminCancelResponse;
-import com.shop.order.dto.OrderAdminConfirmResponse;
-import com.shop.order.dto.OrderAdminListResponse;
-import com.shop.order.repository.OrderAdminRepository;
+import com.shop.admin.order.dto.OrderAdminCancelResponse;
+import com.shop.admin.order.dto.OrderAdminConfirmResponse;
+import com.shop.admin.order.dto.OrderAdminListResponse;
+import com.shop.admin.order.repository.OrderAdminRepository;
 import com.shop.product.domain.Product;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
@@ -34,7 +33,6 @@ public class OrderAdminService {
     private final OrderAdminRepository orderAdminRepository;
     private final ProductRepository productRepository;
     private final SkuRepository skuRepository;
-//    private final PaymentService paymentService;
 
     @Timed(
             value = "order.seller.search.time",
@@ -61,7 +59,7 @@ public class OrderAdminService {
     )
     public OrderAdminConfirmResponse confirm(List<Long> orderIds) {
 
-        List<Order> orders = orderIds.stream()
+        List<com.shop.order.domain.Order> orders = orderIds.stream()
                 .map(id -> orderAdminRepository.findById(id)
                         .orElseThrow(() -> new BusinessException(
                                 ErrorCode.ORDER_NOT_FOUND) {}))
@@ -78,7 +76,7 @@ public class OrderAdminService {
         orders.forEach(OrderAdmin::confirm);
 
         List<Long> confirmedIds = orders.stream()
-                .map(Order::getId)
+                .map(com.shop.order.domain.Order::getId)
                 .toList();
 
         return new OrderAdminConfirmResponse(orders.size(), confirmedIds);
@@ -94,7 +92,7 @@ public class OrderAdminService {
             String cancelReasonCode
     ) {
         // 1. 주문 조회
-        Order order = orderAdminRepository.findById(orderId)
+        com.shop.order.domain.Order order = orderAdminRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.ORDER_NOT_FOUND) {});
 

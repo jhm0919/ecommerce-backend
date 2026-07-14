@@ -1,278 +1,307 @@
 package com.shop.order.service;
 
-import com.shop.global.exception.BusinessException;
-import com.shop.category.domain.Category;
+import com.shop.order.delivery.domain.Delivery;
+import com.shop.order.delivery.repository.DeliveryRepository;
 import com.shop.order.domain.Order;
 import com.shop.order.domain.OrderItem;
-import com.shop.order.domain.OrderStatus;
-import com.shop.order.dto.OrderAdminConfirmResponse;
-import com.shop.order.dto.OrderAdminListResponse;
-import com.shop.order.repository.OrderAdminRepository;
-import com.shop.category.repository.CategoryRepository;
+import com.shop.order.dto.CreateOrderRequest;
+import com.shop.order.exception.InsufficientStockException;
+import com.shop.order.exception.OrderAccessDeniedException;
+import com.shop.order.exception.OrderNotFoundException;
+import com.shop.order.repository.OrderRepository;
+import com.shop.category.domain.Category;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
+import com.shop.product.domain.StockChangedEvent;
 import com.shop.product.repository.ProductRepository;
-import jakarta.persistence.EntityManager;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestPropertySource(locations = "classpath:application-test.yaml")
-//@Transactional
+@ExtendWith(MockitoExtension.class)
 class OrderAdminServiceTest {
 
-    @Autowired
-    OrderAdminService orderAdminService;
-    @Autowired OrderAdminRepository orderAdminRepository;
-    @Autowired CategoryRepository categoryRepository;
-    @Autowired ProductRepository productRepository;
-    @Autowired EntityManager entityManager;  // ★ 추가
+    @Mock private OrderRepository orderRepository;
+    @Mock private DeliveryRepository deliveryRepository;
+    @Mock private ProductRepository productRepository;
+    @Mock private ApplicationEventPublisher eventPublisher;  // ★ 추가
 
-    private Product testProduct;
-    private Sku testSku;
-    private Category testCategory;
-    private final List<Long> createdOrderIds = new ArrayList<>();
+    @InjectMocks private OrderService orderService;
+
+    private Product product;
+    private Sku sku;
 
     @BeforeEach
     void setUp() {
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        orderAdminRepository.deleteAll();
-
-        Category category = categoryRepository.save(
-                Category.create("신발", "shoe-order"));
-        this.testCategory = category;
-        Product product = Product.register(
-                "운동화",
-                BigDecimal.valueOf(10000),
-                "설명", "url", category);
-        productRepository.save(product);
-
-        List<SkuOption> options = List.of(new SkuOption("색상", "blue"));
-        product.addSku(options, 100);
-        Product saved = productRepository.saveAndFlush(product);
-        this.testProduct = saved;
-        this.testSku = saved.getSkuses().get(0);
+        Category category = Category.create("의류", "clothing");
+        product = Product.register(
+                "티셔츠", BigDecimal.valueOf(29900), "설명", "img", category
+        );
+        setId(product, 1L);
+        sku = product.addSku(List.of(new SkuOption("색상", "검정")), 50);
+        setId(sku, 100L);
     }
 
-    @AfterEach
-    void cleanUp() {
-        createdOrderIds.forEach(orderId ->
-                orderAdminRepository.findById(orderId)
-                        .ifPresent(orderAdminRepository::delete));
-        productRepository.findById(testProduct.getId())
-                .ifPresent(productRepository::delete);
-        categoryRepository.findById(testCategory.getId())
-                .ifPresent(categoryRepository::delete);
-        createdOrderIds.clear();
+    private CreateOrderRequest createRequest(boolean isGuest) {
+        return new CreateOrderRequest(
+                List.of(new CreateOrderRequest.OrderItemRequest(1L, 100L, 2)),
+                new CreateOrderRequest.DeliveryInfoRequest(
+                        "홍길동", "010-1234-5678",
+                        "12345", "서울시 강남구", "101호", "문 앞에"
+                ),
+                isGuest ? "guest@example.com" : null,
+                isGuest ? "010-9999-8888" : null
+        );
     }
 
-    private Order createPendingOrder() {
-        OrderItem item = OrderItem.of(testProduct, testSku, 1);
-        Order order = Order.createForMember(1L, List.of(item));
-        Order saved = orderAdminRepository.saveAndFlush(order);
-        createdOrderIds.add(saved.getId());
-        return saved;
+    @Nested
+    @DisplayName("회원 주문 생성")
+    class CreateMemberOrderAdmin {
+
+        @Test
+        @DisplayName("정상적으로 주문을 생성한다")
+        void createNormal() {
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+            given(orderRepository.save(any(Order.class)))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            Order result = orderService.createMemberOrder(10L, createRequest(false));
+
+            assertThat(result.getMemberId()).isEqualTo(10L);
+            assertThat(result.isMemberOrder()).isTrue();
+            assertThat(sku.getStock()).isEqualTo(48);  // SKU 재고 50 - 2
+            verify(orderRepository).save(any(Order.class));
+            verify(deliveryRepository).save(any(Delivery.class));
+            // ★ 재고 이력 이벤트 발행 검증
+            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
+        }
+
+        @Test
+        @DisplayName("재고 부족 시 InsufficientStockException")
+        void rejectInsufficientStock() {
+            Category category = Category.create("의류", "clothing");
+            Product lowStockProduct = Product.register(
+                    "한정상품", BigDecimal.valueOf(10000), "설명", "img", category
+            );
+            setId(lowStockProduct, 1L);
+            Sku lowStockSku = lowStockProduct.addSku(
+                    List.of(new SkuOption("색상", "검정")), 1
+            );
+            setId(lowStockSku, 100L);
+
+            given(productRepository.findById(1L)).willReturn(Optional.of(lowStockProduct));
+
+            CreateOrderRequest request = new CreateOrderRequest(
+                    List.of(new CreateOrderRequest.OrderItemRequest(1L, 100L, 5)),
+                    new CreateOrderRequest.DeliveryInfoRequest(
+                            "홍", "010-1", "12345", "서울", "101", null
+                    ),
+                    null, null
+            );
+
+            assertThatThrownBy(() -> orderService.createMemberOrder(10L, request))
+                    .isInstanceOf(InsufficientStockException.class);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 SKU ID 요청 시 예외")
+        void rejectUnknownSkuId() {
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+
+            CreateOrderRequest request = new CreateOrderRequest(
+                    List.of(new CreateOrderRequest.OrderItemRequest(1L, 999L, 1)),
+                    new CreateOrderRequest.DeliveryInfoRequest(
+                            "홍", "010-1", "12345", "서울", "101", null
+                    ),
+                    null, null
+            );
+
+            assertThatThrownBy(() -> orderService.createMemberOrder(10L, request))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
     }
 
-    private Order createCancelledOrder() {
-        Order order = createPendingOrder();
-        order.cancel();
-        return orderAdminRepository.saveAndFlush(order);
+    @Nested
+    @DisplayName("비회원 주문 생성")
+    class CreateGuestOrderAdmin {
+
+        @Test
+        @DisplayName("정상적으로 비회원 주문 생성")
+        void createNormal() {
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+            given(orderRepository.save(any(Order.class)))
+                    .willAnswer(inv -> inv.getArgument(0));
+
+            Order result = orderService.createGuestOrder(createRequest(true));
+
+            assertThat(result.isGuestOrder()).isTrue();
+            assertThat(result.getGuestEmail()).isEqualTo("guest@example.com");
+            assertThat(result.getGuestPhone()).isEqualTo("010-9999-8888");
+            // ★ 재고 이력 이벤트 발행 검증
+            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
+        }
+
+        @Test
+        @DisplayName("guestEmail이 없으면 예외")
+        void rejectMissingEmail() {
+            CreateOrderRequest request = new CreateOrderRequest(
+                    List.of(new CreateOrderRequest.OrderItemRequest(1L, 100L, 1)),
+                    new CreateOrderRequest.DeliveryInfoRequest(
+                            "홍", "010-1", "12345", "서울", "101", null
+                    ),
+                    null,
+                    "010-9999-8888"
+            );
+
+            assertThatThrownBy(() -> orderService.createGuestOrder(request))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
     }
 
-    @Test
-    @DisplayName("전체 조회 — 모든 주문 반환")
-    void searchAllReturnsAllOrders() {
-        createPendingOrder();
-        createPendingOrder();
+    @Nested
+    @DisplayName("주문 조회")
+    class FindOrders {
 
-        Page<OrderAdminListResponse> result =
-                orderAdminService.search(null, null, null, PageRequest.of(0, 20));
+        @Test
+        @DisplayName("자기 주문은 조회 가능")
+        void findOwnOrder() {
+            Order order = Order.createForMember(10L, List.of(
+                    OrderItem.of(product, sku, 1)
+            ));
 
-        assertThat(result.getTotalElements()).isEqualTo(2);
+            given(orderRepository.findByIdAndMemberIdWithItems(1L, 10L))
+                    .willReturn(Optional.of(order));
+
+            Order result = orderService.findMyOrder(10L, 1L);
+
+            assertThat(result).isEqualTo(order);
+        }
+
+        @Test
+        @DisplayName("다른 회원의 주문은 NotFound로 응답")
+        void rejectOtherMembersOrder() {
+            given(orderRepository.findByIdAndMemberIdWithItems(1L, 10L))
+                    .willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> orderService.findMyOrder(10L, 1L))
+                    .isInstanceOf(OrderNotFoundException.class);
+        }
     }
 
-    @Test
-    @DisplayName("상태 필터 PENDING — PENDING 주문만 반환")
-    void searchByStatusPendingReturnsOnlyPending() {
-        createPendingOrder();
-        createCancelledOrder();
+    @Nested
+    @DisplayName("비회원 조회 보안")
+    class GuestOrderAdminAccess {
 
-        Page<OrderAdminListResponse> result =
-                orderAdminService.search(
-                        OrderStatus.PENDING, null, null, PageRequest.of(0, 20));
+        @Test
+        @DisplayName("주문번호 + 이메일 일치 시 조회 가능")
+        void allowsAccessWithMatchingEmail() {
+            Order guestOrder = Order.createForGuest(
+                    "guest@example.com", "010-9999-8888",
+                    List.of(OrderItem.of(product, sku, 1))
+            );
 
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent().get(0).status()).isEqualTo(OrderStatus.PENDING);
+            given(orderRepository.findByOrderNumberWithItems(any()))
+                    .willReturn(Optional.of(guestOrder));
+
+            Order result = orderService.findGuestOrder("ORD-...", "guest@example.com");
+
+            assertThat(result).isEqualTo(guestOrder);
+        }
+
+        @Test
+        @DisplayName("주문번호 + 전화번호 일치 시 조회 가능")
+        void allowsAccessWithMatchingPhone() {
+            Order guestOrder = Order.createForGuest(
+                    "guest@example.com", "010-9999-8888",
+                    List.of(OrderItem.of(product, sku, 1))
+            );
+
+            given(orderRepository.findByOrderNumberWithItems(any()))
+                    .willReturn(Optional.of(guestOrder));
+
+            Order result = orderService.findGuestOrder("ORD-...", "010-9999-8888");
+
+            assertThat(result).isEqualTo(guestOrder);
+        }
+
+        @Test
+        @DisplayName("연락처 불일치 시 AccessDenied")
+        void rejectMismatchedContact() {
+            Order guestOrder = Order.createForGuest(
+                    "guest@example.com", "010-9999-8888",
+                    List.of(OrderItem.of(product, sku, 1))
+            );
+
+            given(orderRepository.findByOrderNumberWithItems(any()))
+                    .willReturn(Optional.of(guestOrder));
+
+            assertThatThrownBy(() ->
+                    orderService.findGuestOrder("ORD-...", "wrong@example.com"))
+                    .isInstanceOf(OrderAccessDeniedException.class);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 주문번호는 NotFound")
+        void rejectUnknownOrderNumber() {
+            given(orderRepository.findByOrderNumberWithItems(any()))
+                    .willReturn(Optional.empty());
+
+            assertThatThrownBy(() ->
+                    orderService.findGuestOrder("UNKNOWN", "anything"))
+                    .isInstanceOf(OrderNotFoundException.class);
+        }
     }
 
-    @Test
-    @DisplayName("기간 필터 — 범위 내 주문 반환")
-    void searchByDateRangeReturnsOrdersInRange() {
-        createPendingOrder();
+    @Nested
+    @DisplayName("주문 취소")
+    class CancelOrderAdmin {
 
-        Page<OrderAdminListResponse> result =
-                orderAdminService.search(
-                        null, LocalDate.now(), LocalDate.now(), PageRequest.of(0, 20));
+        @Test
+        @DisplayName("자기 주문 취소 시 SKU 재고 복구 + ORDER_CANCEL 이벤트 발행")
+        void cancelRestoresSkuStock() {
+            Order order = Order.createForMember(10L, List.of(
+                    OrderItem.of(product, sku, 3)
+            ));
 
-        assertThat(result.getTotalElements()).isEqualTo(1);
+            given(orderRepository.findByIdAndMemberIdWithItems(1L, 10L))
+                    .willReturn(Optional.of(order));
+            given(productRepository.findById(any())).willReturn(Optional.of(product));
+
+            orderService.cancelMyOrder(10L, 1L);
+
+            assertThat(sku.getStock()).isEqualTo(53);  // 50 + 3 복구
+            assertThat(order.getStatus().toString()).isEqualTo("CANCELLED");
+            // ★ ORDER_CANCEL 이벤트 발행 검증
+            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
+        }
     }
 
-    @Test
-    @DisplayName("기간 필터 — 범위 밖 주문 없음")
-    void searchOutOfDateRangeReturnsEmpty() {
-        createPendingOrder();
+    // ─── 테스트 헬퍼 ───
 
-        Page<OrderAdminListResponse> result =
-                orderAdminService.search(
-                        null,
-                        LocalDate.now().minusDays(2),
-                        LocalDate.now().minusDays(1),
-                        PageRequest.of(0, 20));
-
-        assertThat(result.getTotalElements()).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("응답 필드 — 필수 항목 포함 확인")
-    void searchResponseFieldsContainsExpectedValues() {
-        createPendingOrder();
-
-        Page<OrderAdminListResponse> result =
-                orderAdminService.search(null, null, null, PageRequest.of(0, 20));
-
-        OrderAdminListResponse response = result.getContent().get(0);
-        assertThat(response.orderId()).isNotNull();
-        assertThat(response.orderNumber()).isNotBlank();
-        assertThat(response.totalAmount()).isNotNull();
-        assertThat(response.itemCount()).isEqualTo(1);
-        assertThat(response.status()).isEqualTo(OrderStatus.PENDING);
-    }
-
-    @Test
-    @DisplayName("PENDING 주문 일괄 확정 → CONFIRMED")
-    void confirmPendingOrdersReturnsSuccessCount() {
-        Order o1 = createPendingOrder();
-        Order o2 = createPendingOrder();
-
-        OrderAdminConfirmResponse response =
-                orderAdminService.confirm(List.of(o1.getId(), o2.getId()));
-
-        assertThat(response.successCount()).isEqualTo(2);
-        assertThat(response.confirmedOrderIds())
-                .containsExactlyInAnyOrder(o1.getId(), o2.getId());
-
-        Order confirmed = orderAdminRepository.findById(o1.getId()).orElseThrow();
-        assertThat(confirmed.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
-    }
-
-    @Test
-    @DisplayName("없는 orderId → 예외 + 전체 롤백")
-        // ★ @Transactional 없음 → 예외 후 DB 조회 가능
-    void confirmWithNotFoundIdThrowsException() {
-        Order o1 = createPendingOrder();
-
-        assertThatThrownBy(() ->
-                orderAdminService.confirm(List.of(o1.getId(), 99999L))
-        ).isInstanceOf(BusinessException.class);
-
-        // ★ 새 트랜잭션으로 조회 → rollback 여부 확인
-        Order notChanged = orderAdminRepository.findById(o1.getId()).orElseThrow();
-        assertThat(notChanged.getStatus()).isEqualTo(OrderStatus.PENDING);
-    }
-
-    @Test
-    @DisplayName("CANCELLED 주문 확정 시도 → 예외 + 전체 롤백")
-    void confirmCancelledOrderThrowsException() {
-        Order pending = createPendingOrder();
-        Order cancelled = createPendingOrder();
-        cancelled.cancel();
-        orderAdminRepository.saveAndFlush(cancelled);
-
-        assertThatThrownBy(() ->
-                orderAdminService.confirm(List.of(pending.getId(), cancelled.getId()))
-        ).isInstanceOf(BusinessException.class);
-
-        Order notChanged = orderAdminRepository.findById(pending.getId()).orElseThrow();
-        assertThat(notChanged.getStatus()).isEqualTo(OrderStatus.PENDING);
-    }
-
-    @Test
-    @DisplayName("단건 확정 → CONFIRMED")
-    void confirmSingleOrderChangesStatusToConfirmed() {
-        Order order = createPendingOrder();
-
-        OrderAdminConfirmResponse response =
-                orderAdminService.confirm(List.of(order.getId()));
-
-        assertThat(response.successCount()).isEqualTo(1);
-    }
-
-    @Test
-    @Transactional
-    @DisplayName("정상 강제 취소 — CANCELLED + 재고 복구")
-    void cancelOrderChangesStatusAndRestoresStock() {
-        int orderQuantity = 2;
-
-        Product freshProduct = productRepository.findById(testProduct.getId()).orElseThrow();
-        Sku freshSku = freshProduct.getSkuses().get(0);
-        int stockBefore = freshSku.getStock();
-
-        OrderItem item = OrderItem.of(freshProduct, freshSku, orderQuantity);
-        Order order = Order.createForMember(1L, List.of(item));
-        order = orderAdminRepository.saveAndFlush(order);
-        createdOrderIds.add(order.getId());
-
-        orderAdminService.cancel(order.getId(), "재고 부족", "OUT_OF_STOCK");
-
-        Order cancelled = orderAdminRepository.findById(order.getId()).orElseThrow();
-        assertThat(cancelled.getStatus()).isEqualTo(OrderStatus.CANCELLED);
-
-        entityManager.flush();  // ★ dirty 변경사항 DB에 반영
-        entityManager.clear();  // ★ 그 다음 캐시 제거
-        Product updated = productRepository.findById(testProduct.getId()).orElseThrow();
-        Sku updatedSku = updated.getSkuses().get(0);
-        assertThat(updatedSku.getStock()).isEqualTo(stockBefore + orderQuantity);
-    }
-
-    @Test
-    @DisplayName("없는 orderId → 예외")
-    void cancelNotFoundOrderThrowsException() {
-        assertThatThrownBy(() ->
-                orderAdminService.cancel(99999L, "사유", "CODE")
-        ).isInstanceOf(BusinessException.class);
-    }
-
-    @Test
-    @DisplayName("이미 취소된 주문 → 예외")
-    void cancelAlreadyCancelledOrderThrowsException() {
-        Order order = createPendingOrder();
-        orderAdminService.cancel(order.getId(), "사유", "CODE");
-
-        assertThatThrownBy(() ->
-                orderAdminService.cancel(order.getId(), "사유", "CODE")
-        ).isInstanceOf(BusinessException.class);
+    private static void setId(Object entity, Long id) {
+        try {
+            Field idField = entity.getClass().getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(entity, id);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

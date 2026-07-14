@@ -1,4 +1,4 @@
-package com.shop.order.repository;
+package com.shop.admin.order.repository;
 
 import com.shop.order.domain.Order;
 import com.shop.order.domain.OrderStatus;

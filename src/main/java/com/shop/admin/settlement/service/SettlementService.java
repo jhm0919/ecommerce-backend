@@ -4,7 +4,7 @@ import com.shop.global.exception.BusinessException;
 import com.shop.global.exception.ErrorCode;
 import com.shop.order.domain.Order;
 import com.shop.order.domain.OrderStatus;
-import com.shop.order.repository.OrderAdminRepository;
+import com.shop.admin.order.repository.OrderAdminRepository;
 import com.shop.admin.settlement.domain.Settlement;
 import com.shop.admin.settlement.dto.SettlementConfirmResponse;
 import com.shop.admin.settlement.dto.SettlementItem;
