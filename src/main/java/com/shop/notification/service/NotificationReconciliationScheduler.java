@@ -1,8 +1,8 @@
 package com.shop.notification.service;
 
-import com.shop.admin.stockhistory.domain.StockChangeType;
-import com.shop.admin.stockhistory.domain.StockHistory;
-import com.shop.admin.stockhistory.repository.StockHistoryRepository;
+import com.shop.admin.stock.domain.StockType;
+import com.shop.admin.stock.domain.StockHistory;
+import com.shop.admin.stock.repository.StockHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -19,9 +19,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NotificationReconciliationScheduler {
 
-    private static final List<StockChangeType> SOLD_OUT_CHANGE_TYPES = List.of(
-            StockChangeType.ORDER,
-            StockChangeType.ADMIN_DECREASE
+    private static final List<StockType> SOLD_OUT_CHANGE_TYPES = List.of(
+            StockType.ORDER,
+            StockType.ADMIN_DECREASE
     );
 
     private final StockHistoryRepository stockHistoryRepository;

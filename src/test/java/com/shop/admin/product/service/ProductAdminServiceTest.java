@@ -141,114 +141,114 @@ class ProductAdminServiceTest {
         }
     }
 
-    @Nested
-    @DisplayName("SKU 재고 증가 (increaseSkuStock)")
-    class IncreaseSkuStock {
-
-        @Test
-        @DisplayName("SKU 재고를 증가시킨다")
-        void increaseSkuStockNormal() {
-            Product product = createProduct();
-            setId(product, 1L);
-            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
-            setId(sku, 100L);
-
-            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-
-            productAdminService.increaseSkuStock(1L, 100L, 5);
-
-            assertThat(sku.getStock()).isEqualTo(15);
-        }
-
-        @Test
-        @DisplayName("재고 증가 시 StockChangedEvent 발행")  // ★ 추가
-        void publishStockChangedEventOnIncrease() {
-            Product product = createProduct();
-            setId(product, 1L);
-            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
-            setId(sku, 100L);
-
-            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-
-            productAdminService.increaseSkuStock(1L, 100L, 5);
-
-            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 상품 ID면 예외")
-        void rejectUnknownProduct() {
-            given(productRepository.findById(999L)).willReturn(Optional.empty());
-
-            assertThatThrownBy(() -> productAdminService.increaseSkuStock(999L, 100L, 5))
-                    .isInstanceOf(ProductNotFoundException.class);
-        }
-    }
-
-    @Nested
-    @DisplayName("SKU 재고 감소 (decreaseSkuStock)")
-    class DecreaseSkuStock {
-
-        @Test
-        @DisplayName("SKU 재고를 감소시킨다")
-        void decreaseSkuStockNormal() {
-            Product product = createProduct();
-            setId(product, 1L);
-            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
-            setId(sku, 100L);
-
-            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-
-            productAdminService.decreaseSkuStock(1L, 100L, 3);
-
-            assertThat(sku.getStock()).isEqualTo(7);
-        }
-
-        @Test
-        @DisplayName("재고 감소 시 항상 StockChangedEvent 발행")  // ★ 추가
-        void alwaysPublishStockChangedEvent() {
-            Product product = createProduct();
-            setId(product, 1L);
-            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
-            setId(sku, 100L);
-
-            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-
-            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
-
-            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
-        }
-
-        @Test
-        @DisplayName("재고 0이어도 StockChangedEvent만 발행")
-        void publishOnlyStockChangedEventWhenSoldOut() {
-            Product product = createProduct();
-            setId(product, 1L);
-            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 3);
-            setId(sku, 100L);
-
-            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-
-            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 3→0
-
-            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
-        }
-
-        @Test
-        @DisplayName("재고 남아도 StockChangedEvent는 발행")
-        void publishStockChangedEventWhenStockRemains() {
-            Product product = createProduct();
-            setId(product, 1L);
-            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
-            setId(sku, 100L);
-
-            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-
-            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
-
-            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
-        }
-    }
+//    @Nested
+//    @DisplayName("SKU 재고 증가 (increaseSkuStock)")
+//    class IncreaseSkuStock {
+//
+//        @Test
+//        @DisplayName("SKU 재고를 증가시킨다")
+//        void increaseSkuStockNormal() {
+//            Product product = createProduct();
+//            setId(product, 1L);
+//            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+//            setId(sku, 100L);
+//
+//            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+//
+//            productAdminService.increaseSkuStock(1L, 100L, 5);
+//
+//            assertThat(sku.getStock()).isEqualTo(15);
+//        }
+//
+//        @Test
+//        @DisplayName("재고 증가 시 StockChangedEvent 발행")  // ★ 추가
+//        void publishStockChangedEventOnIncrease() {
+//            Product product = createProduct();
+//            setId(product, 1L);
+//            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+//            setId(sku, 100L);
+//
+//            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+//
+//            productAdminService.increaseSkuStock(1L, 100L, 5);
+//
+//            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
+//        }
+//
+//        @Test
+//        @DisplayName("존재하지 않는 상품 ID면 예외")
+//        void rejectUnknownProduct() {
+//            given(productRepository.findById(999L)).willReturn(Optional.empty());
+//
+//            assertThatThrownBy(() -> productAdminService.increaseSkuStock(999L, 100L, 5))
+//                    .isInstanceOf(ProductNotFoundException.class);
+//        }
+//    }
+//
+//    @Nested
+//    @DisplayName("SKU 재고 감소 (decreaseSkuStock)")
+//    class DecreaseSkuStock {
+//
+//        @Test
+//        @DisplayName("SKU 재고를 감소시킨다")
+//        void decreaseSkuStockNormal() {
+//            Product product = createProduct();
+//            setId(product, 1L);
+//            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+//            setId(sku, 100L);
+//
+//            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+//
+//            productAdminService.decreaseSkuStock(1L, 100L, 3);
+//
+//            assertThat(sku.getStock()).isEqualTo(7);
+//        }
+//
+//        @Test
+//        @DisplayName("재고 감소 시 항상 StockChangedEvent 발행")  // ★ 추가
+//        void alwaysPublishStockChangedEvent() {
+//            Product product = createProduct();
+//            setId(product, 1L);
+//            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+//            setId(sku, 100L);
+//
+//            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+//
+//            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
+//
+//            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
+//        }
+//
+//        @Test
+//        @DisplayName("재고 0이어도 StockChangedEvent만 발행")
+//        void publishOnlyStockChangedEventWhenSoldOut() {
+//            Product product = createProduct();
+//            setId(product, 1L);
+//            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 3);
+//            setId(sku, 100L);
+//
+//            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+//
+//            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 3→0
+//
+//            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
+//        }
+//
+//        @Test
+//        @DisplayName("재고 남아도 StockChangedEvent는 발행")
+//        void publishStockChangedEventWhenStockRemains() {
+//            Product product = createProduct();
+//            setId(product, 1L);
+//            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
+//            setId(sku, 100L);
+//
+//            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+//
+//            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
+//
+//            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
+//        }
+//    }
 
     @Nested
     @DisplayName("SKU 추가 (addSku)")  // ★ 추가

@@ -1,4 +1,4 @@
-package com.shop.admin.stockhistory.domain;
+package com.shop.admin.stock.domain;
 
 /**
  * 재고 이력이 저장된 뒤 발행되는 이벤트.

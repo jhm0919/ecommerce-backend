@@ -1,10 +1,10 @@
-package com.shop.admin.stockhistory.service;
+package com.shop.admin.stock.service;
 
 import com.shop.product.domain.StockChangedEvent;
-import com.shop.admin.stockhistory.domain.StockChangeType;
-import com.shop.admin.stockhistory.domain.StockHistory;
-import com.shop.admin.stockhistory.domain.StockHistoryRecordedEvent;
-import com.shop.admin.stockhistory.repository.StockHistoryRepository;
+import com.shop.admin.stock.domain.StockType;
+import com.shop.admin.stock.domain.StockHistory;
+import com.shop.admin.stock.domain.StockHistoryRecordedEvent;
+import com.shop.admin.stock.repository.StockHistoryRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -37,7 +37,7 @@ class StockHistoryEventHandlerTest {
         void saveOrderHistory() {
             StockChangedEvent event = new StockChangedEvent(
                     1L, "티셔츠", 100L, "SKU-1-001", "색상=검정",
-                    StockChangeType.ORDER, 3, 50, 47, 1001L
+                    StockType.ORDER, 3, 50, 47, 1001L
             );
             given(stockHistoryRepository.save(any(StockHistory.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
@@ -50,7 +50,7 @@ class StockHistoryEventHandlerTest {
             StockHistory saved = captor.getValue();
             assertThat(saved.getProductId()).isEqualTo(1L);
             assertThat(saved.getSkuId()).isEqualTo(100L);
-            assertThat(saved.getChangeType()).isEqualTo(StockChangeType.ORDER);
+            assertThat(saved.getChangeType()).isEqualTo(StockType.ORDER);
             assertThat(saved.getQuantity()).isEqualTo(3);
             assertThat(saved.getStockBefore()).isEqualTo(50);
             assertThat(saved.getStockAfter()).isEqualTo(47);
@@ -67,7 +67,7 @@ class StockHistoryEventHandlerTest {
         void saveAdminIncreaseHistory() {
             StockChangedEvent event = new StockChangedEvent(
                     1L, "티셔츠", 100L, "SKU-1-001", "색상=검정",
-                    StockChangeType.ADMIN_INCREASE, 10, 40, 50, null
+                    StockType.ADMIN_INCREASE, 10, 40, 50, null
             );
             given(stockHistoryRepository.save(any(StockHistory.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
@@ -78,7 +78,7 @@ class StockHistoryEventHandlerTest {
             verify(stockHistoryRepository).save(captor.capture());
 
             StockHistory saved = captor.getValue();
-            assertThat(saved.getChangeType()).isEqualTo(StockChangeType.ADMIN_INCREASE);
+            assertThat(saved.getChangeType()).isEqualTo(StockType.ADMIN_INCREASE);
             assertThat(saved.getOrderId()).isNull();  // 주문 없음
         }
 
@@ -87,7 +87,7 @@ class StockHistoryEventHandlerTest {
         void saveOrderCancelHistory() {
             StockChangedEvent event = new StockChangedEvent(
                     1L, "티셔츠", 100L, "SKU-1-001", "색상=검정",
-                    StockChangeType.ORDER_CANCEL, 3, 47, 50, 1001L
+                    StockType.ORDER_CANCEL, 3, 47, 50, 1001L
             );
             given(stockHistoryRepository.save(any(StockHistory.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
@@ -98,7 +98,7 @@ class StockHistoryEventHandlerTest {
             verify(stockHistoryRepository).save(captor.capture());
 
             StockHistory saved = captor.getValue();
-            assertThat(saved.getChangeType()).isEqualTo(StockChangeType.ORDER_CANCEL);
+            assertThat(saved.getChangeType()).isEqualTo(StockType.ORDER_CANCEL);
             assertThat(saved.getStockBefore()).isEqualTo(47);
             assertThat(saved.getStockAfter()).isEqualTo(50);  // 복구됐으니 증가
             assertThat(saved.getOrderId()).isEqualTo(1001L);
@@ -109,7 +109,7 @@ class StockHistoryEventHandlerTest {
         void saveSkuCreatedHistory() {
             StockChangedEvent event = new StockChangedEvent(
                     1L, "티셔츠", 100L, "SKU-1-001", "색상=검정",
-                    StockChangeType.SKU_CREATED, 30, 0, 30, null
+                    StockType.SKU_CREATED, 30, 0, 30, null
             );
             given(stockHistoryRepository.save(any(StockHistory.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
@@ -120,7 +120,7 @@ class StockHistoryEventHandlerTest {
             verify(stockHistoryRepository).save(captor.capture());
 
             StockHistory saved = captor.getValue();
-            assertThat(saved.getChangeType()).isEqualTo(StockChangeType.SKU_CREATED);
+            assertThat(saved.getChangeType()).isEqualTo(StockType.SKU_CREATED);
             assertThat(saved.getStockBefore()).isEqualTo(0);   // 신규 생성
             assertThat(saved.getStockAfter()).isEqualTo(30);
             assertThat(saved.getOrderId()).isNull();

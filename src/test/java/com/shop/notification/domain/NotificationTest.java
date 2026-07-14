@@ -1,7 +1,7 @@
 package com.shop.notification.domain;
 
-import com.shop.admin.stockhistory.domain.StockChangeType;
-import com.shop.admin.stockhistory.domain.StockHistory;
+import com.shop.admin.stock.domain.StockType;
+import com.shop.admin.stock.domain.StockHistory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -70,7 +70,7 @@ class NotificationTest {
     private StockHistory soldOutHistory() {
         return StockHistory.of(
                 1L, "티셔츠", 100L, "SKU-1-001", "색상=검정, 사이즈=S",
-                StockChangeType.ORDER, 3, 3, 0, 1000L
+                StockType.ORDER, 3, 3, 0, 1000L
         );
     }
 

@@ -2,7 +2,7 @@ package com.shop.admin.product.service;
 
 import com.shop.admin.product.dto.ProductAdminCreateRequest;
 import com.shop.admin.product.dto.ProductAdminUpdateRequest;
-import com.shop.admin.stockhistory.domain.StockChangeType;
+import com.shop.admin.stock.domain.StockType;
 import com.shop.cart.repository.CartRepository;
 import com.shop.category.domain.Category;
 import com.shop.category.exception.CategoryNotFoundException;
@@ -120,7 +120,7 @@ public class ProductAdminService {
         // 4. 이제 ID가 있는 savedSku 객체로 이벤트를 발행합니다.
         eventPublisher.publishEvent(StockChangedEvent.of(
                 savedProduct, savedSku,
-                StockChangeType.SKU_CREATED,
+                StockType.SKU_CREATED,
                 initialStock,
                 0,
                 initialStock,
@@ -128,53 +128,6 @@ public class ProductAdminService {
         ));
 
         return savedSku;
-    }
-
-    /**
-     * SKU 재고를 증가시킨다 (입고).
-     */
-    @Transactional
-    public void increaseSkuStock(Long productId, Long skuId, int quantity) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
-
-        Sku sku = product.findSkuById(skuId).orElseThrow();
-        int stockBefore = sku.getStock();
-
-        product.increaseSkuStock(skuId, quantity);
-
-        eventPublisher.publishEvent(StockChangedEvent.of(
-                product, sku,
-                StockChangeType.ADMIN_INCREASE,
-                quantity,
-                stockBefore,
-                sku.getStock(),
-                null  // orderId 없음
-        ));
-    }
-
-    /**
-     * SKU 재고를 감소시킨다 (수동 조정).
-     */
-    @Transactional
-    public void decreaseSkuStock(Long productId, Long skuId, int quantity) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
-
-        Sku sku = product.findSkuById(skuId).orElseThrow();
-        int stockBefore = sku.getStock();
-
-        product.decreaseSkuStock(skuId, quantity);
-
-        // 이력 이벤트
-        eventPublisher.publishEvent(StockChangedEvent.of(
-                product, sku,
-                StockChangeType.ADMIN_DECREASE,
-                quantity,
-                stockBefore,
-                sku.getStock(),
-                null
-        ));
     }
 
     /**

@@ -1,6 +1,6 @@
 package com.shop.product.domain;
 
-import com.shop.admin.stockhistory.domain.StockChangeType;
+import com.shop.admin.stock.domain.StockType;
 
 /**
  * 재고 변동 이벤트.
@@ -12,7 +12,7 @@ public record StockChangedEvent(
         Long skuId,
         String skuCode,
         String skuOptionsSnapshot,
-        StockChangeType changeType,
+        StockType changeType,
         int quantity,       // 변동량 (항상 양수, 방향은 changeType으로)
         int stockBefore,    // 변동 전 재고
         int stockAfter,     // 변동 후 재고
@@ -21,7 +21,7 @@ public record StockChangedEvent(
     public static StockChangedEvent of(
             Product product,
             Sku sku,
-            StockChangeType changeType,
+            StockType changeType,
             int quantity,
             int stockBefore,
             int stockAfter,

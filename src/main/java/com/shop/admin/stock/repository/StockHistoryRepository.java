@@ -1,7 +1,7 @@
-package com.shop.admin.stockhistory.repository;
+package com.shop.admin.stock.repository;
 
-import com.shop.admin.stockhistory.domain.StockChangeType;
-import com.shop.admin.stockhistory.domain.StockHistory;
+import com.shop.admin.stock.domain.StockType;
+import com.shop.admin.stock.domain.StockHistory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,7 +27,7 @@ public interface StockHistoryRepository extends JpaRepository<StockHistory, Long
     Page<StockHistory> findHistories(
             @Param("productId") Long productId,
             @Param("skuId") Long skuId,
-            @Param("changeType") StockChangeType changeType,
+            @Param("changeType") StockType changeType,
             Pageable pageable
     );
 
@@ -40,7 +40,7 @@ public interface StockHistoryRepository extends JpaRepository<StockHistory, Long
             ORDER BY h.occurredAt DESC, h.id DESC
             """)
     Page<StockHistory> findSoldOutTransitionsSince(
-            @Param("changeTypes") Collection<StockChangeType> changeTypes,
+            @Param("changeTypes") Collection<StockType> changeTypes,
             @Param("from") LocalDateTime from,
             Pageable pageable
     );

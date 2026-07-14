@@ -1,8 +1,8 @@
 package com.shop.notification.service;
 
-import com.shop.admin.stockhistory.domain.StockChangeType;
-import com.shop.admin.stockhistory.domain.StockHistory;
-import com.shop.admin.stockhistory.domain.StockHistoryRecordedEvent;
+import com.shop.admin.stock.domain.StockType;
+import com.shop.admin.stock.domain.StockHistory;
+import com.shop.admin.stock.domain.StockHistoryRecordedEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +26,7 @@ class NotificationEventHandlerTest {
     void handleStockHistoryRecorded() {
         StockHistory history = StockHistory.of(
                 1L, "티셔츠", 100L, "SKU-1-001", "색상=검정, 사이즈=S",
-                StockChangeType.ORDER, 3, 3, 0, 1001L
+                StockType.ORDER, 3, 3, 0, 1001L
         );
 
         notificationEventHandler.handleStockHistoryRecorded(
@@ -40,7 +40,7 @@ class NotificationEventHandlerTest {
     void propagateCreatorException() {
         StockHistory history = StockHistory.of(
                 1L, "티셔츠", 100L, "SKU-1-001", "색상=검정, 사이즈=S",
-                StockChangeType.ORDER, 3, 3, 0, 1001L
+                StockType.ORDER, 3, 3, 0, 1001L
         );
         RuntimeException exception = new RuntimeException("notification failed");
         willThrow(exception).given(notificationCreatorService)

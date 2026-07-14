@@ -22,7 +22,7 @@ import java.time.LocalDate;
 
 @Tag(name = "주문 관리", description = "판매자 주문 조회 및 처리 API")
 @RestController
-@RequestMapping("/api/seller/orders")
+@RequestMapping("/api/admin/orders")
 @RequiredArgsConstructor
 public class OrderAdminController {
 

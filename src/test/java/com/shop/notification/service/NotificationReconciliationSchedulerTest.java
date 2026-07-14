@@ -1,8 +1,8 @@
 package com.shop.notification.service;
 
-import com.shop.admin.stockhistory.domain.StockChangeType;
-import com.shop.admin.stockhistory.domain.StockHistory;
-import com.shop.admin.stockhistory.repository.StockHistoryRepository;
+import com.shop.admin.stock.domain.StockType;
+import com.shop.admin.stock.domain.StockHistory;
+import com.shop.admin.stock.repository.StockHistoryRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,13 +57,13 @@ class NotificationReconciliationSchedulerTest {
         verify(notificationCreatorService).createSoldOutNotificationIfNeeded(second);
 
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<StockChangeType>> typesCaptor =
+        ArgumentCaptor<List<StockType>> typesCaptor =
                 ArgumentCaptor.forClass(List.class);
         verify(stockHistoryRepository, times(2)).findSoldOutTransitionsSince(
                 typesCaptor.capture(), any(), any(Pageable.class));
 
         assertThat(typesCaptor.getAllValues().get(0))
-                .containsExactly(StockChangeType.ORDER, StockChangeType.ADMIN_DECREASE);
+                .containsExactly(StockType.ORDER, StockType.ADMIN_DECREASE);
     }
 
     @Test
@@ -84,7 +84,7 @@ class NotificationReconciliationSchedulerTest {
     private StockHistory history(Long orderId) {
         return StockHistory.of(
                 10L, "티셔츠", 100L, "SKU-10-001", "색상=검정",
-                StockChangeType.ORDER, 3, 3, 0, orderId
+                StockType.ORDER, 3, 3, 0, orderId
         );
     }
 }

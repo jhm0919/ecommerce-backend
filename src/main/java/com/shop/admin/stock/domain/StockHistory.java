@@ -1,4 +1,4 @@
-package com.shop.admin.stockhistory.domain;
+package com.shop.admin.stock.domain;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -47,7 +47,7 @@ public class StockHistory {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "change_type", nullable = false, length = 20)
-    private StockChangeType changeType;
+    private StockType changeType;
 
     @Column(nullable = false)
     private int quantity;       // 변동량 (양수)
@@ -75,7 +75,7 @@ public class StockHistory {
             Long skuId,
             String skuCode,
             String skuOptionsSnapshot,
-            StockChangeType changeType,
+            StockType changeType,
             int quantity,
             int stockBefore,
             int stockAfter,
@@ -96,8 +96,8 @@ public class StockHistory {
     }
 
     public boolean isSoldOutTransition() {
-        return (changeType == StockChangeType.ORDER
-                || changeType == StockChangeType.ADMIN_DECREASE)
+        return (changeType == StockType.ORDER
+                || changeType == StockType.ADMIN_DECREASE)
                 && stockBefore > 0
                 && stockAfter == 0;
     }

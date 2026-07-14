@@ -3,7 +3,6 @@ package com.shop.admin.product.controller;
 import com.shop.admin.product.dto.SkuAdminAddRequest;
 import com.shop.admin.product.dto.ProductAdminCreateRequest;
 import com.shop.admin.product.dto.ProductAdminUpdateRequest;
-import com.shop.admin.stock.dto.StockUpdateRequest;
 import com.shop.admin.product.service.ProductAdminService;
 import com.shop.global.response.CommonResponse;
 import com.shop.product.domain.Product;
@@ -93,38 +92,6 @@ public class ProductAdminController {
         Sku sku = productAdminService.addSku(productId, options, request.initialStock());
         return ResponseEntity.status(201)
                 .body(CommonResponse.createSuccess(SkuResponse.from(sku)));
-    }
-
-    @Operation(summary = "SKU 재고 증가", description = "SKU 재고를 증가시킨다 (입고).")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "증가 성공"),
-            @ApiResponse(responseCode = "400", description = "단종 상품"),
-            @ApiResponse(responseCode = "404", description = "상품 또는 SKU 없음")
-    })
-    @PostMapping("/{productId}/skus/{skuId}/stock/increase")
-    public ResponseEntity<Void> increaseSkuStock(
-            @PathVariable Long productId,
-            @PathVariable Long skuId,
-            @Valid @RequestBody StockUpdateRequest request
-    ) {
-        productAdminService.increaseSkuStock(productId, skuId, request.quantity());
-        return ResponseEntity.noContent().build();
-    }
-
-    @Operation(summary = "SKU 재고 감소", description = "SKU 재고를 수동으로 감소시킨다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "감소 성공"),
-            @ApiResponse(responseCode = "400", description = "재고 부족"),
-            @ApiResponse(responseCode = "404", description = "상품 또는 SKU 없음")
-    })
-    @PostMapping("/{productId}/skus/{skuId}/stock/decrease")
-    public ResponseEntity<Void> decreaseSkuStock(
-            @PathVariable Long productId,
-            @PathVariable Long skuId,
-            @Valid @RequestBody StockUpdateRequest request
-    ) {
-        productAdminService.decreaseSkuStock(productId, skuId, request.quantity());
-        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "SKU 제거", description = "재고가 0인 SKU만 제거 가능.")

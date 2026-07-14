@@ -2,8 +2,8 @@ package com.shop.notification.service;
 
 import com.shop.notification.domain.Notification;
 import com.shop.notification.repository.NotificationRepository;
-import com.shop.admin.stockhistory.domain.StockChangeType;
-import com.shop.admin.stockhistory.domain.StockHistory;
+import com.shop.admin.stock.domain.StockType;
+import com.shop.admin.stock.domain.StockHistory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -53,7 +53,7 @@ class NotificationServiceTest {
     ) {
         StockHistory history = StockHistory.of(
                 productId, productName, skuId, skuCode, skuOptionsSnapshot,
-                StockChangeType.ORDER, 1, 1, 0, 1000L
+                StockType.ORDER, 1, 1, 0, 1000L
         );
         setId(history, skuId + 1000);
         return history;

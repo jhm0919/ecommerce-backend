@@ -17,7 +17,7 @@ import com.shop.product.domain.Sku;
 import com.shop.product.domain.StockChangedEvent;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
-import com.shop.admin.stockhistory.domain.StockChangeType;
+import com.shop.admin.stock.domain.StockType;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +55,7 @@ public class OrderService {
         orderRepository.save(order);
 
         // ★ 주문 저장 후 이벤트 발행 (orderId 확보)
-        publishStockChangedEvents(prepared, order.getId(), StockChangeType.ORDER);
+        publishStockChangedEvents(prepared, order.getId(), StockType.ORDER);
 
         createDelivery(order.getId(), request.delivery());
 
@@ -96,7 +96,7 @@ public class OrderService {
         orderRepository.save(order);
 
         // ★ 주문 저장 후 이벤트 발행
-        publishStockChangedEvents(prepared, order.getId(), StockChangeType.ORDER);
+        publishStockChangedEvents(prepared, order.getId(), StockType.ORDER);
 
         createDelivery(order.getId(), request.delivery());
 
@@ -188,7 +188,7 @@ public class OrderService {
             // ★ ORDER_CANCEL 이벤트 발행
             eventPublisher.publishEvent(StockChangedEvent.of(
                     product, sku,
-                    StockChangeType.ORDER_CANCEL,
+                    StockType.ORDER_CANCEL,
                     item.getQuantity(),
                     stockBefore,
                     sku.getStock(),
@@ -254,7 +254,7 @@ public class OrderService {
     private void publishStockChangedEvents(
             List<PreparedOrderItem> prepared,
             Long orderId,
-            StockChangeType changeType
+            StockType changeType
     ) {
         for (PreparedOrderItem p : prepared) {
             eventPublisher.publishEvent(StockChangedEvent.of(

@@ -32,7 +32,6 @@ import java.util.List;
 public class OrderAdminService {
     private final OrderAdminRepository orderAdminRepository;
     private final ProductRepository productRepository;
-    private final SkuRepository skuRepository;
 
     @Timed(
             value = "order.seller.search.time",

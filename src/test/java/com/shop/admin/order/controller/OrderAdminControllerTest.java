@@ -53,7 +53,7 @@ class OrderAdminControllerTest {
     JwtAuthenticationProvider jwtAuthenticationProvider;
 
     @Test
-    @DisplayName("GET /api/seller/orders - 전체 조회 200")
+    @DisplayName("GET /api/admin/orders - 전체 조회 200")
     void searchAllReturns200() throws Exception {
         when(orderAdminService.search(eq(null), eq(null), eq(null), any(Pageable.class)))
                 .thenReturn(pageOf(
@@ -61,7 +61,7 @@ class OrderAdminControllerTest {
                         orderResponse(2L, "ORD-002", OrderStatus.PENDING)
                 ));
 
-        mockMvc.perform(get("/api/seller/orders"))
+        mockMvc.perform(get("/api/admin/orders"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.message").value("성공"))
@@ -77,7 +77,7 @@ class OrderAdminControllerTest {
         when(orderAdminService.search(eq(OrderStatus.PENDING), eq(null), eq(null), any(Pageable.class)))
                 .thenReturn(pageOf(orderResponse(1L, "ORD-001", OrderStatus.PENDING)));
 
-        mockMvc.perform(get("/api/seller/orders")
+        mockMvc.perform(get("/api/admin/orders")
                         .param("status", "PENDING"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
@@ -91,7 +91,7 @@ class OrderAdminControllerTest {
         when(orderAdminService.search(eq(null), eq(today), eq(today), any(Pageable.class)))
                 .thenReturn(pageOf(orderResponse(1L, "ORD-001", OrderStatus.PENDING)));
 
-        mockMvc.perform(get("/api/seller/orders")
+        mockMvc.perform(get("/api/admin/orders")
                         .param("from", today.toString())
                         .param("to", today.toString()))
                 .andExpect(status().isOk())
@@ -105,7 +105,7 @@ class OrderAdminControllerTest {
         when(orderAdminService.search(eq(OrderStatus.CONFIRMED), eq(null), eq(null), any(Pageable.class)))
                 .thenReturn(Page.empty());
 
-        mockMvc.perform(get("/api/seller/orders")
+        mockMvc.perform(get("/api/admin/orders")
                         .param("status", "CONFIRMED"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
@@ -113,14 +113,14 @@ class OrderAdminControllerTest {
     }
 
     @Test
-    @DisplayName("PATCH /api/seller/orders/confirm - 정상 확정 200")
+    @DisplayName("PATCH /api/admin/orders/confirm - 정상 확정 200")
     void confirmOrdersReturns200() throws Exception {
         OrderAdminConfirmRequest request =
                 new OrderAdminConfirmRequest(List.of(1L, 2L));
         when(orderAdminService.confirm(List.of(1L, 2L)))
                 .thenReturn(new OrderAdminConfirmResponse(2, List.of(1L, 2L)));
 
-        mockMvc.perform(patch("/api/seller/orders/confirm")
+        mockMvc.perform(patch("/api/admin/orders/confirm")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -137,7 +137,7 @@ class OrderAdminControllerTest {
         when(orderAdminService.confirm(List.of(99999L)))
                 .thenThrow(new BusinessException(ErrorCode.ORDER_NOT_FOUND) {});
 
-        mockMvc.perform(patch("/api/seller/orders/confirm")
+        mockMvc.perform(patch("/api/admin/orders/confirm")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
@@ -152,7 +152,7 @@ class OrderAdminControllerTest {
         when(orderAdminService.confirm(List.of(1L)))
                 .thenThrow(new BusinessException(ErrorCode.INVALID_ORDER_STATUS) {});
 
-        mockMvc.perform(patch("/api/seller/orders/confirm")
+        mockMvc.perform(patch("/api/admin/orders/confirm")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -165,7 +165,7 @@ class OrderAdminControllerTest {
         OrderAdminConfirmRequest request =
                 new OrderAdminConfirmRequest(List.of());
 
-        mockMvc.perform(patch("/api/seller/orders/confirm")
+        mockMvc.perform(patch("/api/admin/orders/confirm")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -175,7 +175,7 @@ class OrderAdminControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/seller/orders/{orderId}/cancel - 정상 취소 200")
+    @DisplayName("POST /api/admin/orders/{orderId}/cancel - 정상 취소 200")
     void cancelOrderReturns200() throws Exception {
         OrderAdminCancelRequest request =
                 new OrderAdminCancelRequest("재고 부족", "OUT_OF_STOCK");
@@ -183,7 +183,7 @@ class OrderAdminControllerTest {
                 .thenReturn(new OrderAdminCancelResponse(
                         1L, "ORD-001", OrderStatus.CANCELLED, "재고 부족"));
 
-        mockMvc.perform(post("/api/seller/orders/1/cancel")
+        mockMvc.perform(post("/api/admin/orders/1/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -200,7 +200,7 @@ class OrderAdminControllerTest {
         when(orderAdminService.cancel(99999L, "사유", "CODE"))
                 .thenThrow(new BusinessException(ErrorCode.ORDER_NOT_FOUND) {});
 
-        mockMvc.perform(post("/api/seller/orders/99999/cancel")
+        mockMvc.perform(post("/api/admin/orders/99999/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
@@ -213,7 +213,7 @@ class OrderAdminControllerTest {
         OrderAdminCancelRequest request =
                 new OrderAdminCancelRequest("", "CODE");
 
-        mockMvc.perform(post("/api/seller/orders/1/cancel")
+        mockMvc.perform(post("/api/admin/orders/1/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -230,7 +230,7 @@ class OrderAdminControllerTest {
         when(orderAdminService.cancel(1L, "사유", "CODE"))
                 .thenThrow(new BusinessException(ErrorCode.ALREADY_CANCELLED_ORDER) {});
 
-        mockMvc.perform(post("/api/seller/orders/1/cancel")
+        mockMvc.perform(post("/api/admin/orders/1/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())

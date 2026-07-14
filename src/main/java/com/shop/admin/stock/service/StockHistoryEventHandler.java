@@ -1,9 +1,9 @@
-package com.shop.admin.stockhistory.service;
+package com.shop.admin.stock.service;
 
 import com.shop.product.domain.StockChangedEvent;
-import com.shop.admin.stockhistory.domain.StockHistory;
-import com.shop.admin.stockhistory.domain.StockHistoryRecordedEvent;
-import com.shop.admin.stockhistory.repository.StockHistoryRepository;
+import com.shop.admin.stock.domain.StockHistory;
+import com.shop.admin.stock.domain.StockHistoryRecordedEvent;
+import com.shop.admin.stock.repository.StockHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;

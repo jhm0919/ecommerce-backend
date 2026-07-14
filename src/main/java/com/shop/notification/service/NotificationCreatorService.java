@@ -3,7 +3,7 @@ package com.shop.notification.service;
 import com.shop.notification.domain.Notification;
 import com.shop.notification.domain.NotificationSourceType;
 import com.shop.notification.repository.NotificationRepository;
-import com.shop.admin.stockhistory.domain.StockHistory;
+import com.shop.admin.stock.domain.StockHistory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;

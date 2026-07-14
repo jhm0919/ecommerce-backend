@@ -1,6 +1,6 @@
-package com.shop.admin.stockhistory.domain;
+package com.shop.admin.stock.domain;
 
-public enum StockChangeType {
+public enum StockType {
     ORDER,           // 주문으로 인한 차감
     ORDER_CANCEL,    // 주문 취소로 인한 복구
     ADMIN_INCREASE,  // 어드민 수동 증가

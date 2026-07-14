@@ -1,7 +1,7 @@
-package com.shop.admin.stockhistory.dto;
+package com.shop.admin.stock.dto;
 
-import com.shop.admin.stockhistory.domain.StockChangeType;
-import com.shop.admin.stockhistory.domain.StockHistory;
+import com.shop.admin.stock.domain.StockType;
+import com.shop.admin.stock.domain.StockHistory;
 
 import java.time.LocalDateTime;
 
@@ -12,7 +12,7 @@ public record StockHistoryResponse(
         Long skuId,
         String skuCode,
         String skuOptionsSnapshot,
-        StockChangeType changeType,
+        StockType changeType,
         int quantity,
         int stockBefore,
         int stockAfter,

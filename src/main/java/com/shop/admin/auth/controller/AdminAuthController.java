@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "판매자 인증", description = "판매자 로그인 API")
 @RestController
-@RequestMapping("/api/seller/auth")
+@RequestMapping("/api/admin/auth")
 @RequiredArgsConstructor
 public class AdminAuthController {
 

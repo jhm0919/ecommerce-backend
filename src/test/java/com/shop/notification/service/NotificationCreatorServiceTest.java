@@ -3,8 +3,8 @@ package com.shop.notification.service;
 import com.shop.notification.domain.Notification;
 import com.shop.notification.domain.NotificationSourceType;
 import com.shop.notification.repository.NotificationRepository;
-import com.shop.admin.stockhistory.domain.StockChangeType;
-import com.shop.admin.stockhistory.domain.StockHistory;
+import com.shop.admin.stock.domain.StockType;
+import com.shop.admin.stock.domain.StockHistory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -38,7 +38,7 @@ class NotificationCreatorServiceTest {
         @Test
         @DisplayName("재고가 1 이상에서 0으로 전이되면 알림 저장")
         void createWhenSoldOutTransition() {
-            StockHistory history = history(1L, StockChangeType.ORDER, 3, 0);
+            StockHistory history = history(1L, StockType.ORDER, 3, 0);
             given(notificationRepository.existsBySourceTypeAndSourceId(
                     NotificationSourceType.STOCK_HISTORY, 1L)).willReturn(false);
 
@@ -58,7 +58,7 @@ class NotificationCreatorServiceTest {
         @Test
         @DisplayName("이미 같은 StockHistory source 알림이 있으면 저장하지 않는다")
         void skipExistingSource() {
-            StockHistory history = history(1L, StockChangeType.ORDER, 3, 0);
+            StockHistory history = history(1L, StockType.ORDER, 3, 0);
             given(notificationRepository.existsBySourceTypeAndSourceId(
                     NotificationSourceType.STOCK_HISTORY, 1L)).willReturn(true);
 
@@ -70,7 +70,7 @@ class NotificationCreatorServiceTest {
         @Test
         @DisplayName("이미 품절 상태에서 0으로 남은 이력은 알림을 만들지 않는다")
         void skipZeroToZero() {
-            StockHistory history = history(1L, StockChangeType.ORDER, 0, 0);
+            StockHistory history = history(1L, StockType.ORDER, 0, 0);
 
             notificationCreatorService.createSoldOutNotificationIfNeeded(history);
 
@@ -80,7 +80,7 @@ class NotificationCreatorServiceTest {
         @Test
         @DisplayName("재고가 남아 있으면 알림을 만들지 않는다")
         void skipWhenStockRemains() {
-            StockHistory history = history(1L, StockChangeType.ORDER, 5, 2);
+            StockHistory history = history(1L, StockType.ORDER, 5, 2);
 
             notificationCreatorService.createSoldOutNotificationIfNeeded(history);
 
@@ -90,7 +90,7 @@ class NotificationCreatorServiceTest {
         @Test
         @DisplayName("어드민 증가 이력은 재고가 0이어도 품절 알림 대상이 아니다")
         void skipAdminIncrease() {
-            StockHistory history = history(1L, StockChangeType.ADMIN_INCREASE, 3, 0);
+            StockHistory history = history(1L, StockType.ADMIN_INCREASE, 3, 0);
 
             notificationCreatorService.createSoldOutNotificationIfNeeded(history);
 
@@ -102,7 +102,7 @@ class NotificationCreatorServiceTest {
         void rejectHistoryWithoutId() {
             StockHistory history = StockHistory.of(
                     10L, "티셔츠", 100L, "SKU-10-001", "색상=검정",
-                    StockChangeType.ORDER, 3, 3, 0, 1000L
+                    StockType.ORDER, 3, 3, 0, 1000L
             );
 
             assertThatThrownBy(() ->
@@ -120,7 +120,7 @@ class NotificationCreatorServiceTest {
         @Test
         @DisplayName("exists=false 이후 save 유니크 충돌이 나도 source가 생겼으면 멱등 처리")
         void ignoreUniqueConflictAfterRace() {
-            StockHistory history = history(1L, StockChangeType.ORDER, 3, 0);
+            StockHistory history = history(1L, StockType.ORDER, 3, 0);
             given(notificationRepository.existsBySourceTypeAndSourceId(
                     NotificationSourceType.STOCK_HISTORY, 1L))
                     .willReturn(false, true);
@@ -139,7 +139,7 @@ class NotificationCreatorServiceTest {
         @Test
         @DisplayName("저장 실패 후 source가 없으면 유니크 충돌이 아니므로 예외 재전파")
         void rethrowNonUniqueIntegrityViolation() {
-            StockHistory history = history(1L, StockChangeType.ORDER, 3, 0);
+            StockHistory history = history(1L, StockType.ORDER, 3, 0);
             DataIntegrityViolationException exception =
                     new DataIntegrityViolationException("not null violation");
             given(notificationRepository.existsBySourceTypeAndSourceId(
@@ -156,7 +156,7 @@ class NotificationCreatorServiceTest {
 
     private StockHistory history(
             Long id,
-            StockChangeType changeType,
+            StockType changeType,
             int stockBefore,
             int stockAfter
     ) {

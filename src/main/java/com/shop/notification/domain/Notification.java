@@ -1,6 +1,6 @@
 package com.shop.notification.domain;
 
-import com.shop.admin.stockhistory.domain.StockHistory;
+import com.shop.admin.stock.domain.StockHistory;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
