@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-public record SkuAddRequest(
+public record SkuAdminAddRequest(
     @NotEmpty(message = "옵션은 1개 이상이어야 합니다")
     List<SkuOptionRequest> options,
 

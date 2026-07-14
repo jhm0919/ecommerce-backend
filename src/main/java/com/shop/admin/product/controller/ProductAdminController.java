@@ -1,10 +1,10 @@
 package com.shop.admin.product.controller;
 
-import com.shop.admin.product.dto.SkuAddRequest;
+import com.shop.admin.product.dto.SkuAdminAddRequest;
 import com.shop.admin.product.dto.ProductAdminCreateRequest;
 import com.shop.admin.product.dto.ProductAdminUpdateRequest;
 import com.shop.admin.stock.dto.StockUpdateRequest;
-import com.shop.admin.product.service.ProductService;
+import com.shop.admin.product.service.ProductAdminService;
 import com.shop.global.response.CommonResponse;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.Sku;
@@ -29,7 +29,7 @@ import java.util.List;
 @RequestMapping("/api/admin/products")
 @RequiredArgsConstructor
 public class ProductAdminController {
-    private final ProductService productService;
+    private final ProductAdminService productAdminService;
 
     @Operation(summary = "상품 등록", description = "새 상품을 등록한다.")
     @ApiResponses({
@@ -41,7 +41,7 @@ public class ProductAdminController {
     public ResponseEntity<CommonResponse<ProductDetailResponse>> register(
             @Valid @RequestBody ProductAdminCreateRequest request
     ) {
-        Product product = productService.register(request);
+        Product product = productAdminService.register(request);
         return ResponseEntity.status(201)
                 .body(CommonResponse.createSuccess(ProductDetailResponse.from(product)));
     }
@@ -58,7 +58,7 @@ public class ProductAdminController {
             @Valid @RequestBody ProductAdminUpdateRequest request
     ) {
         // 1. 서비스로부터 DTO를 직접 받습니다.
-        ProductDetailResponse responseDto = productService.update(id, request);
+        ProductDetailResponse responseDto = productAdminService.update(id, request);
         return ResponseEntity.ok(
                 CommonResponse.createSuccess(responseDto) // 2. 받은 DTO를 그대로 응답으로 보냅니다.
         );
@@ -71,7 +71,7 @@ public class ProductAdminController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> discontinue(@PathVariable Long id) {
-        productService.discontinue(id);
+        productAdminService.discontinue(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -84,13 +84,13 @@ public class ProductAdminController {
     @PostMapping("/{productId}/skus")
     public ResponseEntity<CommonResponse<SkuResponse>> addSku(
             @PathVariable Long productId,
-            @Valid @RequestBody SkuAddRequest request
+            @Valid @RequestBody SkuAdminAddRequest request
     ) {
         List<SkuOption> options = request.options().stream()
                 .map(opt -> new SkuOption(opt.name(), opt.value()))
                 .toList();
 
-        Sku sku = productService.addSku(productId, options, request.initialStock());
+        Sku sku = productAdminService.addSku(productId, options, request.initialStock());
         return ResponseEntity.status(201)
                 .body(CommonResponse.createSuccess(SkuResponse.from(sku)));
     }
@@ -107,7 +107,7 @@ public class ProductAdminController {
             @PathVariable Long skuId,
             @Valid @RequestBody StockUpdateRequest request
     ) {
-        productService.increaseSkuStock(productId, skuId, request.quantity());
+        productAdminService.increaseSkuStock(productId, skuId, request.quantity());
         return ResponseEntity.noContent().build();
     }
 
@@ -123,7 +123,7 @@ public class ProductAdminController {
             @PathVariable Long skuId,
             @Valid @RequestBody StockUpdateRequest request
     ) {
-        productService.decreaseSkuStock(productId, skuId, request.quantity());
+        productAdminService.decreaseSkuStock(productId, skuId, request.quantity());
         return ResponseEntity.noContent().build();
     }
 
@@ -138,7 +138,7 @@ public class ProductAdminController {
             @PathVariable Long productId,
             @PathVariable Long skuId
     ) {
-        productService.removeSku(productId, skuId);
+        productAdminService.removeSku(productId, skuId);
         return ResponseEntity.noContent().build();
     }
 }

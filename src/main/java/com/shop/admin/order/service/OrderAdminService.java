@@ -2,7 +2,7 @@ package com.shop.admin.order.service;
 
 import com.shop.global.exception.BusinessException;
 import com.shop.global.exception.ErrorCode;
-import com.shop.admin.order.domain.OrderAdmin;
+import com.shop.order.domain.Order;
 import com.shop.order.domain.OrderItem;
 import com.shop.order.domain.OrderStatus;
 import com.shop.admin.order.dto.OrderAdminCancelResponse;
@@ -59,7 +59,7 @@ public class OrderAdminService {
     )
     public OrderAdminConfirmResponse confirm(List<Long> orderIds) {
 
-        List<com.shop.order.domain.Order> orders = orderIds.stream()
+        List<Order> orders = orderIds.stream()
                 .map(id -> orderAdminRepository.findById(id)
                         .orElseThrow(() -> new BusinessException(
                                 ErrorCode.ORDER_NOT_FOUND) {}))
@@ -73,7 +73,11 @@ public class OrderAdminService {
         });
 
         // 전부 통과 시 일괄 확정
-        orders.forEach(OrderAdmin::confirm);
+//        orders.forEach(OrderAdmin::confirm);
+//        for (Order order : orders) {
+//            order.confirm();
+//        }
+        orders.forEach(Order::confirm);
 
         List<Long> confirmedIds = orders.stream()
                 .map(com.shop.order.domain.Order::getId)
@@ -92,12 +96,13 @@ public class OrderAdminService {
             String cancelReasonCode
     ) {
         // 1. 주문 조회
-        com.shop.order.domain.Order order = orderAdminRepository.findById(orderId)
+        Order order = orderAdminRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.ORDER_NOT_FOUND) {});
 
         // 2. 강제 취소
-        OrderAdmin.forceCancel(order);
+//        OrderAdmin.forceCancel(order);
+        order.forceCancel();
 
         // 3. 재고 복구 — 팀원 패턴 그대로
         for (OrderItem item : order.getItems()) {

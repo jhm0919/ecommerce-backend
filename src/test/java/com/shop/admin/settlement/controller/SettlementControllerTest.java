@@ -1,7 +1,7 @@
 package com.shop.admin.settlement.controller;
 
 import com.shop.category.domain.Category;
-import com.shop.admin.order.domain.OrderAdmin;
+import com.shop.order.domain.Order;
 import com.shop.order.domain.OrderItem;
 import com.shop.admin.order.repository.OrderAdminRepository;
 import com.shop.category.repository.CategoryRepository;
@@ -72,9 +72,9 @@ class SettlementControllerTest {
 
     private void createConfirmedOrder() {
         OrderItem item = OrderItem.of(testProduct, testSku, 1);
-        com.shop.order.domain.Order order = com.shop.order.domain.Order.createForMember(1L, List.of(item));
+        Order order = Order.createForMember(1L, List.of(item));
         orderAdminRepository.save(order);
-        OrderAdmin.confirm(order);
+        order.confirm();
         orderAdminRepository.saveAndFlush(order);
     }
 

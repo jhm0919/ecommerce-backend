@@ -34,19 +34,19 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class ProductServiceTest {
+class ProductAdminServiceTest {
     @Mock
     private ProductRepository productRepository;
     @Mock private CategoryRepository categoryRepository;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private CartRepository cartRepository; // 1. CartRepository Mock 객체 추가
-    private ProductService productService; // 필드만 선언
+    private ProductAdminService productAdminService; // 필드만 선언
 
     @BeforeEach
         // 4. @BeforeEach 셋업 메서드 추가 (또는 기존 메서드에 추가)
     void setUp() {
         // 5. 서비스 객체를 수동으로 생성하고 모든 Mock을 주입합니다.
-        productService = new ProductService(
+        productAdminService = new ProductAdminService(
                 productRepository,
                 categoryRepository,
                 cartRepository,
@@ -88,7 +88,7 @@ class ProductServiceTest {
             given(productRepository.save(any(Product.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
 
-            Product result = productService.register(request);
+            Product result = productAdminService.register(request);
 
             assertThat(result.getName()).isEqualTo("베이직 티셔츠");
             assertThat(result.getStatus().name()).isEqualTo("ACTIVE");
@@ -108,7 +108,7 @@ class ProductServiceTest {
 
             given(categoryRepository.findById(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> productService.register(request))
+            assertThatThrownBy(() -> productAdminService.register(request))
                     .isInstanceOf(CategoryNotFoundException.class);
         }
     }
@@ -124,7 +124,7 @@ class ProductServiceTest {
             Long categoryId = product.getCategory().getId();
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            ProductDetailResponse result = productService.update(1L,
+            ProductDetailResponse result = productAdminService.update(1L,
                     new ProductAdminUpdateRequest("새 이름", null, null, null, null));
 
             assertThat(result.name()).isEqualTo("새 이름");
@@ -135,7 +135,7 @@ class ProductServiceTest {
         void rejectUnknownProduct() {
             given(productRepository.findById(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> productService.update(999L,
+            assertThatThrownBy(() -> productAdminService.update(999L,
                     new ProductAdminUpdateRequest("이름", null, null, null, null)))
                     .isInstanceOf(ProductNotFoundException.class);
         }
@@ -155,7 +155,7 @@ class ProductServiceTest {
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            productService.increaseSkuStock(1L, 100L, 5);
+            productAdminService.increaseSkuStock(1L, 100L, 5);
 
             assertThat(sku.getStock()).isEqualTo(15);
         }
@@ -170,7 +170,7 @@ class ProductServiceTest {
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            productService.increaseSkuStock(1L, 100L, 5);
+            productAdminService.increaseSkuStock(1L, 100L, 5);
 
             verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
@@ -180,7 +180,7 @@ class ProductServiceTest {
         void rejectUnknownProduct() {
             given(productRepository.findById(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> productService.increaseSkuStock(999L, 100L, 5))
+            assertThatThrownBy(() -> productAdminService.increaseSkuStock(999L, 100L, 5))
                     .isInstanceOf(ProductNotFoundException.class);
         }
     }
@@ -199,7 +199,7 @@ class ProductServiceTest {
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            productService.decreaseSkuStock(1L, 100L, 3);
+            productAdminService.decreaseSkuStock(1L, 100L, 3);
 
             assertThat(sku.getStock()).isEqualTo(7);
         }
@@ -214,7 +214,7 @@ class ProductServiceTest {
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            productService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
+            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
 
             verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
@@ -229,7 +229,7 @@ class ProductServiceTest {
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            productService.decreaseSkuStock(1L, 100L, 3);  // 재고 3→0
+            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 3→0
 
             verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
@@ -244,7 +244,7 @@ class ProductServiceTest {
 
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
-            productService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
+            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
 
             verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
@@ -277,7 +277,7 @@ class ProductServiceTest {
                     });
 
             // when
-            productService.addSku(1L,
+            productAdminService.addSku(1L,
                     List.of(new SkuOption("색상", "검정")), 10);
 
             // then
@@ -297,7 +297,7 @@ class ProductServiceTest {
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
             // when
-            productService.discontinue(1L);
+            productAdminService.discontinue(1L);
 
             // then
             assertThat(product.getStatus().name()).isEqualTo("DISCONTINUED");

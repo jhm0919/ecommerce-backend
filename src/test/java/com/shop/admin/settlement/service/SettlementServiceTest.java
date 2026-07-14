@@ -2,7 +2,7 @@ package com.shop.admin.settlement.service;
 
 import com.shop.global.exception.BusinessException;
 import com.shop.category.domain.Category;
-import com.shop.admin.order.domain.OrderAdmin;
+import com.shop.order.domain.Order;
 import com.shop.order.domain.OrderItem;
 import com.shop.admin.order.repository.OrderAdminRepository;
 import com.shop.category.repository.CategoryRepository;
@@ -66,33 +66,33 @@ class SettlementServiceTest {
     }
 
     // 헬퍼 — CONFIRMED 주문 생성
-    private com.shop.order.domain.Order createConfirmedOrder(int quantity) {
+    private Order createConfirmedOrder(int quantity) {
         OrderItem item = OrderItem.of(testProduct, testSku, quantity);
-        com.shop.order.domain.Order order = com.shop.order.domain.Order.createForMember(1L, List.of(item));
+        Order order = Order.createForMember(1L, List.of(item));
         orderAdminRepository.save(order);
-        OrderAdmin.confirm(order);
+        order.confirm();
         return orderAdminRepository.saveAndFlush(order);
     }
 
-    private com.shop.order.domain.Order createConfirmedOrder() {
+    private Order createConfirmedOrder() {
         OrderItem item = OrderItem.of(testProduct, testSku, 1);
-        com.shop.order.domain.Order order = com.shop.order.domain.Order.createForMember(1L, List.of(item));
+        Order order = Order.createForMember(1L, List.of(item));
         orderAdminRepository.save(order);
-        OrderAdmin.confirm(order);
+        order.confirm();
         return orderAdminRepository.saveAndFlush(order);
     }
 
     // 헬퍼 — PENDING 주문 생성
-    private com.shop.order.domain.Order createPendingOrder() {
+    private Order createPendingOrder() {
         OrderItem item = OrderItem.of(testProduct, testSku, 1);
-        com.shop.order.domain.Order order = com.shop.order.domain.Order.createForMember(1L, List.of(item));
+        Order order = Order.createForMember(1L, List.of(item));
         return orderAdminRepository.saveAndFlush(order);
     }
 
     // 헬퍼 — CANCELLED 주문 생성
-    private com.shop.order.domain.Order createCancelledOrder() {
+    private Order createCancelledOrder() {
         OrderItem item = OrderItem.of(testProduct, testSku, 1);
-        com.shop.order.domain.Order order = com.shop.order.domain.Order.createForMember(1L, List.of(item));
+        Order order = Order.createForMember(1L, List.of(item));
         order.cancel();
         return orderAdminRepository.saveAndFlush(order);
     }

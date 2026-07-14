@@ -25,7 +25,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ProductService {
+public class ProductAdminService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final CartRepository cartRepository;

@@ -1,5 +1,7 @@
 package com.shop.order.domain;
 
+import com.shop.global.exception.BusinessException;
+import com.shop.global.exception.ErrorCode;
 import com.shop.product.domain.Money;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -210,8 +212,18 @@ public class Order {
     /**
      *  (Admin) 상태 변경 메서드
      */
-    void updateStatus(OrderStatus newStatus) {
-        this.status = newStatus;
+    public void confirm() {
+        if (this.status != OrderStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS) {};
+        }
+        this.status = OrderStatus.CONFIRMED;
+    }
+
+    public void forceCancel() {
+        if (this.status == OrderStatus.CANCELLED) {
+            throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS) {};
+        }
+        this.status = OrderStatus.CANCELLED;
     }
 
     // ─────────────────────────────────────
