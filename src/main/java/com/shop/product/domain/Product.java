@@ -1,6 +1,8 @@
 package com.shop.product.domain;
 
 import com.shop.category.domain.Category;
+import com.shop.global.exception.BusinessException;
+import com.shop.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -227,6 +229,7 @@ public class Product {
     public void increaseSkuStock(Long skuId, int quantity) {
         if (this.status == ProductStatus.DISCONTINUED) {
             throw new IllegalStateException("Cannot restock discontinued product");
+//            throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS) {};
         }
         Sku sku = findSku(skuId);
         sku.increaseStock(quantity);

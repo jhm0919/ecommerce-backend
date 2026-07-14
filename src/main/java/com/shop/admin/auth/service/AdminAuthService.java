@@ -24,12 +24,12 @@ public class AdminAuthService {
 
         // 판매자 조회
         Admin admin = adminRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException(ErrorCode.SELLER_NOT_FOUND) {
+                .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_NOT_FOUND) {
                 });
 
         // 비밀번호 검증
         if (!passwordEncoder.matches(password, admin.getPassword())) {
-            throw new BusinessException(ErrorCode.SELLER_INVALID_PASSWORD) {
+            throw new BusinessException(ErrorCode.ADMIN_INVALID_PASSWORD) {
             };
         }
 
@@ -37,7 +37,7 @@ public class AdminAuthService {
         return authService.createToken(
                 admin.getId(),
                 admin.getUsername(),  // providerSub 자리에 username
-                "SELLER"
+                "ADMIN"
         );
     }
 }
