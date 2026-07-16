@@ -56,9 +56,11 @@ public enum ErrorCode {
     QUESTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "Q003", "질문에 접근할 수 없습니다"),
     QUESTION_NOT_OWNER(HttpStatus.FORBIDDEN, "Q004", "본인의 질문만 삭제할 수 있습니다"),
 
-    // Dashboard
-    INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "DB001", "조회 기간이 올바르지 않습니다"),
-    DATE_RANGE_TOO_LONG(HttpStatus.BAD_REQUEST, "DB002", "조회 기간은 최대 365일까지 가능합니다");
+    // Sales
+    INVALID_SALES_DATE(HttpStatus.BAD_REQUEST, "DB001", "유효하지 않는 날짜입니다."),
+    INVALID_SALES_MONTH(HttpStatus.BAD_REQUEST, "DB002", "유효하지 않는 월입니다.");
+//    INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "DB003", "조회 기간이 올바르지 않습니다"),
+//    DATE_RANGE_TOO_LONG(HttpStatus.BAD_REQUEST, "DB004", "조회 기간은 최대 365일까지 가능합니다");
 
     private final HttpStatus status;
     private final String code;

@@ -1,0 +1,123 @@
+package com.shop.admin.sales.service;
+
+import com.shop.admin.sales.dto.*;
+import com.shop.admin.sales.exception.InvalidDateException;
+import com.shop.admin.sales.exception.InvalidMonthException;
+import com.shop.global.exception.BusinessException;
+import com.shop.global.exception.ErrorCode;
+import com.shop.order.domain.OrderStatus;
+import com.shop.order.repository.OrderRepository;
+import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class SalesService {
+    private final OrderRepository orderRepository;
+    private static final List<OrderStatus> SALES_STATUSES =
+            List.of(OrderStatus.PENDING, OrderStatus.CONFIRMED);
+
+    @Transactional(readOnly = true)
+    public SalesDailyResponse getDailySales(LocalDate date, Sort.Direction sort) {
+        validateDate(date);
+
+        LocalDateTime from = date.atStartOfDay();
+        LocalDateTime toExclusive = date.plusDays(1).atStartOfDay();
+
+        List<SalesDailyItem> items =
+                orderRepository.findDailySalesItems(from, toExclusive, SALES_STATUSES);
+
+        List<SalesDailyItem> sortedItems = getSortedItems(sort, items);
+
+        BigDecimal totalAmount = getDailyTotalAmount(items);
+
+        long totalQuantity = items.stream()
+                .mapToLong(SalesDailyItem::quantity)
+                .sum();
+
+        return new SalesDailyResponse(date, sortedItems, totalAmount, totalQuantity);
+    }
+
+    private static void validateDate(LocalDate date) {
+        if (date == null || date.isAfter(LocalDate.now())) {
+            throw new InvalidDateException();
+        }
+    }
+
+    private static @NonNull BigDecimal getDailyTotalAmount(List<SalesDailyItem> items) {
+        return items.stream()
+                .map(SalesDailyItem::amount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private static @NonNull List<SalesDailyItem> getSortedItems(Sort.Direction sort, List<SalesDailyItem> items) {
+        return sort == Sort.Direction.DESC
+                ? items.stream()
+                    .sorted(Comparator.comparing(SalesDailyItem::amount).reversed())
+                    .toList()
+                : items.stream()
+                    .sorted(Comparator.comparing(SalesDailyItem::amount))
+                    .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public SalesMonthlyResponse getMonthlySales(YearMonth month) {
+        validateMonth(month);
+
+        LocalDate firstDay = month.atDay(1);
+        LocalDate lastDay = month.atEndOfMonth();
+        LocalDateTime from = firstDay.atStartOfDay();
+        LocalDateTime toExclusive = lastDay.plusDays(1).atStartOfDay();
+
+        List<SalesMonthlyItem> rawItems =
+                orderRepository.findMonthlySalesItems(from, toExclusive, SALES_STATUSES);
+
+        // 월 내 날짜가 빠지지 않게 0원으로 채워 넣음
+        List<SalesMonthlyItem> items = normalizeItems(rawItems, firstDay, lastDay);
+
+        BigDecimal totalAmount = getMonthlyTotalAmount(rawItems);
+
+        return new SalesMonthlyResponse(month, items, totalAmount);
+    }
+
+    private static void validateMonth(YearMonth month) {
+        if (month == null || month.isAfter(YearMonth.now())) {
+            throw new InvalidMonthException();
+        }
+    }
+
+    private static @NonNull List<SalesMonthlyItem> normalizeItems(List<SalesMonthlyItem> rawItems, LocalDate firstDay, LocalDate lastDay) {
+        Map<LocalDate, BigDecimal> amountByDate = rawItems.stream()
+                .collect(Collectors.toMap(
+                        SalesMonthlyItem::date,
+                        SalesMonthlyItem::dailyAmount,
+                        BigDecimal::add
+                ));
+
+        return firstDay.datesUntil(lastDay.plusDays(1))
+                .map(date -> new SalesMonthlyItem(
+                        date,
+                        amountByDate.getOrDefault(date, BigDecimal.ZERO)
+                ))
+                .toList();
+    }
+
+    private static @NonNull BigDecimal getMonthlyTotalAmount(List<SalesMonthlyItem> items) {
+        return items.stream()
+                .map(SalesMonthlyItem::dailyAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+}

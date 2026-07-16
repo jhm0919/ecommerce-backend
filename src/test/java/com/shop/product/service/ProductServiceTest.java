@@ -41,7 +41,7 @@ class ProductServiceTest {
     @Mock private ApplicationEventPublisher eventPublisher; // Mock 객체 추가
 
 //    @InjectMocks private ProductService productService;
-private ProductService productService; // 필드만 선언합니다.
+    private ProductService productService; // 필드만 선언합니다.
 
     @BeforeEach
     void setUp() {

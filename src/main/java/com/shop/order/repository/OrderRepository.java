@@ -1,5 +1,7 @@
 package com.shop.order.repository;
 
+import com.shop.admin.sales.dto.SalesDailyItem;
+import com.shop.admin.sales.dto.SalesMonthlyItem;
 import com.shop.order.domain.Order;
 import com.shop.order.domain.OrderStatus;
 import org.springframework.data.domain.Page;
@@ -89,22 +91,26 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @return Object[] = [date(java.sql.Date), revenue(BigDecimal), count(Long)]
      */
     @Query("""
-            SELECT FUNCTION('DATE', o.createdAt) AS orderDate,
-                   COALESCE(SUM(o.totalAmount.amount), 0),
-                   COUNT(o)
-            FROM Order o
-            WHERE o.status IN (
-                com.shop.order.domain.OrderStatus.PENDING,
-                com.shop.order.domain.OrderStatus.CONFIRMED
-            )
-              AND o.createdAt >= :from AND o.createdAt < :to
-            GROUP BY FUNCTION('DATE', o.createdAt)
-            ORDER BY orderDate ASC
-            """)
-    List<Object[]> findDailySales(
+          SELECT new com.shop.admin.sales.dto.SalesDailyItem(
+              oi.productName,
+              oi.priceAtOrder.amount,
+              oi.quantity,
+              (oi.priceAtOrder.amount * oi.quantity)
+          )
+          FROM Order o
+          JOIN o.items oi
+          WHERE o.status IN :statuses
+            AND o.createdAt >= :from
+            AND o.createdAt < :toExclusive
+          ORDER BY oi.productName ASC, oi.priceAtOrder.amount ASC
+      """)
+    List<SalesDailyItem> findDailySalesItems(
             @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime toExclusive
+            @Param("toExclusive") LocalDateTime toExclusive,
+            @Param("statuses") List<OrderStatus> statuses
     );
+
+
 
     /**
      * 월별 매출 집계 (PENDING + CONFIRMED 만, CANCELLED 제외).
@@ -112,22 +118,19 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @return Object[] = [yearMonth(String "YYYY-MM"), revenue(BigDecimal), count(Long)]
      */
     @Query("""
-            SELECT FUNCTION('YEAR', o.createdAt),
-                   FUNCTION('MONTH', o.createdAt),
-                   COALESCE(SUM(o.totalAmount.amount), 0),
-                   COUNT(o)
-            FROM Order o
-            WHERE o.status IN (
-                com.shop.order.domain.OrderStatus.PENDING,
-                com.shop.order.domain.OrderStatus.CONFIRMED
-            )
-              AND o.createdAt >= :from AND o.createdAt < :to
-            GROUP BY FUNCTION('YEAR', o.createdAt), FUNCTION('MONTH', o.createdAt)
-            ORDER BY FUNCTION('YEAR', o.createdAt) ASC, FUNCTION('MONTH', o.createdAt) ASC
-            """)
-    List<Object[]> findMonthlySales(
+          SELECT new com.shop.admin.sales.dto.SalesMonthlyItem(
+              FUNCTION('DATE', o.createdAt),
+              COALESCE(SUM(o.totalAmount.amount), 0)
+          )
+          FROM Order o
+          WHERE o.status IN :statuses
+            AND o.createdAt >= :from
+          ORDER BY FUNCTION('DATE', o.createdAt) ASC
+      """)
+    List<SalesMonthlyItem> findMonthlySalesItems(
             @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime toExclusive
+            @Param("toExclusive") LocalDateTime toExclusive,
+            @Param("statuses") List<OrderStatus> statuses
     );
 
     /**

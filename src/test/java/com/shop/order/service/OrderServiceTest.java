@@ -36,7 +36,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class OrderAdminServiceTest {
+class OrderServiceTest {
 
     @Mock private OrderRepository orderRepository;
     @Mock private DeliveryRepository deliveryRepository;
