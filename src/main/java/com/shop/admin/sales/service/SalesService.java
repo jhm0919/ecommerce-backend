@@ -82,8 +82,15 @@ public class SalesService {
         LocalDateTime from = firstDay.atStartOfDay();
         LocalDateTime toExclusive = lastDay.plusDays(1).atStartOfDay();
 
-        List<SalesMonthlyItem> rawItems =
-                orderRepository.findMonthlySalesItems(from, toExclusive, SALES_STATUSES);
+        List<Object[]> rows = orderRepository.findMonthlySalesItems(from, toExclusive, SALES_STATUSES);
+        List<SalesMonthlyItem> rawItems = rows.stream()
+                .map(row -> {
+                    LocalDate date = convertToLocalDate(row[0]);
+                    BigDecimal amount = convertToBigDecimal(row[1]);
+
+                    return new SalesMonthlyItem(date, amount);
+                })
+                .toList();
 
         // 월 내 날짜가 빠지지 않게 0원으로 채워 넣음
         List<SalesMonthlyItem> items = normalizeItems(rawItems, firstDay, lastDay);
@@ -98,6 +105,39 @@ public class SalesService {
             throw new InvalidMonthException();
         }
     }
+
+    private static LocalDate convertToLocalDate(Object value) {
+        if (value instanceof LocalDate date) {
+            return date;
+        }
+
+        if (value instanceof java.sql.Date date) {
+            return date.toLocalDate();
+        }
+
+        if (value instanceof LocalDateTime dateTime) {
+            return dateTime.toLocalDate();
+        }
+
+        throw new IllegalArgumentException(
+                "지원하지 않는 날짜 타입: " + value
+        );
+    }
+
+    private static BigDecimal convertToBigDecimal(Object value) {
+        if (value instanceof BigDecimal amount) {
+            return amount;
+        }
+
+        if (value instanceof Number number) {
+            return BigDecimal.valueOf(number.doubleValue());
+        }
+
+        throw new IllegalArgumentException(
+                "지원하지 않는 금액 타입: " + value
+        );
+    }
+
 
     private static @NonNull List<SalesMonthlyItem> normalizeItems(List<SalesMonthlyItem> rawItems, LocalDate firstDay, LocalDate lastDay) {
         Map<LocalDate, BigDecimal> amountByDate = rawItems.stream()

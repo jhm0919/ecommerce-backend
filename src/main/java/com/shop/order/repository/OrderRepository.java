@@ -118,16 +118,18 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @return Object[] = [yearMonth(String "YYYY-MM"), revenue(BigDecimal), count(Long)]
      */
     @Query("""
-          SELECT new com.shop.admin.sales.dto.SalesMonthlyItem(
-              FUNCTION('DATE', o.createdAt),
-              COALESCE(SUM(o.totalAmount.amount), 0)
-          )
-          FROM Order o
-          WHERE o.status IN :statuses
-            AND o.createdAt >= :from
-          ORDER BY FUNCTION('DATE', o.createdAt) ASC
+          SELECT (
+               FUNCTION('DATE', o.createdAt),
+               COALESCE(SUM(o.totalAmount.amount), 0)
+           )
+           FROM Order o
+           WHERE o.status IN :statuses
+             AND o.createdAt >= :from
+             AND o.createdAt < :toExclusive
+           GROUP BY FUNCTION('DATE', o.createdAt)
+           ORDER BY FUNCTION('DATE', o.createdAt) ASC
       """)
-    List<SalesMonthlyItem> findMonthlySalesItems(
+    List<Object[]> findMonthlySalesItems(
             @Param("from") LocalDateTime from,
             @Param("toExclusive") LocalDateTime toExclusive,
             @Param("statuses") List<OrderStatus> statuses

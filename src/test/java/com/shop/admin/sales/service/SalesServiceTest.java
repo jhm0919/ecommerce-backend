@@ -131,10 +131,11 @@ class SalesServiceTest {
                 eq(from),
                 eq(toExclusive),
                 eq(List.of(OrderStatus.PENDING, OrderStatus.CONFIRMED))
-        )).willReturn(List.of(
-                        new SalesMonthlyItem(LocalDate.of(2026, 7, 1), BigDecimal.valueOf(10000)),
-                        new SalesMonthlyItem(LocalDate.of(2026, 7, 3), BigDecimal.valueOf(20000))
-                ));
+        )).willReturn(List.<Object[]>of(
+                new Object[]{LocalDate.of(2026, 7, 1), BigDecimal.valueOf(10000)},
+                new Object[]{LocalDate.of(2026, 7, 3), BigDecimal.valueOf(20000)}
+        ));
+
 
         SalesMonthlyResponse result = salesService.getMonthlySales(month);
 
