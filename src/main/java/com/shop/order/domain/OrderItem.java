@@ -60,7 +60,6 @@ public class OrderItem {
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "amount", column = @Column(name = "price_amount", nullable = false, updatable = false, precision = 19, scale = 2)),
-            @AttributeOverride(name = "currency", column = @Column(name = "price_currency", nullable = false, updatable = false, length = 3))
     })
     private Money priceAtOrder;
 

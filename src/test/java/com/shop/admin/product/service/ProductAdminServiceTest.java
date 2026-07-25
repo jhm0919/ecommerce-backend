@@ -7,9 +7,6 @@ import com.shop.category.domain.Category;
 import com.shop.category.exception.CategoryNotFoundException;
 import com.shop.category.repository.CategoryRepository;
 import com.shop.product.domain.Product;
-import com.shop.product.domain.Sku;
-import com.shop.product.domain.SkuOption;
-import com.shop.product.domain.StockChangedEvent;
 import com.shop.product.dto.ProductDetailResponse;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
@@ -24,7 +21,6 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -138,150 +134,6 @@ class ProductAdminServiceTest {
             assertThatThrownBy(() -> productAdminService.update(999L,
                     new ProductAdminUpdateRequest("이름", null, null, null, null)))
                     .isInstanceOf(ProductNotFoundException.class);
-        }
-    }
-
-//    @Nested
-//    @DisplayName("SKU 재고 증가 (increaseSkuStock)")
-//    class IncreaseSkuStock {
-//
-//        @Test
-//        @DisplayName("SKU 재고를 증가시킨다")
-//        void increaseSkuStockNormal() {
-//            Product product = createProduct();
-//            setId(product, 1L);
-//            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
-//            setId(sku, 100L);
-//
-//            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-//
-//            productAdminService.increaseSkuStock(1L, 100L, 5);
-//
-//            assertThat(sku.getStock()).isEqualTo(15);
-//        }
-//
-//        @Test
-//        @DisplayName("재고 증가 시 StockChangedEvent 발행")  // ★ 추가
-//        void publishStockChangedEventOnIncrease() {
-//            Product product = createProduct();
-//            setId(product, 1L);
-//            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
-//            setId(sku, 100L);
-//
-//            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-//
-//            productAdminService.increaseSkuStock(1L, 100L, 5);
-//
-//            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
-//        }
-//
-//        @Test
-//        @DisplayName("존재하지 않는 상품 ID면 예외")
-//        void rejectUnknownProduct() {
-//            given(productRepository.findById(999L)).willReturn(Optional.empty());
-//
-//            assertThatThrownBy(() -> productAdminService.increaseSkuStock(999L, 100L, 5))
-//                    .isInstanceOf(ProductNotFoundException.class);
-//        }
-//    }
-//
-//    @Nested
-//    @DisplayName("SKU 재고 감소 (decreaseSkuStock)")
-//    class DecreaseSkuStock {
-//
-//        @Test
-//        @DisplayName("SKU 재고를 감소시킨다")
-//        void decreaseSkuStockNormal() {
-//            Product product = createProduct();
-//            setId(product, 1L);
-//            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
-//            setId(sku, 100L);
-//
-//            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-//
-//            productAdminService.decreaseSkuStock(1L, 100L, 3);
-//
-//            assertThat(sku.getStock()).isEqualTo(7);
-//        }
-//
-//        @Test
-//        @DisplayName("재고 감소 시 항상 StockChangedEvent 발행")  // ★ 추가
-//        void alwaysPublishStockChangedEvent() {
-//            Product product = createProduct();
-//            setId(product, 1L);
-//            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
-//            setId(sku, 100L);
-//
-//            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-//
-//            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
-//
-//            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
-//        }
-//
-//        @Test
-//        @DisplayName("재고 0이어도 StockChangedEvent만 발행")
-//        void publishOnlyStockChangedEventWhenSoldOut() {
-//            Product product = createProduct();
-//            setId(product, 1L);
-//            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 3);
-//            setId(sku, 100L);
-//
-//            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-//
-//            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 3→0
-//
-//            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
-//        }
-//
-//        @Test
-//        @DisplayName("재고 남아도 StockChangedEvent는 발행")
-//        void publishStockChangedEventWhenStockRemains() {
-//            Product product = createProduct();
-//            setId(product, 1L);
-//            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
-//            setId(sku, 100L);
-//
-//            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-//
-//            productAdminService.decreaseSkuStock(1L, 100L, 3);  // 재고 10→7
-//
-//            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
-//        }
-//    }
-
-    @Nested
-    @DisplayName("SKU 추가 (addSku)")  // ★ 추가
-    class AddSku {
-
-        @Test
-        @DisplayName("SKU 추가 시 SKU_CREATED 이벤트 발행")
-        void publishSkuCreatedEvent() {
-            // given
-            Product product = createProduct();
-            setId(product, 1L);
-
-            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-
-            // ★★★ 이 부분이 핵심입니다 ★★★
-            // productRepository.save()가 호출되면, 인자로 받은 product 객체를 그대로 반환하도록 설정합니다.
-            // 이렇게 해야 savedProduct가 null이 되지 않습니다.
-            given(productRepository.save(any(Product.class)))
-                    .willAnswer(invocation -> {
-                        Product savedProduct = invocation.getArgument(0);
-                        // 실제 DB처럼, 저장된 SKU에 ID를 부여하는 것을 흉내 냅니다.
-                        if (!savedProduct.getSkuses().isEmpty()) {
-                            setId(savedProduct.getSkuses().get(0), 200L); // 임의의 SKU ID 부여
-                        }
-                        return savedProduct;
-                    });
-
-            // when
-            productAdminService.addSku(1L,
-                    List.of(new SkuOption("색상", "검정")), 10);
-
-            // then
-            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
     }
 

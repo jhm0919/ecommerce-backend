@@ -9,12 +9,10 @@ import com.shop.order.domain.OrderItem;
 import com.shop.order.dto.CreateOrderRequest;
 import com.shop.order.dto.OrderDetailResponse;
 import com.shop.order.exception.InsufficientStockException;
-import com.shop.order.exception.OrderAccessDeniedException;
 import com.shop.order.exception.OrderNotFoundException;
 import com.shop.order.repository.OrderRepository;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.Sku;
-import com.shop.product.domain.StockChangedEvent;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
 import com.shop.admin.stock.domain.StockType;
@@ -38,15 +36,22 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final DeliveryRepository deliveryRepository;
     private final ProductRepository productRepository;
-    private final ApplicationEventPublisher eventPublisher;
 
     // ─────────────────────────────────────
     // 주문 생성
     // ─────────────────────────────────────
-
+    @Timed(
+            value = "order.member.create.time",
+            description = "회원 주문 생성 처리 시간"
+    )
     @Transactional
-    public Order createMemberOrder(Long memberId, CreateOrderRequest request) {
+    public OrderDetailResponse createMemberOrder(
+            Long memberId,
+            CreateOrderRequest request
+    ) {
+        // 재고 차감이 끝난 주문 상품과 이후 이벤트 발행에 필요한 스냅샷을 임시로 담아두는 객체
         List<PreparedOrderItem> prepared = prepareItemsAndDecreaseStock(request.items());
+
         List<OrderItem> items = prepared.stream()
                 .map(PreparedOrderItem::orderItem)
                 .toList();
@@ -54,26 +59,8 @@ public class OrderService {
         Order order = Order.createForMember(memberId, items);
         orderRepository.save(order);
 
-        // ★ 주문 저장 후 이벤트 발행 (orderId 확보)
-        publishStockChangedEvents(prepared, order.getId(), StockType.ORDER);
-
         createDelivery(order.getId(), request.delivery());
 
-        log.info("Member order created: orderId={}, memberId={}, total={}",
-                order.getId(), memberId, order.getTotalAmount());
-        return order;
-    }
-
-    @Timed(
-            value = "order.member.create.time",
-            description = "회원 주문 생성 처리 시간"
-    )
-    @Transactional
-    public OrderDetailResponse createMemberOrderDetail(
-            Long memberId,
-            CreateOrderRequest request
-    ) {
-        Order order = createMemberOrder(memberId, request);
         Delivery delivery = findDeliveryByOrderId(order.getId());
 
         return OrderDetailResponse.from(order, delivery);
@@ -131,15 +118,15 @@ public class OrderService {
 
             product.increaseSkuStock(item.getSkuId(), item.getQuantity());
 
-            // ★ ORDER_CANCEL 이벤트 발행
-            eventPublisher.publishEvent(StockChangedEvent.of(
-                    product, sku,
-                    StockType.ORDER_CANCEL,
-                    item.getQuantity(),
-                    stockBefore,
-                    sku.getStock(),
-                    orderId
-            ));
+//            // ★ ORDER_CANCEL 이벤트 발행
+//            eventPublisher.publishEvent(StockChangedEvent.of(
+//                    product, sku,
+//                    StockType.ORDER_CANCEL,
+//                    item.getQuantity(),
+//                    stockBefore,
+//                    sku.getStock(),
+//                    orderId
+//            ));
         }
 
         order.cancel();
@@ -166,9 +153,7 @@ public class OrderService {
                     .orElseThrow(() -> new ProductNotFoundException(req.productId()));
 
             Sku sku = product.findSkuById(req.skuId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "SKU not found in product: productId=" + req.productId()
-                                    + ", skuId=" + req.skuId()));
+                    .orElseThrow(() -> new OrderNotFoundException(req.skuId()));
 
             int stockBefore = sku.getStock();  // ★ 차감 전 재고 기록
 
@@ -191,28 +176,6 @@ public class OrderService {
         }
 
         return prepared;
-    }
-
-    /**
-     * 주문 저장 후 재고 변동 이력 이벤트 발행.
-     * orderId 확보 후 호출.
-     */
-    private void publishStockChangedEvents(
-            List<PreparedOrderItem> prepared,
-            Long orderId,
-            StockType changeType
-    ) {
-        for (PreparedOrderItem p : prepared) {
-            eventPublisher.publishEvent(StockChangedEvent.of(
-                    p.product(),
-                    p.sku(),
-                    changeType,
-                    p.quantity(),
-                    p.stockBefore(),
-                    p.stockAfter(),
-                    orderId
-            ));
-        }
     }
 
     private void createDelivery(Long orderId, CreateOrderRequest.DeliveryInfoRequest request) {

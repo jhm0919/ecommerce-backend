@@ -1,19 +1,20 @@
 package com.shop.order.service;
 
+import com.shop.order.delivery.domain.Address;
 import com.shop.order.delivery.domain.Delivery;
+import com.shop.order.delivery.domain.Receiver;
 import com.shop.order.delivery.repository.DeliveryRepository;
 import com.shop.order.domain.Order;
 import com.shop.order.domain.OrderItem;
 import com.shop.order.dto.CreateOrderRequest;
+import com.shop.order.dto.OrderDetailResponse;
 import com.shop.order.exception.InsufficientStockException;
-import com.shop.order.exception.OrderAccessDeniedException;
 import com.shop.order.exception.OrderNotFoundException;
 import com.shop.order.repository.OrderRepository;
 import com.shop.category.domain.Category;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
-import com.shop.product.domain.StockChangedEvent;
 import com.shop.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -69,26 +70,43 @@ class OrderServiceTest {
         );
     }
 
+    private Delivery createDelivery() {
+        return Delivery.prepare(1L,
+                new Address("12345", "서울", "101호"),
+                new Receiver("홍길동", "010-1234-5678"),
+                null);
+    }
+
     @Nested
     @DisplayName("회원 주문 생성")
     class CreateMemberOrderAdmin {
 
         @Test
         @DisplayName("정상적으로 주문을 생성한다")
-        void createNormal() {
+        void createOrder() {
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
             given(orderRepository.save(any(Order.class)))
+                    .willAnswer(inv -> {
+                        Order order = inv.getArgument(0);
+                        setId(order, 1L);
+                        return order;
+                    });
+            given(deliveryRepository.save(any(Delivery.class)))
                     .willAnswer(inv -> inv.getArgument(0));
 
-            Order result = orderService.createMemberOrder(10L, createRequest());
+            Delivery delivery = createDelivery();
+            given(deliveryRepository.findByOrderId(1L)).willReturn(Optional.of(delivery));
 
-            assertThat(result.getMemberId()).isEqualTo(10L);
-            assertThat(result.isMemberOrder()).isTrue();
-            assertThat(sku.getStock()).isEqualTo(48);  // SKU 재고 50 - 2
+            OrderDetailResponse memberOrder = orderService.createMemberOrder(10L, createRequest());
+
+            assertThat(memberOrder.orderNumber()).isNotBlank();
+            assertThat(memberOrder.items()).hasSize(1);
+            assertThat(memberOrder.delivery().receiverName()).isEqualTo("홍길동");
+            assertThat(sku.getStock()).isEqualTo(48);
+
             verify(orderRepository).save(any(Order.class));
             verify(deliveryRepository).save(any(Delivery.class));
-            // ★ 재고 이력 이벤트 발행 검증
-            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
+            verify(deliveryRepository).findByOrderId(1L);
         }
 
         @Test
@@ -130,7 +148,7 @@ class OrderServiceTest {
             );
 
             assertThatThrownBy(() -> orderService.createMemberOrder(10L, request))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(OrderNotFoundException.class);
         }
     }
 
@@ -184,8 +202,6 @@ class OrderServiceTest {
 
             assertThat(sku.getStock()).isEqualTo(53);  // 50 + 3 복구
             assertThat(order.getStatus().toString()).isEqualTo("CANCELLED");
-            // ★ ORDER_CANCEL 이벤트 발행 검증
-            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
         }
     }
 

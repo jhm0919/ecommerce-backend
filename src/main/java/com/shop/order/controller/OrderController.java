@@ -52,7 +52,7 @@ public class OrderController {
     ) {
         return ResponseEntity.status(201)
                 .body(CommonResponse.createSuccess(
-                        orderService.createMemberOrderDetail(principal.memberId(), request)
+                        orderService.createMemberOrder(principal.memberId(), request)
                 ));
     }
 

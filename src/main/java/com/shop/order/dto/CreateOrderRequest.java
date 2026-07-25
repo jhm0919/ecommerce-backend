@@ -7,8 +7,6 @@ import java.util.List;
 
 /**
  * 주문 생성 요청.
- *
- * <p>회원/비회원 공통 필드. 비회원은 추가로 {@code guestEmail}, {@code guestPhone} 필요.
  */
 public record CreateOrderRequest(
         @NotEmpty(message = "주문 항목은 1개 이상이어야 합니다")

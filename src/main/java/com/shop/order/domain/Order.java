@@ -44,7 +44,7 @@ public class Order {
     private String orderNumber;
 
     @Column(name = "member_id", updatable = false)
-    private Long memberId;  // null이면 비회원 주문
+    private Long memberId;
 
     @Embedded
     @AttributeOverrides({

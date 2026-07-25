@@ -10,7 +10,6 @@ import com.shop.category.repository.CategoryRepository;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
-import com.shop.product.domain.StockChangedEvent;
 import com.shop.product.dto.ProductDetailResponse;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
@@ -116,16 +115,6 @@ public class ProductAdminService {
                 .filter(s -> s.getSkuCode().equals(newSku.getSkuCode()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Failed to find saved SKU"));
-
-        // 4. 이제 ID가 있는 savedSku 객체로 이벤트를 발행합니다.
-        eventPublisher.publishEvent(StockChangedEvent.of(
-                savedProduct, savedSku,
-                StockType.SKU_CREATED,
-                initialStock,
-                0,
-                initialStock,
-                null
-        ));
 
         return savedSku;
     }
