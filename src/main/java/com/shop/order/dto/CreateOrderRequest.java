@@ -17,12 +17,7 @@ public record CreateOrderRequest(
 
         @NotNull(message = "배송 정보는 필수입니다")
         @Valid
-        DeliveryInfoRequest delivery,
-
-        // 비회원만 사용 (회원은 null)
-        String guestEmail,
-
-        String guestPhone
+        DeliveryInfoRequest delivery
 ) {
     public record OrderItemRequest(
             @NotNull(message = "상품 ID는 필수입니다")

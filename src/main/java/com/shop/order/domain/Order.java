@@ -22,7 +22,6 @@ import java.util.Objects;
  * <p>회원 주문과 비회원 주문을 모두 지원한다:
  * <ul>
  *   <li>회원 주문: {@code memberId}가 NOT NULL</li>
- *   <li>비회원 주문: {@code memberId}가 NULL이며 {@code guestEmail}, {@code guestPhone}이 NOT NULL</li>
  * </ul>
  *
  * <p>배송 정보(받는 사람, 주소, 배송 상태 등)는 별도 {@code Delivery} Aggregate에서 관리한다.
@@ -46,12 +45,6 @@ public class Order {
 
     @Column(name = "member_id", updatable = false)
     private Long memberId;  // null이면 비회원 주문
-
-    @Column(name = "guest_email", length = 255)
-    private String guestEmail;
-
-    @Column(name = "guest_phone", length = 20)
-    private String guestPhone;
 
     @Embedded
     @AttributeOverrides({
@@ -87,20 +80,7 @@ public class Order {
      */
     public static Order createForMember(Long memberId, List<OrderItem> items) {
         Objects.requireNonNull(memberId, "memberId must not be null");
-        return create(memberId, null, null, items);
-    }
-
-    /**
-     * 비회원 주문을 생성한다.
-     */
-    public static Order createForGuest(
-            String guestEmail,
-            String guestPhone,
-            List<OrderItem> items
-    ) {
-        validateGuestEmail(guestEmail);
-        validateGuestPhone(guestPhone);
-        return create(null, guestEmail, guestPhone, items);
+        return create(memberId, items);
     }
 
     /**
@@ -108,8 +88,6 @@ public class Order {
      */
     private static Order create(
             Long memberId,
-            String guestEmail,
-            String guestPhone,
             List<OrderItem> items
     ) {
         validateItems(items);
@@ -117,8 +95,6 @@ public class Order {
         Order order = new Order();
         order.orderNumber = OrderNumberGenerator.generate();
         order.memberId = memberId;
-        order.guestEmail = guestEmail;
-        order.guestPhone = guestPhone;
         order.status = OrderStatus.PENDING;
 
         // OrderItem들 추가 + 양방향 관계 설정
@@ -184,21 +160,6 @@ public class Order {
 
     public boolean isMemberOrder() {
         return memberId != null;
-    }
-
-    /**
-     * 비회원 조회 인증.
-     * 주문번호는 외부에서 검증되었으므로,
-     * 이 메서드는 연락처(이메일 또는 전화번호) 일치 여부를 확인한다.
-     */
-    public boolean matchesGuestContact(String contact) {
-        if (!isGuestOrder()) {
-            return false;
-        }
-        if (contact == null || contact.isBlank()) {
-            return false;
-        }
-        return contact.equals(guestEmail) || contact.equals(guestPhone);
     }
 
     /**

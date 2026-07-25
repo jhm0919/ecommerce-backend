@@ -116,48 +116,4 @@ public class OrderController {
         );
     }
 
-    // ─────────────────────────────────────
-    // 비회원용 API
-    // ─────────────────────────────────────
-
-    @Operation(summary = "비회원 주문 생성", description = "비회원 주문을 생성한다. 이메일과 전화번호 필수.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "주문 생성 성공"),
-            @ApiResponse(responseCode = "400", description = "재고 부족 / 입력값 오류"),
-            @ApiResponse(responseCode = "404", description = "상품 또는 SKU 없음")
-    })
-    @Counted(
-            value = "order.guest.create",
-            description = "비회원 주문 생성 요청 수"
-    )
-    @PostMapping("/guest")
-    public ResponseEntity<CommonResponse<OrderDetailResponse>> createGuestOrder(
-            @Valid @RequestBody CreateOrderRequest request
-    ) {
-        return ResponseEntity.status(201)
-                .body(CommonResponse.createSuccess(
-                        orderService.createGuestOrderDetail(request)
-                ));
-    }
-
-    @Operation(summary = "비회원 주문 조회", description = "주문번호 + 연락처(이메일 또는 전화번호)로 조회.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "404", description = "주문 없음 또는 연락처 불일치")
-    })
-    @Counted(
-            value = "order.guest.search",
-            description = "비회원 주문 조회 요청 수"
-    )
-    @GetMapping("/guest")
-    public ResponseEntity<CommonResponse<OrderDetailResponse>> getGuestOrder(
-            @RequestParam String orderNumber,
-            @RequestParam String contact
-    ) {
-        Order order = orderService.findGuestOrder(orderNumber, contact);
-        Delivery delivery = orderService.findDeliveryByOrderId(order.getId());
-        return ResponseEntity.ok(
-                CommonResponse.createSuccess(OrderDetailResponse.from(order, delivery))
-        );
-    }
 }

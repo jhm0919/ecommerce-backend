@@ -26,7 +26,7 @@ connectex: No connection could be made because the target machine actively refus
 PowerShell 예시:
 
 ```powershell
-$env:SPRING_PROFILES_ACTIVE="local,perf"
+$env:SPRING_PROFILES_ACTIVE="perf"
 $env:PERFORMANCE_SEED_ENABLED="true"
 .\gradlew.bat bootRun
 ```
@@ -34,7 +34,7 @@ $env:PERFORMANCE_SEED_ENABLED="true"
 또는 `.env`에 다음 값을 둘 수 있습니다.
 
 ```properties
-SPRING_PROFILES_ACTIVE=local,perf
+SPRING_PROFILES_ACTIVE=perf
 PERFORMANCE_SEED_ENABLED=true
 ```
 

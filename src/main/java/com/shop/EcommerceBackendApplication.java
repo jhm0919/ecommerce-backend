@@ -1,6 +1,5 @@
 package com.shop;
 
-import com.shop.global.config.AsyncProperties;
 import com.shop.global.config.CookieProperties;
 import com.shop.global.config.CorsProperties;
 import com.shop.global.config.JwtProperties;
@@ -15,7 +14,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
         JwtProperties.class,
         CookieProperties.class,
         CorsProperties.class,
-        AsyncProperties.class
 })
 public class EcommerceBackendApplication {
 

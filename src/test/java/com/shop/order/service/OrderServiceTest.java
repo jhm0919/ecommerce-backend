@@ -59,15 +59,13 @@ class OrderServiceTest {
         setId(sku, 100L);
     }
 
-    private CreateOrderRequest createRequest(boolean isGuest) {
+    private CreateOrderRequest createRequest() {
         return new CreateOrderRequest(
                 List.of(new CreateOrderRequest.OrderItemRequest(1L, 100L, 2)),
                 new CreateOrderRequest.DeliveryInfoRequest(
                         "홍길동", "010-1234-5678",
                         "12345", "서울시 강남구", "101호", "문 앞에"
-                ),
-                isGuest ? "guest@example.com" : null,
-                isGuest ? "010-9999-8888" : null
+                )
         );
     }
 
@@ -82,7 +80,7 @@ class OrderServiceTest {
             given(orderRepository.save(any(Order.class)))
                     .willAnswer(inv -> inv.getArgument(0));
 
-            Order result = orderService.createMemberOrder(10L, createRequest(false));
+            Order result = orderService.createMemberOrder(10L, createRequest());
 
             assertThat(result.getMemberId()).isEqualTo(10L);
             assertThat(result.isMemberOrder()).isTrue();
@@ -112,8 +110,7 @@ class OrderServiceTest {
                     List.of(new CreateOrderRequest.OrderItemRequest(1L, 100L, 5)),
                     new CreateOrderRequest.DeliveryInfoRequest(
                             "홍", "010-1", "12345", "서울", "101", null
-                    ),
-                    null, null
+                    )
             );
 
             assertThatThrownBy(() -> orderService.createMemberOrder(10L, request))
@@ -129,48 +126,10 @@ class OrderServiceTest {
                     List.of(new CreateOrderRequest.OrderItemRequest(1L, 999L, 1)),
                     new CreateOrderRequest.DeliveryInfoRequest(
                             "홍", "010-1", "12345", "서울", "101", null
-                    ),
-                    null, null
+                    )
             );
 
             assertThatThrownBy(() -> orderService.createMemberOrder(10L, request))
-                    .isInstanceOf(IllegalArgumentException.class);
-        }
-    }
-
-    @Nested
-    @DisplayName("비회원 주문 생성")
-    class CreateGuestOrderAdmin {
-
-        @Test
-        @DisplayName("정상적으로 비회원 주문 생성")
-        void createNormal() {
-            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-            given(orderRepository.save(any(Order.class)))
-                    .willAnswer(inv -> inv.getArgument(0));
-
-            Order result = orderService.createGuestOrder(createRequest(true));
-
-            assertThat(result.isGuestOrder()).isTrue();
-            assertThat(result.getGuestEmail()).isEqualTo("guest@example.com");
-            assertThat(result.getGuestPhone()).isEqualTo("010-9999-8888");
-            // ★ 재고 이력 이벤트 발행 검증
-            verify(eventPublisher).publishEvent(any(StockChangedEvent.class));
-        }
-
-        @Test
-        @DisplayName("guestEmail이 없으면 예외")
-        void rejectMissingEmail() {
-            CreateOrderRequest request = new CreateOrderRequest(
-                    List.of(new CreateOrderRequest.OrderItemRequest(1L, 100L, 1)),
-                    new CreateOrderRequest.DeliveryInfoRequest(
-                            "홍", "010-1", "12345", "서울", "101", null
-                    ),
-                    null,
-                    "010-9999-8888"
-            );
-
-            assertThatThrownBy(() -> orderService.createGuestOrder(request))
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }
@@ -205,69 +164,6 @@ class OrderServiceTest {
         }
     }
 
-    @Nested
-    @DisplayName("비회원 조회 보안")
-    class GuestOrderAdminAccess {
-
-        @Test
-        @DisplayName("주문번호 + 이메일 일치 시 조회 가능")
-        void allowsAccessWithMatchingEmail() {
-            Order guestOrder = Order.createForGuest(
-                    "guest@example.com", "010-9999-8888",
-                    List.of(OrderItem.of(product, sku, 1))
-            );
-
-            given(orderRepository.findByOrderNumberWithItems(any()))
-                    .willReturn(Optional.of(guestOrder));
-
-            Order result = orderService.findGuestOrder("ORD-...", "guest@example.com");
-
-            assertThat(result).isEqualTo(guestOrder);
-        }
-
-        @Test
-        @DisplayName("주문번호 + 전화번호 일치 시 조회 가능")
-        void allowsAccessWithMatchingPhone() {
-            Order guestOrder = Order.createForGuest(
-                    "guest@example.com", "010-9999-8888",
-                    List.of(OrderItem.of(product, sku, 1))
-            );
-
-            given(orderRepository.findByOrderNumberWithItems(any()))
-                    .willReturn(Optional.of(guestOrder));
-
-            Order result = orderService.findGuestOrder("ORD-...", "010-9999-8888");
-
-            assertThat(result).isEqualTo(guestOrder);
-        }
-
-        @Test
-        @DisplayName("연락처 불일치 시 AccessDenied")
-        void rejectMismatchedContact() {
-            Order guestOrder = Order.createForGuest(
-                    "guest@example.com", "010-9999-8888",
-                    List.of(OrderItem.of(product, sku, 1))
-            );
-
-            given(orderRepository.findByOrderNumberWithItems(any()))
-                    .willReturn(Optional.of(guestOrder));
-
-            assertThatThrownBy(() ->
-                    orderService.findGuestOrder("ORD-...", "wrong@example.com"))
-                    .isInstanceOf(OrderAccessDeniedException.class);
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 주문번호는 NotFound")
-        void rejectUnknownOrderNumber() {
-            given(orderRepository.findByOrderNumberWithItems(any()))
-                    .willReturn(Optional.empty());
-
-            assertThatThrownBy(() ->
-                    orderService.findGuestOrder("UNKNOWN", "anything"))
-                    .isInstanceOf(OrderNotFoundException.class);
-        }
-    }
 
     @Nested
     @DisplayName("주문 취소")

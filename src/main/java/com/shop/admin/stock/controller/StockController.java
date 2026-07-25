@@ -59,10 +59,10 @@ public class StockController {
     /**
      * 재고 변동 이력 조회.
      *
-     * GET /api/admin/products/1/stock-histories
-     * GET /api/admin/products/1/stock-histories?skuId=100
-     * GET /api/admin/products/1/stock-histories?changeType=ORDER
-     * GET /api/admin/products/1/stock-histories?skuId=100&changeType=ORDER
+     * GET /api/admin/stock/1/
+     * GET /api/admin/stock/1/?skuId=100
+     * GET /api/admin/stock/1/?changeType=ORDER
+     * GET /api/admin/stock/1/?skuId=100&changeType=ORDER
      */
     @Operation(summary = "재고 변동 이력 조회",
             description = "상품의 재고 변동 이력. SKU/변동타입 필터 지원.")
@@ -70,7 +70,7 @@ public class StockController {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "404", description = "상품 없음")
     })
-    @GetMapping
+    @GetMapping("/{productId}")
     public ResponseEntity<CommonResponse<Page<StockHistoryResponse>>> findHistories(
             @PathVariable Long productId,
             @RequestParam(required = false) Long skuId,

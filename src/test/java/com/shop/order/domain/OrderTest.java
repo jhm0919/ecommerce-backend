@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
-class OrderAdminTest {
+class OrderTest {
 
     private Product product1;
     private Product product2;
@@ -90,90 +90,6 @@ class OrderAdminTest {
         void rejectEmptyItems() {
             assertThatThrownBy(() -> Order.createForMember(1L, List.of()))
                     .isInstanceOf(IllegalArgumentException.class);
-        }
-    }
-
-    @Nested
-    @DisplayName("비회원 주문 생성")
-    class CreateForGuest {
-
-        @Test
-        @DisplayName("비회원 주문을 생성할 수 있다")
-        void createGuestOrder() {
-            Order order = Order.createForGuest(
-                    "guest@example.com", "010-9999-8888", singleItem()
-            );
-
-            assertThat(order.getMemberId()).isNull();
-            assertThat(order.getGuestEmail()).isEqualTo("guest@example.com");
-            assertThat(order.getGuestPhone()).isEqualTo("010-9999-8888");
-            assertThat(order.isGuestOrder()).isTrue();
-            assertThat(order.isMemberOrder()).isFalse();
-        }
-
-        @Test
-        @DisplayName("이메일이 null이면 예외")
-        void rejectNullEmail() {
-            assertThatThrownBy(() -> Order.createForGuest(
-                    null, "010-1234-5678", singleItem()))
-                    .isInstanceOf(NullPointerException.class);
-        }
-
-        @Test
-        @DisplayName("이메일에 @가 없으면 예외")
-        void rejectInvalidEmail() {
-            assertThatThrownBy(() -> Order.createForGuest(
-                    "invalid-email", "010-1234-5678", singleItem()))
-                    .isInstanceOf(IllegalArgumentException.class);
-        }
-    }
-
-    @Nested
-    @DisplayName("비회원 조회 인증")
-    class GuestAccessAuthorization {
-
-        private Order guestOrder;
-
-        @BeforeEach
-        void setUp() {
-            guestOrder = Order.createForGuest(
-                    "guest@example.com", "010-9999-8888", singleItem()
-            );
-        }
-
-        @Test
-        @DisplayName("이메일이 일치하면 접근 허용")
-        void allowsAccessWithMatchingEmail() {
-            assertThat(guestOrder.matchesGuestContact("guest@example.com")).isTrue();
-        }
-
-        @Test
-        @DisplayName("전화번호가 일치하면 접근 허용")
-        void allowsAccessWithMatchingPhone() {
-            assertThat(guestOrder.matchesGuestContact("010-9999-8888")).isTrue();
-        }
-
-        @Test
-        @DisplayName("연락처 불일치면 접근 거부")
-        void rejectsAccessWithWrongContact() {
-            assertThat(guestOrder.matchesGuestContact("other@example.com")).isFalse();
-            assertThat(guestOrder.matchesGuestContact("010-0000-0000")).isFalse();
-        }
-
-        @Test
-        @DisplayName("회원 주문은 이 방식으로 접근 거부")
-        void rejectsForMemberOrder() {
-            Order memberOrder = Order.createForMember(1L, singleItem());
-
-            assertThat(memberOrder.matchesGuestContact("guest@example.com")).isFalse();
-        }
-
-        @Test
-        @DisplayName("null 또는 빈 연락처는 거부")
-        void rejectsBlankContact() {
-            assertThat(guestOrder.matchesGuestContact(null)).isFalse();
-            assertThat(guestOrder.matchesGuestContact("")).isFalse();
-            assertThat(guestOrder.matchesGuestContact("   ")).isFalse();
         }
     }
 

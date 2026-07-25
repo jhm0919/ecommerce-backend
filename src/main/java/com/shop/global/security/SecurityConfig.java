@@ -82,8 +82,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/refresh", "/api/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/orders/guest").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/orders/guest").permitAll()
                         .requestMatchers("/api/ai/**").permitAll()
                         .requestMatchers("/api/seller/me/**").hasRole("SELLER")
                         .requestMatchers("/api/seller/**").permitAll()

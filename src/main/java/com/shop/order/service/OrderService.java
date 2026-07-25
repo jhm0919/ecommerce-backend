@@ -79,43 +79,6 @@ public class OrderService {
         return OrderDetailResponse.from(order, delivery);
     }
 
-    @Transactional
-    public Order createGuestOrder(CreateOrderRequest request) {
-        validateGuestInfo(request);
-
-        List<PreparedOrderItem> prepared = prepareItemsAndDecreaseStock(request.items());
-        List<OrderItem> items = prepared.stream()
-                .map(PreparedOrderItem::orderItem)
-                .toList();
-
-        Order order = Order.createForGuest(
-                request.guestEmail(),
-                request.guestPhone(),
-                items
-        );
-        orderRepository.save(order);
-
-        // ★ 주문 저장 후 이벤트 발행
-        publishStockChangedEvents(prepared, order.getId(), StockType.ORDER);
-
-        createDelivery(order.getId(), request.delivery());
-
-        log.info("Guest order created: orderId={}, email={}, total={}",
-                order.getId(), request.guestEmail(), order.getTotalAmount());
-        return order;
-    }
-
-    @Timed(
-            value = "order.guest.create.time",
-            description = "비회원 주문 생성 처리 시간"
-    )
-    @Transactional
-    public OrderDetailResponse createGuestOrderDetail(CreateOrderRequest request) {
-        Order order = createGuestOrder(request);
-        Delivery delivery = findDeliveryByOrderId(order.getId());
-        return OrderDetailResponse.from(order, delivery);
-    }
-
     // ─────────────────────────────────────
     // 주문 조회 (변경 없음)
     // ─────────────────────────────────────
@@ -137,23 +100,6 @@ public class OrderService {
     public Order findMyOrder(Long memberId, Long orderId) {
         return orderRepository.findByIdAndMemberIdWithItems(orderId, memberId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
-    }
-
-    @Timed(
-            value = "order.guest.search.time",
-            description = "비회원 주문 조회 처리 시간"
-    )
-    @Transactional(readOnly = true)
-    public Order findGuestOrder(String orderNumber, String contact) {
-        Order order = orderRepository.findByOrderNumberWithItems(orderNumber)
-                .orElseThrow(() -> new OrderNotFoundException(orderNumber));
-
-        if (!order.matchesGuestContact(contact)) {
-            log.warn("Guest order access denied: orderNumber={}", orderNumber);
-            throw new OrderAccessDeniedException();
-        }
-
-        return order;
     }
 
     @Transactional(readOnly = true)
@@ -282,15 +228,6 @@ public class OrderService {
 
         Delivery delivery = Delivery.prepare(orderId, address, receiver, request.memo());
         deliveryRepository.save(delivery);
-    }
-
-    private void validateGuestInfo(CreateOrderRequest request) {
-        if (request.guestEmail() == null || request.guestEmail().isBlank()) {
-            throw new IllegalArgumentException("Guest email is required");
-        }
-        if (request.guestPhone() == null || request.guestPhone().isBlank()) {
-            throw new IllegalArgumentException("Guest phone is required");
-        }
     }
 
     // ─────────────────────────────────────
