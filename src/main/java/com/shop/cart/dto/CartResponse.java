@@ -2,10 +2,8 @@ package com.shop.cart.dto;
 
 import com.shop.cart.domain.Cart;
 import com.shop.cart.domain.CartItem;
-import com.shop.product.domain.Money;
 import com.shop.product.domain.Product;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -18,8 +16,7 @@ import java.util.Map;
 public record CartResponse(
         Long cartId,
         List<CartItemResponse> items,
-        BigDecimal totalAmount,
-//        String currency,
+        int totalPrice,
         int itemCount,
         int totalQuantity
 ) {
@@ -29,10 +26,9 @@ public record CartResponse(
             Long skuId, // 추가
             String productName,
             String productImageUrl,
-            BigDecimal currentPrice,
-//            String currency,
+            int currentPrice,
             int quantity,
-            BigDecimal subtotal,
+            int subtotal,
             boolean available
     ) {
         /**
@@ -47,16 +43,16 @@ public record CartResponse(
                         item.getSkuId(), // ★★★ 2. skuId 값 추가
                         item.getProductName(),  // 스냅샷 사용
                         item.getProductImageUrl(),
-                        null,
-//                        null,
+                        0,
                         item.getQuantity(),
-                        null,
+                        0,
                         false
                 );
             }
 
-            Money currentPrice = product.getPrice();
-            Money subtotal = currentPrice.multiply(item.getQuantity());
+            int currentPrice = product.getPrice();
+
+            int subtotal = calculateSubtotal(currentPrice, item.getQuantity());
 
             return new CartItemResponse(
                     item.getId(),
@@ -64,10 +60,9 @@ public record CartResponse(
                     item.getSkuId(), // ★★★ 3. skuId 값 추가
                     product.getName(),  // 현재 이름 (스냅샷보다 우선)
                     product.getMainImageUrl(),  // 현재 이미지
-                    currentPrice.getAmount(),
-//                    currentPrice.getCurrency(),
+                    currentPrice,
                     item.getQuantity(),
-                    subtotal.getAmount(),
+                    subtotal,
                     true
             );
         }
@@ -85,29 +80,28 @@ public record CartResponse(
                 .toList();
 
         // 사용 가능한 항목들의 합계 계산
-        Money total = calculateTotal(itemResponses);
+        int totalPrice = calculateTotalPrice(itemResponses);
 
         return new CartResponse(
                 cart.getId(),
                 itemResponses,
-                total != null ? total.getAmount() : BigDecimal.ZERO,
-//                total != null ? total.getCurrency() : "KRW",  // 기본 통화
+                totalPrice,
                 cart.getItemCount(),
                 cart.getTotalQuantity()
         );
     }
 
+    public static int calculateSubtotal(int price, int quantity) {
+        return Math.multiplyExact(price, quantity);
+    }
+
     /**
      * 사용 가능한 항목들의 합계 계산.
      */
-    private static Money calculateTotal(List<CartItemResponse> items) {
-        Money total = null;
-        for (CartItemResponse item : items) {
-            if (!item.available()) continue;
-
-            Money subtotal = new Money(item.subtotal());
-            total = (total == null) ? subtotal : total.add(subtotal);
-        }
-        return total;
+    private static int calculateTotalPrice(List<CartItemResponse> items) {
+        return items.stream()
+                .filter(CartItemResponse::available)
+                .mapToInt(CartItemResponse::subtotal)
+                .reduce(0, Math::addExact);
     }
 }

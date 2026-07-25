@@ -3,8 +3,7 @@ package com.shop.admin.sales.service;
 import com.shop.admin.sales.dto.*;
 import com.shop.admin.sales.exception.InvalidDateException;
 import com.shop.admin.sales.exception.InvalidMonthException;
-import com.shop.global.exception.BusinessException;
-import com.shop.global.exception.ErrorCode;
+import com.shop.order.domain.OrderItem;
 import com.shop.order.domain.OrderStatus;
 import com.shop.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,6 @@ import java.time.YearMonth;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,12 +35,19 @@ public class SalesService {
         LocalDateTime from = date.atStartOfDay();
         LocalDateTime toExclusive = date.plusDays(1).atStartOfDay();
 
-        List<SalesDailyItem> items =
-                orderRepository.findDailySalesItems(from, toExclusive, SALES_STATUSES);
+        List<OrderItem> orderItems = orderRepository.findDailySalesItems(from, toExclusive, SALES_STATUSES);
+
+        List<SalesDailyItem> items = orderItems.stream()
+                .map(item -> new SalesDailyItem( // SalesDailyItem 생성
+                        item.getProductName(),
+                        item.getPrice(),
+                        item.getQuantity(),
+                        Math.multiplyExact((long) item.getPrice(), item.getQuantity()) // amount 계산
+                )).toList();
 
         List<SalesDailyItem> sortedItems = getSortedItems(sort, items);
 
-        BigDecimal totalAmount = getDailyTotalAmount(items);
+        long totalAmount = getDailyTotalAmount(items);
 
         long totalQuantity = items.stream()
                 .mapToLong(SalesDailyItem::quantity)
@@ -57,10 +62,10 @@ public class SalesService {
         }
     }
 
-    private static @NonNull BigDecimal getDailyTotalAmount(List<SalesDailyItem> items) {
+    private static @NonNull long getDailyTotalAmount(List<SalesDailyItem> items) {
         return items.stream()
                 .map(SalesDailyItem::amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(0L, Long::sum);
     }
 
     private static @NonNull List<SalesDailyItem> getSortedItems(Sort.Direction sort, List<SalesDailyItem> items) {

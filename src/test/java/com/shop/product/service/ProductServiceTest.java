@@ -1,7 +1,6 @@
 package com.shop.product.service;
 
 import com.shop.category.domain.Category;
-import com.shop.product.domain.Money;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.ProductStatus;
 import com.shop.product.domain.Sku;
@@ -25,7 +24,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,7 +54,7 @@ class ProductServiceTest {
     private Product createProduct() {  // ★ stock 매개변수 제거
         return Product.register(
                 "베이직 티셔츠",
-                BigDecimal.valueOf(29900),
+                29900,
                 "100% 면 소재",
                 "https://example.com/image.jpg",
                 createCategory()
@@ -292,7 +290,7 @@ class ProductServiceTest {
         return new ProductSummaryProjection(
                 1L,
                 "베이직 티셔츠",
-                new Money(BigDecimal.valueOf(29900)),
+                29900,
                 "https://example.com/image.jpg",
                 "남성 상의",
                 ProductStatus.ACTIVE,

@@ -20,7 +20,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
                 oi.productId,
                 oi.productName,
                 SUM(oi.quantity),
-                SUM(oi.priceAtOrder.amount * oi.quantity)
+                SUM(oi.price * oi.quantity)
             FROM OrderItem oi
             JOIN Order o ON o.id = oi.order.id
             WHERE o.status = 'PENDING'

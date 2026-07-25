@@ -2,7 +2,6 @@ package com.shop.order.domain;
 
 import com.shop.global.exception.BusinessException;
 import com.shop.global.exception.ErrorCode;
-import com.shop.product.domain.Money;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -46,11 +45,8 @@ public class Order {
     @Column(name = "member_id", updatable = false)
     private Long memberId;
 
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "amount", column = @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)),
-    })
-    private Money totalAmount;
+    @Column(nullable = false)
+    private int totalPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -103,7 +99,7 @@ public class Order {
         }
 
         // 총 금액 계산
-        order.totalAmount = order.calculateTotal();
+        order.totalPrice = order.calculateTotal();
 
         return order;
     }
@@ -118,16 +114,10 @@ public class Order {
         this.items.add(item);
     }
 
-    private Money calculateTotal() {
-        if (items.isEmpty()) {
-            throw new IllegalStateException("Cannot calculate total of empty order");
-        }
-
-        Money total = items.get(0).calculateSubtotal();
-        for (int i = 1; i < items.size(); i++) {
-            total = total.add(items.get(i).calculateSubtotal());
-        }
-        return total;
+    private int calculateTotal() {
+        return items.stream()
+                .mapToInt(OrderItem::calculateSubtotal)
+                .reduce(0, Math::addExact);
     }
 
     // ─────────────────────────────────────

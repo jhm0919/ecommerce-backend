@@ -1,8 +1,7 @@
 package com.shop.order.repository;
 
-import com.shop.admin.sales.dto.SalesDailyItem;
-import com.shop.admin.sales.dto.SalesMonthlyItem;
 import com.shop.order.domain.Order;
+import com.shop.order.domain.OrderItem;
 import com.shop.order.domain.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -53,58 +52,21 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("memberId") Long memberId
     );
 
-
-    /**
-     * 기간 내 완료 주문의 매출액 + 주문 건수.
-     * [totalRevenue, orderCount] 형태로 반환.
-     */
-    @Query("""
-        SELECT SUM(o.totalAmount.amount), COUNT(o)
-        FROM Order o
-        WHERE o.status = 'PENDING'
-          AND o.createdAt >= :from
-          AND o.createdAt <= :to
-        """)
-    List<Object[]> findRevenueAndOrderCount(
-            @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime to
-    );
-
-    /**
-     * 기간 내 취소 건수.
-     */
-    @Query("""
-        SELECT COUNT(o)
-        FROM Order o
-        WHERE o.status = 'CANCELLED'
-          AND o.createdAt >= :from
-          AND o.createdAt <= :to
-        """)
-    long countCancelledOrders(
-            @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime to
-    );
-
     /**
      * 일별 매출 집계 (PENDING + CONFIRMED 만, CANCELLED 제외).
      *
      * @return Object[] = [date(java.sql.Date), revenue(BigDecimal), count(Long)]
      */
     @Query("""
-          SELECT new com.shop.admin.sales.dto.SalesDailyItem(
-              oi.productName,
-              oi.priceAtOrder.amount,
-              oi.quantity,
-              (oi.priceAtOrder.amount * oi.quantity)
-          )
+          SELECT oi
           FROM Order o
           JOIN o.items oi
           WHERE o.status IN :statuses
             AND o.createdAt >= :from
             AND o.createdAt < :toExclusive
-          ORDER BY oi.productName ASC, oi.priceAtOrder.amount ASC
+          ORDER BY oi.productName ASC, oi.price ASC
       """)
-    List<SalesDailyItem> findDailySalesItems(
+    List<OrderItem> findDailySalesItems( // OrderItem 엔티티만 반환
             @Param("from") LocalDateTime from,
             @Param("toExclusive") LocalDateTime toExclusive,
             @Param("statuses") List<OrderStatus> statuses
@@ -120,7 +82,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("""
           SELECT (
                FUNCTION('DATE', o.createdAt),
-               COALESCE(SUM(o.totalAmount.amount), 0)
+               COALESCE(SUM(o.totalPrice), 0)
            )
            FROM Order o
            WHERE o.status IN :statuses
@@ -133,86 +95,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("from") LocalDateTime from,
             @Param("toExclusive") LocalDateTime toExclusive,
             @Param("statuses") List<OrderStatus> statuses
-    );
-
-    /**
-     * 일별 결제 집계 (모든 상태 포함 — 결제 시도 전체).
-     *
-     * @return Object[] = [date(java.sql.Date), totalAmount(BigDecimal), count(Long)]
-     */
-    @Query("""
-        SELECT FUNCTION('DATE', o.createdAt) AS orderDate,
-               COALESCE(SUM(o.totalAmount.amount), 0),
-               COUNT(o)
-        FROM Order o
-        WHERE o.createdAt >= :from AND o.createdAt < :to
-        GROUP BY FUNCTION('DATE', o.createdAt)
-        ORDER BY orderDate ASC
-        """)
-    List<Object[]> findDailyPayments(
-            @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime toExclusive
-    );
-
-    /**
-     * 월별 결제 집계 (모든 상태 포함).
-     *
-     * @return Object[] = [year(Integer), month(Integer), totalAmount(BigDecimal), count(Long)]
-     */
-    @Query("""
-        SELECT FUNCTION('YEAR', o.createdAt),
-               FUNCTION('MONTH', o.createdAt),
-               COALESCE(SUM(o.totalAmount.amount), 0),
-               COUNT(o)
-        FROM Order o
-        WHERE o.createdAt >= :from AND o.createdAt < :to
-        GROUP BY FUNCTION('YEAR', o.createdAt), FUNCTION('MONTH', o.createdAt)
-        ORDER BY FUNCTION('YEAR', o.createdAt) ASC, FUNCTION('MONTH', o.createdAt) ASC
-        """)
-    List<Object[]> findMonthlyPayments(
-            @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime toExclusive
-    );
-
-    /**
-     * 일별 환불 집계 (CANCELLED 만).
-     *
-     * @return Object[] = [date(java.sql.Date), refundAmount(BigDecimal), count(Long)]
-     */
-    @Query("""
-        SELECT FUNCTION('DATE', o.createdAt) AS orderDate,
-               COALESCE(SUM(o.totalAmount.amount), 0),
-               COUNT(o)
-        FROM Order o
-        WHERE o.status = com.shop.order.domain.OrderStatus.CANCELLED
-          AND o.createdAt >= :from AND o.createdAt < :to
-        GROUP BY FUNCTION('DATE', o.createdAt)
-        ORDER BY orderDate ASC
-        """)
-    List<Object[]> findDailyRefunds(
-            @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime toExclusive
-    );
-
-    /**
-     * 월별 환불 집계 (CANCELLED 만).
-     *
-     * @return Object[] = [year(Integer), month(Integer), refundAmount(BigDecimal), count(Long)]
-     */
-    @Query("""
-        SELECT FUNCTION('YEAR', o.createdAt),
-               FUNCTION('MONTH', o.createdAt),
-               COALESCE(SUM(o.totalAmount.amount), 0),
-               COUNT(o)
-        FROM Order o
-        WHERE o.status = com.shop.order.domain.OrderStatus.CANCELLED
-          AND o.createdAt >= :from AND o.createdAt < :to
-        GROUP BY FUNCTION('YEAR', o.createdAt), FUNCTION('MONTH', o.createdAt)
-        ORDER BY FUNCTION('YEAR', o.createdAt) ASC, FUNCTION('MONTH', o.createdAt) ASC
-        """)
-    List<Object[]> findMonthlyRefunds(
-            @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime toExclusive
     );
 
     List<Order> findTop5ByMemberIdOrderByCreatedAtDesc(Long memberId);

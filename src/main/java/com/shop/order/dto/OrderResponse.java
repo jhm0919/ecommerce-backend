@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public record OrderResponse(
         String orderNumber,
         OrderStatus status,
-        BigDecimal totalAmount,
+        int totalPrice,
         int itemCount,
         LocalDateTime createdAt
 ) {
@@ -21,7 +21,7 @@ public record OrderResponse(
         return new OrderResponse(
                 order.getOrderNumber(),
                 order.getStatus(),
-                order.getTotalAmount().getAmount(),
+                order.getTotalPrice(),
                 order.getItems().size(),
                 order.getCreatedAt()
         );

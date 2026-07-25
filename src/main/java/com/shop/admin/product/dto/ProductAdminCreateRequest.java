@@ -5,8 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.math.BigDecimal;
-
 public record ProductAdminCreateRequest(
         @NotBlank(message = "상품명은 필수입니다")
         @Size(max = 200, message = "상품명은 200자를 초과할 수 없습니다")
@@ -14,7 +12,7 @@ public record ProductAdminCreateRequest(
 
         @NotNull(message = "가격은 필수입니다")
         @DecimalMin(value = "0", inclusive = true, message = "가격은 0 이상이어야 합니다")
-        BigDecimal price,
+        int price,
 
         @Size(max = 4000, message = "설명은 4000자를 초과할 수 없습니다")
         String description,

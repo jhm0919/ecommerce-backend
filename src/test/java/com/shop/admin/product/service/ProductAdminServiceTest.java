@@ -20,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,7 +56,7 @@ class ProductAdminServiceTest {
     private Product createProduct() {
         return Product.register(
                 "베이직 티셔츠",
-                BigDecimal.valueOf(29900),
+                29900,
                 "100% 면 소재",
                 "https://example.com/image.jpg",
                 createCategory()
@@ -73,7 +72,7 @@ class ProductAdminServiceTest {
         void registerNormal() {
             ProductAdminCreateRequest request = new ProductAdminCreateRequest(
                     "베이직 티셔츠",
-                    new BigDecimal("29900"),
+                    29900,
                     "100% 면 소재",
                     "https://example.com/image.jpg",
                     1L
@@ -96,7 +95,7 @@ class ProductAdminServiceTest {
         void rejectUnknownCategory() {
             ProductAdminCreateRequest request = new ProductAdminCreateRequest(
                     "베이직 티셔츠",
-                    new BigDecimal("29900"),
+                    29900,
                     "설명",
                     "https://...",
                     999L
@@ -117,11 +116,10 @@ class ProductAdminServiceTest {
         @DisplayName("이름만 수정할 수 있다")
         void updateNameOnly() {
             Product product = createProduct();
-            Long categoryId = product.getCategory().getId();
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
             ProductDetailResponse result = productAdminService.update(1L,
-                    new ProductAdminUpdateRequest("새 이름", null, null, null, null));
+                    new ProductAdminUpdateRequest("새 이름", 0, null, null, null));
 
             assertThat(result.name()).isEqualTo("새 이름");
         }
@@ -132,7 +130,7 @@ class ProductAdminServiceTest {
             given(productRepository.findById(999L)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> productAdminService.update(999L,
-                    new ProductAdminUpdateRequest("이름", null, null, null, null)))
+                    new ProductAdminUpdateRequest("이름", 0, null, null, null)))
                     .isInstanceOf(ProductNotFoundException.class);
         }
     }

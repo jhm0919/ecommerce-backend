@@ -1,6 +1,5 @@
 package com.shop.order.domain;
 
-import com.shop.product.domain.Money;
 import com.shop.product.domain.Product;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -57,11 +56,8 @@ public class OrderItem {
     @Column(name = "product_image_url", updatable = false, length = MAX_IMAGE_URL_LENGTH)
     private String productImageUrl;
 
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "amount", column = @Column(name = "price_amount", nullable = false, updatable = false, precision = 19, scale = 2)),
-    })
-    private Money priceAtOrder;
+    @Column(nullable = false)
+    private int price;
 
     @Column(nullable = false, updatable = false)
     private int quantity;
@@ -113,7 +109,7 @@ public class OrderItem {
         item.skuCode = sku.getSkuCode();
         item.skuOptions = new ArrayList<>(sku.getOptions());
 
-        item.priceAtOrder = product.getPrice();
+        item.price = product.getPrice();
         item.quantity = quantity;
         return item;
     }
@@ -129,9 +125,9 @@ public class OrderItem {
     /**
      * 이 항목의 소계 (단가 × 수량).
      */
-    public Money calculateSubtotal() {
-        return priceAtOrder.multiply(quantity);
-    }
+//    public Money calculateSubtotal() {
+//        return price.multiply(quantity);
+//    }
 
     /**
      * Order와의 관계를 설정한다.
@@ -150,4 +146,10 @@ public class OrderItem {
             throw new IllegalArgumentException("quantity must be positive: " + quantity);
         }
     }
+
+    public int calculateSubtotal() {
+        return Math.multiplyExact(price, quantity);
+    }
+
+
 }

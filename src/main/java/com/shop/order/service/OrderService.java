@@ -25,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -113,20 +114,7 @@ public class OrderService {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new ProductNotFoundException(item.getProductId()));
 
-            Sku sku = product.findSkuById(item.getSkuId()).orElseThrow();
-            int stockBefore = sku.getStock();
-
             product.increaseSkuStock(item.getSkuId(), item.getQuantity());
-
-//            // ★ ORDER_CANCEL 이벤트 발행
-//            eventPublisher.publishEvent(StockChangedEvent.of(
-//                    product, sku,
-//                    StockType.ORDER_CANCEL,
-//                    item.getQuantity(),
-//                    stockBefore,
-//                    sku.getStock(),
-//                    orderId
-//            ));
         }
 
         order.cancel();

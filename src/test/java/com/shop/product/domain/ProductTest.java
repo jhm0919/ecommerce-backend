@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -15,12 +14,11 @@ import static org.assertj.core.api.Assertions.*;
 class ProductTest {
 
     private Category category;
-    private BigDecimal price;
+    private int price = 10000;
 
     @BeforeEach
     void setUp() {
         category = Category.create("남성 상의", "men-tops");
-        price = BigDecimal.valueOf(10000);
     }
 
     private Product createProduct() {
@@ -46,11 +44,11 @@ class ProductTest {
         void registerAlwaysActive() {
             Product product = createProduct();
 
-            BigDecimal price = BigDecimal.valueOf(10000);
+            int price = 10000;
 
             assertThat(product.getStatus()).isEqualTo(ProductStatus.ACTIVE);
             assertThat(product.getName()).isEqualTo("베이직 티셔츠");
-            assertThat(product.getPrice()).isEqualTo(new Money(price));
+            assertThat(product.getPrice()).isEqualTo(price);
         }
 
         @Test
@@ -69,13 +67,13 @@ class ProductTest {
                     .isInstanceOf(IllegalArgumentException.class);
         }
 
-        @Test
-        @DisplayName("price가 null이면 예외")
-        void rejectNullPrice() {
-            assertThatThrownBy(() -> Product.register(
-                    "이름", null, "desc", "img", category))
-                    .isInstanceOf(NullPointerException.class);
-        }
+//        @Test
+//        @DisplayName("price가 null이면 예외")
+//        void rejectNullPrice() {
+//            assertThatThrownBy(() -> Product.register(
+//                    "이름", 0, "desc", "img", category))
+//                    .isInstanceOf(NullPointerException.class);
+//        }
 
         @Test
         @DisplayName("category가 null이면 예외")
@@ -282,11 +280,11 @@ class ProductTest {
         @DisplayName("가격을 변경할 수 있다")
         void changePriceNormal() {
             Product product = createProduct();
-            BigDecimal newPrice = BigDecimal.valueOf(39900);
+            int newPrice = 39900;
 
             product.update(null, null, null, newPrice, null);
 
-            assertThat(product.getPrice()).isEqualTo(new Money(newPrice));
+            assertThat(product.getPrice()).isEqualTo(newPrice);
         }
 
         @Test
@@ -295,7 +293,7 @@ class ProductTest {
             Product product = createProduct();
             product.discontinue();
 
-            BigDecimal newPrice = BigDecimal.valueOf(39900);
+            int newPrice = 39900;
 
             assertThatThrownBy(() -> product.update(
                     null, null, null, newPrice, null

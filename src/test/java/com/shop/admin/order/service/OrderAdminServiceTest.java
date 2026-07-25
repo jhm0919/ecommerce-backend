@@ -27,7 +27,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +65,7 @@ class OrderAdminServiceTest {
         this.testCategory = category;
         Product product = Product.register(
                 "운동화",
-                BigDecimal.valueOf(10000),
+                10000,
                 "설명", "url", category);
         productRepository.save(product);
 
@@ -167,7 +166,6 @@ class OrderAdminServiceTest {
         OrderAdminListResponse response = result.getContent().get(0);
         assertThat(response.orderId()).isNotNull();
         assertThat(response.orderNumber()).isNotBlank();
-        assertThat(response.totalAmount()).isNotNull();
         assertThat(response.itemCount()).isEqualTo(1);
         assertThat(response.status()).isEqualTo(OrderStatus.PENDING);
     }

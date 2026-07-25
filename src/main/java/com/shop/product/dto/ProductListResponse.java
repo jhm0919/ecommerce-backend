@@ -3,8 +3,6 @@ package com.shop.product.dto;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.ProductStatus;
 
-import java.math.BigDecimal;
-
 /**
  * 상품 목록 조회 응답.
  * 목록에 필요한 최소 정보만 포함 (성능 최적화).
@@ -13,8 +11,7 @@ import java.math.BigDecimal;
 public record ProductListResponse(
         Long id,
         String name,
-        BigDecimal price,
-//        String currency,
+        int price,
         String mainImageUrl,
         String categoryName,
         ProductStatus status,
@@ -25,7 +22,7 @@ public record ProductListResponse(
         return new ProductListResponse(
                 product.getId(),
                 product.getName(),
-                product.getPrice().getAmount(),
+                product.getPrice(),
                 product.getMainImageUrl(),
                 product.getCategory().getName(),
                 product.getStatus(),
@@ -40,7 +37,7 @@ public record ProductListResponse(
         return new ProductListResponse(
                 projection.id(),
                 projection.name(),
-                projection.price().getAmount(),
+                projection.price(),
                 projection.mainImageUrl(),
                 projection.categoryName(),
                 projection.status(),

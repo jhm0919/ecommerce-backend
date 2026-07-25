@@ -15,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,7 +34,7 @@ class StockServiceTest {
     private Product createProduct() {
         return Product.register(
                 "베이직 티셔츠",
-                BigDecimal.valueOf(29900),
+                29900,
                 "100% 면 소재",
                 "https://example.com/image.jpg",
                 createCategory()

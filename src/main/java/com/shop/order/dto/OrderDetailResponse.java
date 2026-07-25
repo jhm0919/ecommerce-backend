@@ -17,7 +17,7 @@ import java.util.List;
 public record OrderDetailResponse(
         String orderNumber,
         OrderStatus status,
-        BigDecimal totalAmount,
+        int totalPrice,
         List<OrderItemResponse> items,
         DeliveryResponse delivery,
         LocalDateTime createdAt,
@@ -26,19 +26,19 @@ public record OrderDetailResponse(
     public record OrderItemResponse(
             Long productId,
             String productName,
-            BigDecimal priceAmount,
+            int price,
             String productImageUrl,
             int quantity,
-            BigDecimal subtotal
+            int subtotal
     ) {
         public static OrderItemResponse from(OrderItem item) {
             return new OrderItemResponse(
                     item.getProductId(),
                     item.getProductName(),
-                    item.getPriceAtOrder().getAmount(),
+                    item.getPrice(),
                     item.getProductImageUrl(),
                     item.getQuantity(),
-                    item.calculateSubtotal().getAmount()
+                    item.calculateSubtotal()
             );
         }
     }
@@ -75,7 +75,7 @@ public record OrderDetailResponse(
         return new OrderDetailResponse(
                 order.getOrderNumber(),
                 order.getStatus(),
-                order.getTotalAmount().getAmount(),
+                order.getTotalPrice(),
                 order.getItems().stream()
                         .map(OrderItemResponse::from)
                         .toList(),

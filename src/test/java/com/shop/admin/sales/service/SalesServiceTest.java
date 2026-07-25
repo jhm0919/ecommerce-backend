@@ -8,6 +8,7 @@ import com.shop.admin.sales.exception.InvalidDateException;
 import com.shop.admin.sales.exception.InvalidMonthException;
 import com.shop.global.exception.BusinessException;
 import com.shop.global.exception.ErrorCode;
+import com.shop.order.domain.OrderItem;
 import com.shop.order.domain.OrderStatus;
 import com.shop.order.repository.OrderRepository;
 import org.assertj.core.api.Assertions;
@@ -32,6 +33,7 @@ import static org.mockito.BDDMockito.given;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.willReturn;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class SalesServiceTest {
@@ -41,6 +43,14 @@ class SalesServiceTest {
     @InjectMocks
     private SalesService salesService;
 
+    private OrderItem orderItem(String productName, int price, int quantity) {
+        OrderItem item = mock(OrderItem.class);
+        given(item.getProductName()).willReturn(productName);
+        given(item.getPrice()).willReturn(price);
+        given(item.getQuantity()).willReturn(quantity);
+        return item;
+    }
+
     @Test
     @DisplayName("일별 매출 계산")
     void dailySalesCalculatesTotals() {
@@ -48,16 +58,18 @@ class SalesServiceTest {
         LocalDateTime from = date.atStartOfDay();
         LocalDateTime toExclusive = date.plusDays(1).atStartOfDay();
 
+        List<OrderItem> items = List.of(
+                orderItem("A상품", 10000, 2),
+                orderItem("B상품", 15000, 1)
+        );
+
         given(orderRepository.findDailySalesItems(
                 from, toExclusive, List.of(OrderStatus.PENDING, OrderStatus.CONFIRMED)
-        )).willReturn(List.of(
-                new SalesDailyItem("A상품", BigDecimal.valueOf(10000), 2, BigDecimal.valueOf(20000)),
-                new SalesDailyItem("B상품", BigDecimal.valueOf(15000), 1, BigDecimal.valueOf(15000))
-        ));
+        )).willReturn(items);
 
         SalesDailyResponse result = salesService.getDailySales(date, Sort.Direction.ASC);
 
-        assertThat(result.totalAmount()).isEqualByComparingTo("35000");
+        assertThat(result.totalAmount()).isEqualByComparingTo(35000L);
         assertThat(result.totalQuantity()).isEqualTo(3);
         assertThat(result.items()).hasSize(2);
     }
@@ -69,25 +81,23 @@ class SalesServiceTest {
         LocalDateTime from = date.atStartOfDay();
         LocalDateTime toExclusive = date.plusDays(1).atStartOfDay();
 
+        List<OrderItem> items = List.of(
+                orderItem("B상품", 30000, 1),
+                orderItem("A상품", 10000, 2),
+                orderItem("C상품", 20000, 4)
+        );
+
         given(orderRepository.findDailySalesItems(
                 eq(from),
                 eq(toExclusive),
                 eq(List.of(OrderStatus.PENDING, OrderStatus.CONFIRMED))
-        )).willReturn(List.of(
-                new SalesDailyItem("B상품", BigDecimal.valueOf(30000), 1, BigDecimal.valueOf(30000)),
-                new SalesDailyItem("A상품", BigDecimal.valueOf(10000), 2, BigDecimal.valueOf(20000)),
-                new SalesDailyItem("C상품", BigDecimal.valueOf(20000), 4, BigDecimal.valueOf(80000))
-        ));
+        )).willReturn(items);
 
         SalesDailyResponse result = salesService.getDailySales(date, Sort.Direction.ASC);
 
         assertThat(result.items())
                 .extracting(SalesDailyItem::amount)
-                .containsExactly(
-                        BigDecimal.valueOf(20000),
-                        BigDecimal.valueOf(30000),
-                        BigDecimal.valueOf(80000)
-                );
+                .containsExactly(20000L, 30000L, 80000L);
     }
 
     @Test
@@ -97,25 +107,23 @@ class SalesServiceTest {
         LocalDateTime from = date.atStartOfDay();
         LocalDateTime toExclusive = date.plusDays(1).atStartOfDay();
 
+        List<OrderItem> items = List.of(
+                orderItem("B상품", 30000, 1),
+                orderItem("A상품", 10000, 2),
+                orderItem("C상품", 20000, 4)
+        );
+
         given(orderRepository.findDailySalesItems(
                 eq(from),
                 eq(toExclusive),
                 eq(List.of(OrderStatus.PENDING, OrderStatus.CONFIRMED))
-        )).willReturn(List.of(
-                new SalesDailyItem("B상품", BigDecimal.valueOf(30000), 1, BigDecimal.valueOf(30000)),
-                new SalesDailyItem("A상품", BigDecimal.valueOf(10000), 2, BigDecimal.valueOf(20000)),
-                new SalesDailyItem("C상품", BigDecimal.valueOf(20000), 4, BigDecimal.valueOf(80000))
-        ));
+        )).willReturn(items);
 
         SalesDailyResponse result = salesService.getDailySales(date, Sort.Direction.DESC);
 
         assertThat(result.items())
                 .extracting(SalesDailyItem::amount)
-                .containsExactly(
-                        BigDecimal.valueOf(80000),
-                        BigDecimal.valueOf(30000),
-                        BigDecimal.valueOf(20000)
-                );
+                .containsExactly(80000L, 30000L, 20000L);
     }
 
     @Test

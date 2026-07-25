@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -28,7 +27,7 @@ class CartTest {
         Category category = Category.create("의류", "clothing");
 
         product1 = Product.register(
-                "티셔츠", BigDecimal.valueOf(29900), "설명", "img1", category
+                "티셔츠", 29900, "설명", "img1", category
         );
         setId(product1, 1L);
         sku1 = product1.addSku(List.of(new SkuOption("색상", "검정")), 50);
@@ -37,7 +36,7 @@ class CartTest {
         setId(sku1B, 101L);
 
         product2 = Product.register(
-                "바지", BigDecimal.valueOf(49900), "설명", "img2", category
+                "바지", 49900, "설명", "img2", category
         );
         setId(product2, 2L);
         sku2 = product2.addSku(List.of(new SkuOption("색상", "회색")), 40);

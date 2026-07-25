@@ -19,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,7 +50,7 @@ class CartServiceTest {
 
         Category category = Category.create("의류", "clothing");
         product = Product.register(
-                "티셔츠", BigDecimal.valueOf(29900), "설명", "img", category
+                "티셔츠", 29900, "설명", "img", category
         );
         setId(product, PRODUCT_ID);
         sku = product.addSku(List.of(new SkuOption("색상", "검정")), 50);

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -24,7 +23,7 @@ class CartItemTest {
         Category category = Category.create("의류", "clothing");
         product = Product.register(
                 "베이직 티셔츠",
-                BigDecimal.valueOf(29900),
+                29900,
                 "100% 면",
                 "https://example.com/image.jpg",
                 category

@@ -27,7 +27,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,7 +52,7 @@ class OrderServiceTest {
     void setUp() {
         Category category = Category.create("의류", "clothing");
         product = Product.register(
-                "티셔츠", BigDecimal.valueOf(29900), "설명", "img", category
+                "티셔츠", 29900, "설명", "img", category
         );
         setId(product, 1L);
         sku = product.addSku(List.of(new SkuOption("색상", "검정")), 50);
@@ -114,7 +113,7 @@ class OrderServiceTest {
         void rejectInsufficientStock() {
             Category category = Category.create("의류", "clothing");
             Product lowStockProduct = Product.register(
-                    "한정상품", BigDecimal.valueOf(10000), "설명", "img", category
+                    "한정상품", 10000, "설명", "img", category
             );
             setId(lowStockProduct, 1L);
             Sku lowStockSku = lowStockProduct.addSku(

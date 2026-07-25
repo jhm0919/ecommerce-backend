@@ -24,7 +24,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -249,7 +248,7 @@ class OrderAdminControllerTest {
         return new OrderAdminListResponse(
                 orderId,
                 orderNumber,
-                BigDecimal.valueOf(10000),
+                10000,
                 status,
                 1,
                 LocalDateTime.now()

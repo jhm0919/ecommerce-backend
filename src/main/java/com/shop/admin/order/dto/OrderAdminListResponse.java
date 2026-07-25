@@ -3,13 +3,12 @@ package com.shop.admin.order.dto;
 import com.shop.order.domain.Order;
 import com.shop.order.domain.OrderStatus;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record OrderAdminListResponse(
         Long orderId,
         String orderNumber,
-        BigDecimal totalAmount,
+        int totalPrice,
         OrderStatus status,
         int itemCount,
         LocalDateTime createdAt
@@ -18,7 +17,7 @@ public record OrderAdminListResponse(
         return new OrderAdminListResponse(
                 order.getId(),
                 order.getOrderNumber(),
-                order.getTotalAmount().getAmount(),
+                order.getTotalPrice(),
                 order.getStatus(),
                 order.getItems().size(),
                 order.getCreatedAt()

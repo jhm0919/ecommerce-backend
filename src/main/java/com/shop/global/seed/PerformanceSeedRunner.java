@@ -23,7 +23,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -143,7 +142,7 @@ public class PerformanceSeedRunner implements CommandLineRunner {
                     Category category = categories.get((i - 1) % categories.size());
                     Product product = Product.register(
                             catalogProductName(i),
-                            BigDecimal.valueOf(5_000 + (i % 296) * 1_000),
+                            5_000 + (i % 296) * 1_000,
                             catalogDescription(i),
                             "https://example.com/perf/products/" + i + ".jpg",
                             category
@@ -171,7 +170,7 @@ public class PerformanceSeedRunner implements CommandLineRunner {
     private Product seedOrderTestProduct(Category category) {
         Product product = Product.register(
                 ORDER_PRODUCT_NAME,
-                BigDecimal.valueOf(29_900),
+                29900,
                 "Performance test product for order-create scenario",
                 "https://example.com/perf/order-product.jpg",
                 category

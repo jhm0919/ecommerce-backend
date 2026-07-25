@@ -17,8 +17,7 @@ import java.util.List;
 public record ProductDetailResponse(
         Long id,
         String name,
-        BigDecimal price,
-//        String currency,
+        int price,
         String description,
         String mainImageUrl,
         CategoryResponse category,
@@ -32,8 +31,7 @@ public record ProductDetailResponse(
         return new ProductDetailResponse(
                 product.getId(),
                 product.getName(),
-                product.getPrice().getAmount(),
-//                product.getPrice().getCurrency(),
+                product.getPrice(),
                 product.getDescription(),
                 product.getMainImageUrl(),
                 CategoryResponse.from(product.getCategory()),

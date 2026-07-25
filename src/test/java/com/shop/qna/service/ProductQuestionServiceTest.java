@@ -26,7 +26,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,7 +52,7 @@ class ProductQuestionServiceTest {
     void setUp() {
         testProduct = Product.register(
                 "티셔츠",
-                BigDecimal.valueOf(29900),
+                29900,
                 "설명",
                 "https://image.url",
                 Category.create("상의", "tops")

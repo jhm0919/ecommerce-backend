@@ -21,7 +21,6 @@ import java.util.Optional;
 /**
  * 이커머스의 상품을 표현하는 Aggregate Root.
  *
- * <p>{@link Money} 값 객체로 가격을 표현하여 통화/금액의 안전성을 보장한다.
  * 상태({@link ProductStatus})는 ACTIVE → SOLD_OUT → DISCONTINUED 순서로 전이된다.
  *
  * <p>재고는 SKU 단위로 관리된다. Product의 총 재고 = 모든 SKU 재고의 합계.
@@ -47,14 +46,8 @@ public class Product {
     @Column(nullable = false, length = MAX_NAME_LENGTH)
     private String name;
 
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "amount", column = @Column(name = "price_amount", nullable = false, precision = 19, scale = 2)),
-            @AttributeOverride(name = "currency", column = @Column(name = "price_currency", nullable = false, length = 3))
-    })
-    private Money price;
-
-    // ★ stock 필드 제거
+    @Column(nullable = false)
+    private int price;
 
     @Column(length = MAX_DESCRIPTION_LENGTH)
     private String description;
@@ -93,22 +86,21 @@ public class Product {
      */
     public static Product register(
             String name,
-            BigDecimal price,
+            int price,
             String description,
             String mainImageUrl,
             Category category
     ) {
-        Money money = new Money(price);
 
         validateName(name);
-        validatePrice(money);
+        validatePrice(price);
         validateDescription(description);
         validateImageUrl(mainImageUrl);
         validateCategory(category);
 
         Product product = new Product();
         product.name = name.trim();
-        product.price = money;
+        product.price = price;
         product.description = (description == null) ? null : description.trim();
         product.mainImageUrl = mainImageUrl;
         product.category = category;
@@ -123,9 +115,13 @@ public class Product {
     public void update(String name,
                        String description,
                        String mainImageUrl,
-                       BigDecimal price,
+                       Integer price,
                        Category category
     ) {
+        if (this.status == ProductStatus.DISCONTINUED) {
+            throw new IllegalStateException("Cannot update discontinued product");
+        }
+
         if (name != null) {
             validateName(name);
             this.name = name.trim();
@@ -139,12 +135,8 @@ public class Product {
             this.mainImageUrl = mainImageUrl;
         }
         if (price != null) {
-            if (this.status == ProductStatus.DISCONTINUED) {
-                throw new IllegalStateException("Cannot change price of discontinued product");
-            }
-            Money money = new Money(price);
-            validatePrice(money);
-            this.price = money;
+            validatePrice(price);
+            this.price = price;
         }
         if (category != null) {
             validateCategory(category);
@@ -279,8 +271,10 @@ public class Product {
         }
     }
 
-    private static void validatePrice(Money price) {
-        Objects.requireNonNull(price, "price must not be null");
+    private static void validatePrice(int price) {
+        if (price < 0) {
+            throw new IllegalArgumentException("price must not be negative");
+        }
     }
 
     // ★ validateStock 제거
