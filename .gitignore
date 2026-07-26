@@ -59,3 +59,4 @@ out/
 .vscode/
 
 .env
+src/main/resources/application-test-mysql.yaml

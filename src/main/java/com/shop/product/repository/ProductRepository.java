@@ -3,9 +3,11 @@ package com.shop.product.repository;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.ProductStatus;
 import com.shop.product.dto.ProductSummaryProjection;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -109,4 +111,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             nativeQuery = true
     )
     List<Product> findTop3ByStockGreaterThanOrderByCreatedAtDesc(@Param("stock") int stock);
+
 }

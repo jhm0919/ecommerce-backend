@@ -16,6 +16,7 @@ import com.shop.product.domain.Sku;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
 import com.shop.admin.stock.domain.StockType;
+import com.shop.product.repository.SkuRepository;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -37,6 +39,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final DeliveryRepository deliveryRepository;
     private final ProductRepository productRepository;
+    private final SkuRepository skuRepository;
 
     // ─────────────────────────────────────
     // 주문 생성
@@ -137,16 +140,20 @@ public class OrderService {
         List<PreparedOrderItem> prepared = new ArrayList<>();
 
         for (CreateOrderRequest.OrderItemRequest req : requests) {
-            Product product = productRepository.findById(req.productId())
-                    .orElseThrow(() -> new ProductNotFoundException(req.productId()));
+//            Product product = productRepository.findById(req.productId())
+//                    .orElseThrow(() -> new ProductNotFoundException(req.productId()));
 
-            Sku sku = product.findSkuById(req.skuId())
+//            Sku sku = product.findSkuById(req.skuId())
+//                    .orElseThrow(() -> new OrderNotFoundException(req.skuId()));
+
+            Sku sku = skuRepository.findByIdAndProductIdForUpdate(req.skuId(), req.productId())
                     .orElseThrow(() -> new OrderNotFoundException(req.skuId()));
+            Product product = sku.getProduct();
 
             int stockBefore = sku.getStock();  // ★ 차감 전 재고 기록
 
             try {
-                product.decreaseSkuStock(req.skuId(), req.quantity());
+                sku.decreaseStock(req.quantity());
             } catch (IllegalStateException e) {
                 log.warn("Stock decrease failed: productId={}, skuId={}, quantity={}",
                         req.productId(), req.skuId(), req.quantity());

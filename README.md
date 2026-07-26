@@ -6,76 +6,51 @@ Spring Boot 기반 이커머스 백엔드 프로젝트
 
 ## ✨ 주요 기능
 
-*   **회원 관리:** 회원가입, 로그인, 정보 수정, 탈퇴 등 기본적인 회원 기능 및 OAuth2를 이용한 소셜 로그인 기능
-*   **상품 관리:** 상품 등록, 조회, 수정, 삭제 기능, 카테고리 관리(등록, 조회, 수정, 삭제)
-*   **주문 관리:** 상품 주문 생성, 주문 조회, 주문 취소 기능
-*   **장바구니:** 사용자가 원하는 상품을 담고 관리할 수 있는 장바구니 기능
-*   **Q&A:** 상품 및 주문에 대한 고객 문의를 처리하는 Q&A 기능
-*   **알림:** 주문 상태 변경 등 주요 이벤트 발생 시 사용자에게 실시간 알림
+*   **회원 관리:** 회원가입, 로그인(OAuth2를 이용한 소셜 로그인 기능) 
+*   **상품 관리:** 상품 등록, 조회, 수정, 삭제 / 카테고리 등록, 조회, 수정, 삭제
+*   **주문 관리:** 상품 주문, 주문 조회, 주문 취소 기능
+*   **장바구니:** 사용자가 원하는 상품을 담고 관리
+*   **Q&A:** 상품 및 주문에 대한 고객 문의를 처리하는 Q&A
 *   **관리자:** 관리자 전용 페이지를 통해 매출 조회, 회원, 상품, 주문, 재고 관리 등 시스템의 전반적인 데이터 관리
 
 ## 🛠️ 기술 스택
 
-*   **언어:** Java 17
-*   **프레임워크:** Spring Boot 4.0.5
-*   **데이터베이스:**
-    *   JPA (Java Persistence API)
-    *   Redis (캐싱, 세션 관리 등)
-    *   MySQL
-*   **인증 및 인가:**
-    *   Spring Security
-    *   OAuth2 (Social Login) : Google 소셜 로그인
-    *   JWT (JSON Web Token) : API 인증
-*   **API 문서화:** Swagger 
-*   **모니터링:**
-    *   Spring Boot Actuator
-    *   Prometheus
-    *   Grafana
+*   **Language:** Java 17
+*   **Framework:** Spring Boot 4.0.5
+*   **Database:** MySQL 8.0.41, JPA 4.0.5
+*   **Security:** Spring Security, OAuth2, JWT
 
-## 🚀 시작하기
-
-### 1. 프로젝트 클론
-
-```bash
-git clone https://github.com/your-username/ecommerce-backend.git
-cd ecommerce-backend
-```
-
-### 2. 환경 설정
-
-`application.yml` (또는 `application.properties`) 파일에 데이터베이스, Redis, JWT secret key 등 환경에 맞는 설정을 입력합니다.
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/your-db
-    username: your-username
-    password: your-password
-  redis:
-    host: localhost
-    port: 6379
-  jwt:
-    secret: your-secret-key
-```
-
-### 3. 애플리케이션 실행
-
-```bash
-./gradlew bootRun
-```
-
-애플리케이션이 성공적으로 실행되면 `http://localhost:8080` 에서 확인할 수 있습니다.
+## 📅 개발 기간
+* 2026.03 ~
 
 ## 📝 API 문서
 
-애플리케이션 실행 후 다음 URL에서 API 문서를 확인할 수 있습니다.
+*   **Swagger UI:** `https://jhm0919.github.io/swagger-ui/`
 
-*   **Swagger UI:** `http://localhost:8080/swagger-ui.html`
+## 🎯 트러블 슈팅
+1. 문제 정의
+   * 재고 1개 상품에 대해 동시에 2건 주문 시, 둘 다 주문에 성공하는 동시성 이슈 발생
 
-## 📦 아키텍처 (예상)
+2. 재현 조건
+   * MySQL 환경에서 CountDownLatch로 두 요청을 동시에 시작시키고, 동일 SKU를 대상으로 주문을 2번 호출
 
-(프로젝트의 아키텍처 다이어그램이나 간단한 설명을 추가하면 좋습니다.)
+3. 관측 결과
+   * `OrderConcurrencyTest.concurrentOrders_shouldExposeStockRace`테스트에서 성공 건수 2건, 최종 주문 수 2건이 확인됨
+   ![img_1.png](img_1.png)
 
-## 🤝 기여
 
-이 프로젝트는 ... (기여 방법에 대한 안내를 추가할 수 있습니다.)
+* 원인은 재고 차감 시점에 락이 없어서 두 트랜잭션이 같은 재고 값을 동시에 읽고 각각 차감해렸기 때문
+* 트랜잭션만으로는 요청 간 경쟁을 막을 수 없기 때문에 재고 단위인 SKU row에 비관적 락을 적용
+
+### 해결 방식
+- `PESSIMISTIC_WRITE` 락으로 SKU를 먼저 잠근다.
+- 락이 걸린 SKU 엔티티에 직접 재고 차감을 수행한다.
+- 같은 SKU에 대한 동시 주문은 앞선 트랜잭션이 끝날 때까지 대기하게 만든다.
+
+- 검증 결과, 동시 주문 테스트에서 재고 1개 SKU에 대해 주문 2건이 동시에 성공하던 문제가 사라졌고
+최종 주문 수와 재고 상태가 기대값과 일치하는 것을 확인
+![img_2.png](img_2.png)
+
+
+## 📦 아키텍처 
+

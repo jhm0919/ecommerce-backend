@@ -12,7 +12,6 @@ import com.shop.admin.order.repository.OrderAdminRepository;
 import com.shop.product.domain.Product;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
-import com.shop.product.repository.SkuRepository;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
