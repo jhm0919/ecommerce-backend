@@ -1,5 +1,7 @@
 # E-commerce Backend Project
 
+<br/>
+
 ## 📖 프로젝트 소개
 
 Spring Boot 기반 이커머스 백엔드 프로젝트  
