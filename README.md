@@ -2,7 +2,7 @@
 
 ## 📖 프로젝트 소개
 
-Spring Boot 기반 이커머스 백엔드 프로젝트 
+Spring Boot 기반 이커머스 백엔드 프로젝트  
 
 ## ✨ 주요 기능
 
@@ -11,7 +11,7 @@ Spring Boot 기반 이커머스 백엔드 프로젝트
 *   **주문 관리:** 상품 주문, 주문 조회, 주문 취소 기능
 *   **장바구니:** 사용자가 원하는 상품을 담고 관리
 *   **Q&A:** 상품 및 주문에 대한 고객 문의를 처리하는 Q&A
-*   **관리자:** 관리자 전용 페이지를 통해 매출 조회, 회원, 상품, 주문, 재고 관리 등 시스템의 전반적인 데이터 관리
+*   **관리자:** 관리자 전용 페이지를 통해 매출 조회, 회원, 상품, 주문, 재고 관리 등 시스템의 전반적인 데이터 관리  
 
 
 ## 🛠️ 기술 스택
@@ -19,16 +19,16 @@ Spring Boot 기반 이커머스 백엔드 프로젝트
 *   **Language:** Java 17
 *   **Framework:** Spring Boot 4.0.5
 *   **Database:** MySQL 8.0.41, JPA 4.0.5
-*   **Security:** Spring Security, OAuth2, JWT
+*   **Security:** Spring Security, OAuth2, JWT  
 
 
 ## 📅 개발 기간
-* 2026.03 ~
+* 2026.03 ~  
 
 
 ## 📝 API 문서
 
-*   **Swagger UI:** `https://jhm0919.github.io/swagger-ui/`
+*   **Swagger UI:** `https://jhm0919.github.io/swagger-ui/`  
 
 
 ## 🎯 트러블 슈팅
