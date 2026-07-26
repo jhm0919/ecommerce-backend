@@ -1,8 +1,10 @@
-# E-commerce Project Backend
+# E-commerce Backend Project
 
 ## 📖 프로젝트 소개
 
 Spring Boot 기반 이커머스 백엔드 프로젝트  
+
+<br/>
 
 ## ✨ 주요 기능
 
@@ -13,6 +15,7 @@ Spring Boot 기반 이커머스 백엔드 프로젝트
 *   **Q&A:** 상품 및 주문에 대한 고객 문의를 처리하는 Q&A
 *   **관리자:** 관리자 전용 페이지를 통해 매출 조회, 회원, 상품, 주문, 재고 관리 등 시스템의 전반적인 데이터 관리  
 
+<br/>
 
 ## 🛠️ 기술 스택
 
@@ -21,15 +24,18 @@ Spring Boot 기반 이커머스 백엔드 프로젝트
 *   **Database:** MySQL 8.0.41, JPA 4.0.5
 *   **Security:** Spring Security, OAuth2, JWT  
 
+<br/>
 
 ## 📅 개발 기간
 * 2026.03 ~  
 
+<br/>
 
 ## 📝 API 문서
 
 *   **Swagger UI:** `https://jhm0919.github.io/swagger-ui/`  
 
+<br/>
 
 ## 🎯 트러블 슈팅
 1. 문제 정의
