@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -30,24 +31,16 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ProductAdminServiceTest {
+
+    @InjectMocks
+    private ProductAdminService productAdminService;
+
     @Mock
     private ProductRepository productRepository;
-    @Mock private CategoryRepository categoryRepository;
-    @Mock private ApplicationEventPublisher eventPublisher;
-    @Mock private CartRepository cartRepository; // 1. CartRepository Mock 객체 추가
-    private ProductAdminService productAdminService; // 필드만 선언
-
-    @BeforeEach
-        // 4. @BeforeEach 셋업 메서드 추가 (또는 기존 메서드에 추가)
-    void setUp() {
-        // 5. 서비스 객체를 수동으로 생성하고 모든 Mock을 주입합니다.
-        productAdminService = new ProductAdminService(
-                productRepository,
-                categoryRepository,
-                cartRepository,
-                eventPublisher
-        );
-    }
+    @Mock
+    private CategoryRepository categoryRepository;
+    @Mock
+    private CartRepository cartRepository; // 1. CartRepository Mock 객체 추가
 
     private Category createCategory() {
         return Category.create("남성 상의", "men-tops");

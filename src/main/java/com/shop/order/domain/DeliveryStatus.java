@@ -1,4 +1,4 @@
-package com.shop.order.delivery.domain;
+package com.shop.order.domain;
 
 public enum DeliveryStatus {
     PREPARING,     // 배송 준비 중 (주문 직후)

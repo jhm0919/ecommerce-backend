@@ -111,7 +111,7 @@ class ProductTest {
 
             product.decreaseSkuStock(100L, 3);
 
-            assertThat(sku.getStock()).isEqualTo(7);
+            assertThat(sku.getQuantity()).isEqualTo(7);
             assertThat(product.getStatus()).isEqualTo(ProductStatus.ACTIVE);
         }
 
@@ -161,7 +161,7 @@ class ProductTest {
 
             product.increaseSkuStock(100L, 10);
 
-            assertThat(sku.getStock()).isEqualTo(15);
+            assertThat(sku.getQuantity()).isEqualTo(15);
         }
 
         @Test

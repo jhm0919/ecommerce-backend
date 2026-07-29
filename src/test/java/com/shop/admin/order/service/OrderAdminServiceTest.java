@@ -90,7 +90,8 @@ class OrderAdminServiceTest {
 
     private Order createPendingOrder() {
         OrderItem item = OrderItem.of(testProduct, testSku, 1);
-        Order order = Order.createForMember(1L, List.of(item));
+        Order order = Order.createOrder(1L, List.of(item), "12345", "010-1234-5678",
+                "홍길동", "01012345789", "문 앞에");
         Order saved = orderAdminRepository.saveAndFlush(order);
         createdOrderIds.add(saved.getId());
         return saved;
@@ -237,10 +238,11 @@ class OrderAdminServiceTest {
 
         Product freshProduct = productRepository.findById(testProduct.getId()).orElseThrow();
         Sku freshSku = freshProduct.getSkuses().get(0);
-        int stockBefore = freshSku.getStock();
+        int stockBefore = freshSku.getQuantity();
 
         OrderItem item = OrderItem.of(freshProduct, freshSku, orderQuantity);
-        Order order = Order.createForMember(1L, List.of(item));
+        Order order = Order.createOrder(1L, List.of(item), "12345", "010-1234-5678",
+                "홍길동", "01012345789", "문 앞에");
         order = orderAdminRepository.saveAndFlush(order);
         createdOrderIds.add(order.getId());
 
@@ -253,7 +255,7 @@ class OrderAdminServiceTest {
         entityManager.clear();  // ★ 그 다음 캐시 제거
         Product updated = productRepository.findById(testProduct.getId()).orElseThrow();
         Sku updatedSku = updated.getSkuses().get(0);
-        assertThat(updatedSku.getStock()).isEqualTo(stockBefore + orderQuantity);
+        assertThat(updatedSku.getQuantity()).isEqualTo(stockBefore + orderQuantity);
     }
 
     @Test

@@ -26,9 +26,7 @@ import java.util.Optional;
  * SKU 옵션 정보는 보관하지 않으며, 조회 시 skuId로 SKU를 참조한다.
  */
 @Entity
-@Table(name = "carts", indexes = {
-        @Index(name = "idx_cart_member", columnList = "member_id", unique = true)
-})
+@Table(name = "carts")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)

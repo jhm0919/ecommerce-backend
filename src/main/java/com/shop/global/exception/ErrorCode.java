@@ -13,6 +13,7 @@ public enum ErrorCode {
 
     // Product
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "상품을 찾을 수 없습니다"),
+    SKU_NOT_FOUND(HttpStatus.NOT_FOUND, "S001", "옵션을 찾을 수 없습니다"),
 
     // Category
     CATEGORY_HAS_PRODUCTS(HttpStatus.BAD_REQUEST, "CAT001", "상품이 존재하는 카테고리는 삭제할 수 없습니다"),

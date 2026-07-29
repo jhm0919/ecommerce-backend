@@ -6,20 +6,16 @@ import com.shop.order.dto.CreateOrderRequest;
 import com.shop.order.repository.OrderRepository;
 import com.shop.order.service.OrderService;
 import com.shop.product.domain.Product;
-import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
 import com.shop.product.repository.ProductRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.jdbc.Sql;
 
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -67,10 +63,8 @@ public class OrderConcurrencyTest {
     private CreateOrderRequest createRequest() {
         return new CreateOrderRequest(
                 List.of(new CreateOrderRequest.OrderItemRequest(productId, skuId, 1)),
-                new CreateOrderRequest.DeliveryInfoRequest(
-                        "홍길동", "010-1234-5678",
-                        "12345", "서울시 강남구", "101호", "문 앞에"
-                )
+                "12345", "010-1234-5678",
+                "홍길동", "01012345789", "문 앞에"
         );
     }
 
@@ -95,7 +89,7 @@ public class OrderConcurrencyTest {
             start.await();
 
             try {
-                orderService.createMemberOrder(1L, createRequest());
+                orderService.createOrder(1L, createRequest());
                 return true;
             } catch (Exception e) {
                 return false;

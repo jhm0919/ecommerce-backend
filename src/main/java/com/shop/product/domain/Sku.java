@@ -1,5 +1,6 @@
 package com.shop.product.domain;
 
+import com.shop.order.exception.InsufficientStockException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -20,10 +21,7 @@ import java.util.Objects;
  * Product Aggregate에 속하며, Product를 통해서만 관리된다.
  */
 @Entity
-@Table(name = "skus", indexes = {
-        @Index(name = "idx_sku_code", columnList = "sku_code", unique = true),
-        @Index(name = "idx_sku_product", columnList = "product_id")
-})
+@Table(name = "skus")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
@@ -31,25 +29,25 @@ public class Sku {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "sku_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY) // 연관관계 주인, DB에 넣거나 수정할때 여기를 참조, FK
+    @JoinColumn(name = "product_ id", nullable = false)
     private Product product;
 
     @Column(name = "sku_code", nullable = false, unique = true, length = 50, updatable = false)
     private String skuCode;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection
     @CollectionTable(
-            name = "sku_options",
+            name = "sku_options", // 테이블 이름
             joinColumns = @JoinColumn(name = "sku_id")
-    )
-    @OrderColumn(name = "option_order")
+    ) // 값 타입 컬렉션
     private List<SkuOption> options = new ArrayList<>();
 
     @Column(nullable = false)
-    private int stock;
+    private int quantity;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false)
@@ -79,7 +77,7 @@ public class Sku {
         Sku sku = new Sku();
         sku.skuCode = skuCode;
         sku.options = new ArrayList<>(options);
-        sku.stock = stock;
+        sku.quantity = stock;
         return sku;
     }
 
@@ -94,25 +92,24 @@ public class Sku {
     /**
      * 재고를 증가시킨다.
      */
-    public void increaseStock(int quantity) {
+     void increaseStock(int quantity) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("quantity must be positive: " + quantity);
         }
-        this.stock += quantity;
+        this.quantity += quantity;
     }
 
     /**
      * 재고를 감소시킨다.
      */
-    public void decreaseStock(int quantity) {
+     void decreaseStock(int quantity) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("quantity must be positive: " + quantity);
         }
-        if (this.stock < quantity) {
-            throw new IllegalStateException(
-                    "Insufficient stock. Current: " + stock + ", requested: " + quantity);
+        if (this.quantity < quantity) {
+            throw new InsufficientStockException(this.quantity, quantity);
         }
-        this.stock -= quantity;
+        this.quantity -= quantity;
     }
 
     // ─────────────────────────────────────
@@ -132,7 +129,7 @@ public class Sku {
     }
 
     public boolean isInStock() {
-        return stock > 0;
+        return quantity > 0;
     }
 
     public List<SkuOption> getOptions() {

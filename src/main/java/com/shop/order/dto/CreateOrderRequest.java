@@ -13,9 +13,19 @@ public record CreateOrderRequest(
         @Valid
         List<OrderItemRequest> items,
 
-        @NotNull(message = "배송 정보는 필수입니다")
-        @Valid
-        DeliveryInfoRequest delivery
+        @NotBlank(message = "우편번호는 필수입니다.")
+        String zipCode,
+
+        @NotBlank(message = "주소는 필수입니다.")
+        String address,
+
+        @NotBlank(message = "주문자 이름은 필수입니다.")
+        String receiverName,
+
+        @NotBlank(message = "주문자 번호는 필수입니다.")
+        String receiverPhone,
+
+        String memo
 ) {
     public record OrderItemRequest(
             @NotNull(message = "상품 ID는 필수입니다")
@@ -27,23 +37,5 @@ public record CreateOrderRequest(
             @NotNull
             @Min(value = 1, message = "수량은 1 이상이어야 합니다")
             Integer quantity
-    ) {}
-
-    public record DeliveryInfoRequest(
-            @NotBlank(message = "받는 사람 이름은 필수입니다")
-            String receiverName,
-
-            @NotBlank(message = "연락처는 필수입니다")
-            String receiverPhone,
-
-            @NotBlank(message = "우편번호는 필수입니다")
-            String zipCode,
-
-            @NotBlank(message = "주소는 필수입니다")
-            String addressLine1,
-
-            String addressLine2,
-
-            String memo
     ) {}
 }

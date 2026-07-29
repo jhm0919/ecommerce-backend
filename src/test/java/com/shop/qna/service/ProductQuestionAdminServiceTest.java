@@ -28,9 +28,9 @@ import static org.mockito.BDDMockito.given;
 @ExtendWith(MockitoExtension.class)
 class ProductQuestionAdminServiceTest {
 
-    @Mock private ProductQuestionRepository questionRepository;
-
     @InjectMocks private ProductQuestionAdminService questionAdminService;
+
+    @Mock private ProductQuestionRepository questionRepository;
 
     private ProductQuestion pendingQuestion;
     private ProductQuestion answeredQuestion;

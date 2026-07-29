@@ -13,7 +13,7 @@ public interface SkuRepository extends JpaRepository<Sku, Long> {
 
     Optional<Sku> findBySkuCode(String skuCode);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Lock(LockModeType.PESSIMISTIC_WRITE) // 비관적 락
     @Query("""
         SELECT s
         FROM Sku s

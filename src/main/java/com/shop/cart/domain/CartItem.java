@@ -19,11 +19,7 @@ import java.util.Objects;
  * SKU 옵션 정보는 보관하지 않는다 (조회 시 SKU 참조).
  */
 @Entity
-@Table(name = "cart_items", indexes = {
-        @Index(name = "idx_cart_item_cart", columnList = "cart_id"),
-        @Index(name = "idx_cart_item_product", columnList = "product_id"),
-        @Index(name = "idx_cart_item_sku", columnList = "sku_id")  // ★ 인덱스 추가
-})
+@Table(name = "cart_items")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CartItem {

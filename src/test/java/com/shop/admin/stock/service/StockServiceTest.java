@@ -24,8 +24,9 @@ import static org.mockito.BDDMockito.given;
 @ExtendWith(MockitoExtension.class)
 class StockServiceTest {
 
-    @Mock private ProductRepository productRepository;
     @InjectMocks private StockService stockService;
+
+    @Mock private ProductRepository productRepository;
 
     private Category createCategory() {
         return Category.create("남성 상의", "men-tops");
@@ -69,7 +70,7 @@ class StockServiceTest {
 
             stockService.increaseStock(1L, 100L, 5);
 
-            assertThat(sku.getStock()).isEqualTo(15);
+            assertThat(sku.getQuantity()).isEqualTo(15);
         }
 
         @Test
@@ -96,7 +97,7 @@ class StockServiceTest {
 
         stockService.decreaseStock(1L, 100L, 3);
 
-        assertThat(sku.getStock()).isEqualTo(7);
+        assertThat(sku.getQuantity()).isEqualTo(7);
     }
 
 }

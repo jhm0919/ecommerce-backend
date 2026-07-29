@@ -1,6 +1,5 @@
 package com.shop.order.controller;
 
-import com.shop.order.delivery.domain.Delivery;
 import com.shop.global.response.CommonResponse;
 import com.shop.order.domain.Order;
 import com.shop.order.dto.CreateOrderRequest;
@@ -31,10 +30,6 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    // ─────────────────────────────────────
-    // 회원용 API
-    // ─────────────────────────────────────
-
     @Operation(summary = "회원 주문 생성", description = "로그인한 회원의 주문을 생성한다.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "주문 생성 성공"),
@@ -52,7 +47,7 @@ public class OrderController {
     ) {
         return ResponseEntity.status(201)
                 .body(CommonResponse.createSuccess(
-                        orderService.createMemberOrder(principal.memberId(), request)
+                        orderService.createOrder(principal.memberId(), request)
                 ));
     }
 
@@ -67,7 +62,7 @@ public class OrderController {
             @AuthenticationPrincipal AuthPrincipal principal,
             Pageable pageable
     ) {
-        Page<Order> orders = orderService.findMyOrders(principal.memberId(), pageable);
+        Page<Order> orders = orderService.findOrders(principal.memberId(), pageable);
         return ResponseEntity.ok(
                 CommonResponse.createSuccess(orders.map(OrderResponse::from))
         );
@@ -87,10 +82,10 @@ public class OrderController {
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long orderId
     ) {
-        Order order = orderService.findMyOrder(principal.memberId(), orderId);
-        Delivery delivery = orderService.findDeliveryByOrderId(order.getId());
+        Order order = orderService.findOrder(principal.memberId(), orderId);
+//        Delivery delivery = orderService.findDeliveryByOrderId(order.getId());
         return ResponseEntity.ok(
-                CommonResponse.createSuccess(OrderDetailResponse.from(order, delivery))
+                CommonResponse.createSuccess(OrderDetailResponse.from(order))
         );
     }
 
@@ -109,10 +104,10 @@ public class OrderController {
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long orderId
     ) {
-        Order order = orderService.cancelMyOrder(principal.memberId(), orderId);
-        Delivery delivery = orderService.findDeliveryByOrderId(order.getId());
+        Order order = orderService.cancelOrder(principal.memberId(), orderId);
+//        Delivery delivery = orderService.findDeliveryByOrderId(order.getId());
         return ResponseEntity.ok(
-                CommonResponse.createSuccess(OrderDetailResponse.from(order, delivery))
+                CommonResponse.createSuccess(OrderDetailResponse.from(order))
         );
     }
 

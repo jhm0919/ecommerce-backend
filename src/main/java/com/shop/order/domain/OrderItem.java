@@ -27,11 +27,7 @@ import java.util.Objects;
  * <p>이를 통해 상품 가격/이름이 변경되거나 단종되어도 주문 내역은 정확히 보존된다.
  */
 @Entity
-@Table(name = "order_items", indexes = {
-        @Index(name = "idx_order_item_order", columnList = "order_id"),
-        @Index(name = "idx_order_item_product", columnList = "product_id"),
-        @Index(name = "idx_order_item_sku", columnList = "sku_id")
-})
+@Table(name = "order_items")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderItem {
@@ -41,6 +37,7 @@ public class OrderItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "order_item_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -70,7 +67,7 @@ public class OrderItem {
     @Column(name = "sku_code", nullable = false, updatable = false)
     private String skuCode;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection
     @CollectionTable(
             name = "order_item_sku_options",
             joinColumns = @JoinColumn(name = "order_item_id")
@@ -121,13 +118,6 @@ public class OrderItem {
     // ─────────────────────────────────────
     // 비즈니스 메서드
     // ─────────────────────────────────────
-
-    /**
-     * 이 항목의 소계 (단가 × 수량).
-     */
-//    public Money calculateSubtotal() {
-//        return price.multiply(quantity);
-//    }
 
     /**
      * Order와의 관계를 설정한다.

@@ -27,7 +27,7 @@ public record SkuResponse(
                 sku.getOptions().stream()
                         .map(SkuOptionResponse::from)
                         .toList(),
-                sku.getStock()
+                sku.getQuantity()
         );
     }
 }

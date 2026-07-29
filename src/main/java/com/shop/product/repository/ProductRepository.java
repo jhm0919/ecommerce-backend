@@ -38,7 +38,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                 p.mainImageUrl,
                 c.name,
                 p.status,
-                COALESCE(SUM(s.stock), 0)
+                COALESCE(SUM(s.quantity), 0)
             )
             FROM Product p
             JOIN p.category c
@@ -68,6 +68,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("excludedStatus") ProductStatus excludedStatus,
             Pageable pageable
     );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+      SELECT p
+      FROM Product p
+      LEFT JOIN FETCH p.skus s
+      WHERE p.id = :productId
+  """)
+    Optional<Product> findByIdWithSkusForUpdate(@Param("productId") Long productId);
 
     /**
      * 상품 상세 조회 (Category 함께).

@@ -32,12 +32,12 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class CategoryAdminServiceTest {
 
+    @InjectMocks
+    private CategoryAdminService categoryAdminService;
+
     @Mock
     private CategoryRepository categoryRepository;
     @Mock private ProductRepository productRepository;
-
-    @InjectMocks
-    private CategoryAdminService categoryAdminService;
 
     // ─────────────────────────────────────
     // 카테고리 등록

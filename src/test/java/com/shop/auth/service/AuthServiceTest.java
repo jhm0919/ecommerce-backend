@@ -29,11 +29,11 @@ import static org.mockito.BDDMockito.*;
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
+    @InjectMocks private AuthService authService;
+
     @Mock private JwtAuthenticationProvider jwtAuthenticationProvider;
     @Mock private RefreshTokenRepository refreshTokenRepository;
     @Mock private MemberRepository memberRepository;
-
-    @InjectMocks private AuthService authService;
 
     private static final Long MEMBER_ID = 1L;
     private static final String PROVIDER_SUB = "google-sub-123";

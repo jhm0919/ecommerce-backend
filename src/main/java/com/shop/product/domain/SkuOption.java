@@ -28,37 +28,37 @@ public class SkuOption {
     private String optionValue;
 
     public SkuOption(String optionName, String optionValue) {
-        Objects.requireNonNull(optionName, "optionName must not be null");
-        Objects.requireNonNull(optionValue, "optionValue must not be null");
+        String validatedName = validateName(optionName);
+        String validatedValue = validateValue(optionValue);
 
-        String trimmedName = optionName.trim();
-        String trimmedValue = optionValue.trim();
-
-        validateName(trimmedName);
-        validateValue(trimmedValue);
-
-        this.optionName = trimmedName;
-        this.optionValue = trimmedValue;
+        this.optionName = validatedName;
+        this.optionValue = validatedValue;
     }
 
-    private static void validateName(String name) {
+    private static String validateName(String name) {
+        Objects.requireNonNull(name, "optionName must not be null");
         if (name.isBlank()) {
             throw new IllegalArgumentException("optionName must not be blank");
         }
-        if (name.length() > MAX_NAME_LENGTH) {
+        String trimmedName = name.trim();
+        if (trimmedName.length() > MAX_NAME_LENGTH) {
             throw new IllegalArgumentException(
                     "optionName must not exceed " + MAX_NAME_LENGTH + " chars");
         }
+        return trimmedName;
     }
 
-    private static void validateValue(String value) {
+    private static String validateValue(String value) {
+        Objects.requireNonNull(value, "optionValue must not be null");
         if (value.isBlank()) {
             throw new IllegalArgumentException("optionValue must not be blank");
         }
-        if (value.length() > MAX_VALUE_LENGTH) {
+        String trimmedValue = value.trim();
+        if (trimmedValue.length() > MAX_VALUE_LENGTH) {
             throw new IllegalArgumentException(
                     "optionValue must not exceed " + MAX_VALUE_LENGTH + " chars");
         }
+        return trimmedValue;
     }
 
     @Override

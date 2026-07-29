@@ -37,11 +37,12 @@ import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class SalesServiceTest {
-    @Mock
-    private OrderRepository orderRepository;
 
     @InjectMocks
     private SalesService salesService;
+
+    @Mock
+    private OrderRepository orderRepository;
 
     private OrderItem orderItem(String productName, int price, int quantity) {
         OrderItem item = mock(OrderItem.class);

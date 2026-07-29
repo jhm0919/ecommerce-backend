@@ -18,11 +18,6 @@ import java.util.Objects;
 /**
  * 주문을 표현하는 Aggregate Root.
  *
- * <p>회원 주문과 비회원 주문을 모두 지원한다:
- * <ul>
- *   <li>회원 주문: {@code memberId}가 NOT NULL</li>
- * </ul>
- *
  * <p>배송 정보(받는 사람, 주소, 배송 상태 등)는 별도 {@code Delivery} Aggregate에서 관리한다.
  * Order는 주문의 비즈니스 측면(상품, 금액, 결제 상태)에만 집중한다.
  *
@@ -55,6 +50,21 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
+    @Column(nullable = false)
+    private String zipcode;
+
+    @Column(nullable = false)
+    private String address;
+
+    @Column(nullable = false)
+    private String receiverName;
+
+    @Column(nullable = false)
+    private String receiverPhone;
+
+    @Column(nullable = false)
+    private String memo;
+
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
 
@@ -74,39 +84,37 @@ public class Order {
      * 회원 주문을 생성한다.
      * 배송 정보는 별도 Delivery Aggregate에서 처리한다.
      */
-    public static Order createForMember(Long memberId, List<OrderItem> items) {
-        Objects.requireNonNull(memberId, "memberId must not be null");
-        return create(memberId, items);
-    }
-
-    /**
-     * 공통 생성 로직.
-     */
-    private static Order create(
+    public static Order createOrder(
             Long memberId,
-            List<OrderItem> items
+            List<OrderItem> items,
+            String zipcode,
+            String address,
+            String receiver,
+            String receiverPhoneNumber,
+            String memo
     ) {
+        Objects.requireNonNull(memberId, "memberId must not be null");
         validateItems(items);
 
         Order order = new Order();
         order.orderNumber = OrderNumberGenerator.generate();
         order.memberId = memberId;
         order.status = OrderStatus.PENDING;
-
         // OrderItem들 추가 + 양방향 관계 설정
         for (OrderItem item : items) {
             order.addItem(item);
         }
+        order.totalPrice = order.calculateTotal();
+        order.zipcode = zipcode;
+        order.address = address;
+        order.receiverName = receiver;
+        order.receiverPhone = receiverPhoneNumber;
+        order.memo = memo;
 
         // 총 금액 계산
-        order.totalPrice = order.calculateTotal();
 
         return order;
     }
-
-    // ─────────────────────────────────────
-    // 비즈니스 메서드 - 항목 관리
-    // ─────────────────────────────────────
 
     private void addItem(OrderItem item) {
         Objects.requireNonNull(item, "item must not be null");
@@ -119,10 +127,6 @@ public class Order {
                 .mapToInt(OrderItem::calculateSubtotal)
                 .reduce(0, Math::addExact);
     }
-
-    // ─────────────────────────────────────
-    // 비즈니스 메서드 - 상태 전이
-    // ─────────────────────────────────────
 
     /**
      * 주문을 취소한다.
@@ -138,18 +142,6 @@ public class Order {
         }
         this.status = OrderStatus.CANCELLED;
         this.cancelledAt = LocalDateTime.now();
-    }
-
-    // ─────────────────────────────────────
-    // 질의 메서드
-    // ─────────────────────────────────────
-
-    public boolean isGuestOrder() {
-        return memberId == null;
-    }
-
-    public boolean isMemberOrder() {
-        return memberId != null;
     }
 
     /**
@@ -188,20 +180,4 @@ public class Order {
         }
     }
 
-    private static void validateGuestEmail(String email) {
-        Objects.requireNonNull(email, "guest email must not be null");
-        if (email.isBlank()) {
-            throw new IllegalArgumentException("guest email must not be blank");
-        }
-        if (!email.contains("@")) {
-            throw new IllegalArgumentException("Invalid email format: " + email);
-        }
-    }
-
-    private static void validateGuestPhone(String phone) {
-        Objects.requireNonNull(phone, "guest phone must not be null");
-        if (phone.isBlank()) {
-            throw new IllegalArgumentException("guest phone must not be blank");
-        }
-    }
 }

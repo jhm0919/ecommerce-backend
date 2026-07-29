@@ -5,7 +5,6 @@ import com.shop.product.domain.Product;
 import com.shop.product.domain.ProductStatus;
 import com.shop.product.domain.Sku;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -62,7 +61,7 @@ public record ProductDetailResponse(
                     sku.getOptions().stream()
                             .map(opt -> new OptionInfo(opt.getOptionName(), opt.getOptionValue()))
                             .toList(),
-                    sku.getStock(),
+                    sku.getQuantity(),
                     sku.isInStock()
             );
         }

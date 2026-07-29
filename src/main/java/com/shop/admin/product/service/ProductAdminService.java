@@ -2,7 +2,6 @@ package com.shop.admin.product.service;
 
 import com.shop.admin.product.dto.ProductAdminCreateRequest;
 import com.shop.admin.product.dto.ProductAdminUpdateRequest;
-import com.shop.admin.stock.domain.StockType;
 import com.shop.cart.repository.CartRepository;
 import com.shop.category.domain.Category;
 import com.shop.category.exception.CategoryNotFoundException;
@@ -15,7 +14,6 @@ import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +26,6 @@ public class ProductAdminService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final CartRepository cartRepository;
-    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 새 상품을 등록한다.

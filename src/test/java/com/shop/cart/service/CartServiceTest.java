@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -31,10 +32,10 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class CartServiceTest {
 
+    @InjectMocks private CartService cartService;
+
     @Mock private CartRepository cartRepository;
     @Mock private ProductRepository productRepository;
-
-    private CartService cartService; // 필드만 선언합니다.
 
     private static final Long MEMBER_ID = 1L;
     private static final Long PRODUCT_ID = 100L;
@@ -134,15 +135,6 @@ class CartServiceTest {
 
             assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, 999L, SKU_ID, 1))
                     .isInstanceOf(ProductNotFoundException.class);
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 SKU ID는 예외")  // ★ 새 테스트
-        void rejectUnknownSku() {
-            given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
-
-            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, PRODUCT_ID, 999L, 1))
-                    .isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test

@@ -58,11 +58,10 @@ class OrderTest {
         @Test
         @DisplayName("회원 주문을 생성할 수 있다")
         void createMemberOrder() {
-            Order order = Order.createForMember(1L, singleItem());
+            Order order = Order.createOrder(1L, singleItem(), "12345", "010-1234-5678",
+                    "홍길동", "01012345789", "문 앞에");
 
             assertThat(order.getMemberId()).isEqualTo(1L);
-            assertThat(order.isMemberOrder()).isTrue();
-            assertThat(order.isGuestOrder()).isFalse();
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
             assertThat(order.getOrderNumber()).startsWith("ORD-");
         }
@@ -70,7 +69,8 @@ class OrderTest {
         @Test
         @DisplayName("총 금액이 계산된다")
         void calculatesTotalAmount() {
-            Order order = Order.createForMember(1L, multipleItems());
+            Order order = Order.createOrder(1L, multipleItems(), "12345", "010-1234-5678",
+                    "홍길동", "01012345789", "문 앞에");
 
             // 29900 × 2 + 49900 × 1 = 109,700
 
@@ -80,14 +80,16 @@ class OrderTest {
         @Test
         @DisplayName("memberId가 null이면 예외")
         void rejectNullMemberId() {
-            assertThatThrownBy(() -> Order.createForMember(null, singleItem()))
+            assertThatThrownBy(() -> Order.createOrder(null, singleItem(), "12345", "010-1234-5678",
+                    "홍길동", "01012345789", "문 앞에"))
                     .isInstanceOf(NullPointerException.class);
         }
 
         @Test
         @DisplayName("아이템이 비어있으면 예외")
         void rejectEmptyItems() {
-            assertThatThrownBy(() -> Order.createForMember(1L, List.of()))
+            assertThatThrownBy(() -> Order.createOrder(1L, List.of(), "12345", "010-1234-5678",
+                    "홍길동", "01012345789", "문 앞에"))
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }
@@ -99,7 +101,8 @@ class OrderTest {
         @Test
         @DisplayName("PENDING 주문을 취소할 수 있다")
         void cancelPending() {
-            Order order = Order.createForMember(1L, singleItem());
+            Order order = Order.createOrder(1L, singleItem(), "12345", "010-1234-5678",
+                    "홍길동", "01012345789", "문 앞에");
 
             order.cancel();
 
@@ -110,7 +113,8 @@ class OrderTest {
         @Test
         @DisplayName("이미 취소된 주문은 다시 취소 불가")
         void cannotCancelAlreadyCancelled() {
-            Order order = Order.createForMember(1L, singleItem());
+            Order order = Order.createOrder(1L, singleItem(), "12345", "010-1234-5678",
+                    "홍길동", "01012345789", "문 앞에");
             order.cancel();
 
             assertThatThrownBy(order::cancel)
@@ -125,7 +129,8 @@ class OrderTest {
         @Test
         @DisplayName("getItems는 불변 복사본을 반환한다")
         void itemsAreImmutable() {
-            Order order = Order.createForMember(1L, multipleItems());
+            Order order = Order.createOrder(1L, multipleItems(), "12345", "010-1234-5678",
+                    "홍길동", "01012345789", "문 앞에");
 
             List<OrderItem> items = order.getItems();
 

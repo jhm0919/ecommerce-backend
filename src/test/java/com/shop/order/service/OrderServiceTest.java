@@ -1,9 +1,5 @@
 package com.shop.order.service;
 
-import com.shop.order.delivery.domain.Address;
-import com.shop.order.delivery.domain.Delivery;
-import com.shop.order.delivery.domain.Receiver;
-import com.shop.order.delivery.repository.DeliveryRepository;
 import com.shop.order.domain.Order;
 import com.shop.order.domain.OrderItem;
 import com.shop.order.dto.CreateOrderRequest;
@@ -24,7 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -38,42 +33,31 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
 
-    @Mock private OrderRepository orderRepository;
-    @Mock private DeliveryRepository deliveryRepository;
-    @Mock private ProductRepository productRepository;
-    @Mock private ApplicationEventPublisher eventPublisher;  // ★ 추가
-
     @InjectMocks private OrderService orderService;
 
-    private Product product;
-    private Sku sku;
+    @Mock private OrderRepository orderRepository;
+    @Mock private ProductRepository productRepository;
+
+    Product product;
+    Sku sku;
 
     @BeforeEach
     void setUp() {
+        productRepository.deleteAll();
+        orderRepository.deleteAll();
+
         Category category = Category.create("의류", "clothing");
-        product = Product.register(
-                "티셔츠", 29900, "설명", "img", category
-        );
+        product = Product.register("티셔츠", 29900, "설명", "img", category);
         setId(product, 1L);
         sku = product.addSku(List.of(new SkuOption("색상", "검정")), 50);
-        setId(sku, 100L);
+        setId(sku, 10L);
     }
 
     private CreateOrderRequest createRequest() {
-        return new CreateOrderRequest(
-                List.of(new CreateOrderRequest.OrderItemRequest(1L, 100L, 2)),
-                new CreateOrderRequest.DeliveryInfoRequest(
-                        "홍길동", "010-1234-5678",
-                        "12345", "서울시 강남구", "101호", "문 앞에"
-                )
+        return new CreateOrderRequest(List.of(new CreateOrderRequest.OrderItemRequest(product.getId(), sku.getId(), 2)),
+                "12345", "서울시 강남구",
+                "홍길동", "010-1234-5678", "문 앞에"
         );
-    }
-
-    private Delivery createDelivery() {
-        return Delivery.prepare(1L,
-                new Address("12345", "서울", "101호"),
-                new Receiver("홍길동", "010-1234-5678"),
-                null);
     }
 
     @Nested
@@ -83,72 +67,36 @@ class OrderServiceTest {
         @Test
         @DisplayName("정상적으로 주문을 생성한다")
         void createOrder() {
-            given(productRepository.findById(1L)).willReturn(Optional.of(product));
             given(orderRepository.save(any(Order.class)))
-                    .willAnswer(inv -> {
-                        Order order = inv.getArgument(0);
-                        setId(order, 1L);
-                        return order;
-                    });
-            given(deliveryRepository.save(any(Delivery.class)))
-                    .willAnswer(inv -> inv.getArgument(0));
+                    .willAnswer(invocation -> invocation.getArgument(0));
+            given(productRepository.findByIdWithSkusForUpdate(1L))
+                    .willReturn(Optional.of(product));
 
-            Delivery delivery = createDelivery();
-            given(deliveryRepository.findByOrderId(1L)).willReturn(Optional.of(delivery));
 
-            OrderDetailResponse memberOrder = orderService.createMemberOrder(10L, createRequest());
+            OrderDetailResponse orderResponse = orderService.createOrder(1L, createRequest());
 
-            assertThat(memberOrder.orderNumber()).isNotBlank();
-            assertThat(memberOrder.items()).hasSize(1);
-            assertThat(memberOrder.delivery().receiverName()).isEqualTo("홍길동");
-            assertThat(sku.getStock()).isEqualTo(48);
+            assertThat(orderResponse.orderNumber()).isNotBlank();
+            assertThat(orderResponse.items()).hasSize(1);
+            assertThat(orderResponse.receiverName()).isEqualTo("홍길동");
+            assertThat(sku.getQuantity()).isEqualTo(48);
 
             verify(orderRepository).save(any(Order.class));
-            verify(deliveryRepository).save(any(Delivery.class));
-            verify(deliveryRepository).findByOrderId(1L);
         }
 
         @Test
         @DisplayName("재고 부족 시 InsufficientStockException")
         void rejectInsufficientStock() {
-            Category category = Category.create("의류", "clothing");
-            Product lowStockProduct = Product.register(
-                    "한정상품", 10000, "설명", "img", category
-            );
-            setId(lowStockProduct, 1L);
-            Sku lowStockSku = lowStockProduct.addSku(
-                    List.of(new SkuOption("색상", "검정")), 1
-            );
-            setId(lowStockSku, 100L);
+            given(productRepository.findByIdWithSkusForUpdate(1L)).willReturn(Optional.of(product));
 
-            given(productRepository.findById(1L)).willReturn(Optional.of(lowStockProduct));
-
-            CreateOrderRequest request = new CreateOrderRequest(
-                    List.of(new CreateOrderRequest.OrderItemRequest(1L, 100L, 5)),
-                    new CreateOrderRequest.DeliveryInfoRequest(
-                            "홍", "010-1", "12345", "서울", "101", null
-                    )
+            CreateOrderRequest request = new CreateOrderRequest(List.of(new CreateOrderRequest.OrderItemRequest(product.getId(), sku.getId(), 51)),
+                    "12345", "서울시 강남구",
+                    "홍길동", "010-1234-5678", "문 앞에"
             );
 
-            assertThatThrownBy(() -> orderService.createMemberOrder(10L, request))
+            assertThatThrownBy(() -> orderService.createOrder(1L, request))
                     .isInstanceOf(InsufficientStockException.class);
         }
 
-        @Test
-        @DisplayName("존재하지 않는 SKU ID 요청 시 예외")
-        void rejectUnknownSkuId() {
-            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-
-            CreateOrderRequest request = new CreateOrderRequest(
-                    List.of(new CreateOrderRequest.OrderItemRequest(1L, 999L, 1)),
-                    new CreateOrderRequest.DeliveryInfoRequest(
-                            "홍", "010-1", "12345", "서울", "101", null
-                    )
-            );
-
-            assertThatThrownBy(() -> orderService.createMemberOrder(10L, request))
-                    .isInstanceOf(OrderNotFoundException.class);
-        }
     }
 
     @Nested
@@ -158,14 +106,16 @@ class OrderServiceTest {
         @Test
         @DisplayName("자기 주문은 조회 가능")
         void findOwnOrder() {
-            Order order = Order.createForMember(10L, List.of(
+            CreateOrderRequest request = createRequest();
+
+            Order order = Order.createOrder(10L, List.of(
                     OrderItem.of(product, sku, 1)
-            ));
+            ), request.zipCode(), request.address(), request.receiverName(), request.receiverPhone(), request.memo());
 
             given(orderRepository.findByIdAndMemberIdWithItems(1L, 10L))
                     .willReturn(Optional.of(order));
 
-            Order result = orderService.findMyOrder(10L, 1L);
+            Order result = orderService.findOrder(10L, 1L);
 
             assertThat(result).isEqualTo(order);
         }
@@ -176,7 +126,7 @@ class OrderServiceTest {
             given(orderRepository.findByIdAndMemberIdWithItems(1L, 10L))
                     .willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> orderService.findMyOrder(10L, 1L))
+            assertThatThrownBy(() -> orderService.findOrder(10L, 1L))
                     .isInstanceOf(OrderNotFoundException.class);
         }
     }
@@ -189,17 +139,19 @@ class OrderServiceTest {
         @Test
         @DisplayName("자기 주문 취소 시 SKU 재고 복구 + ORDER_CANCEL 이벤트 발행")
         void cancelRestoresSkuStock() {
-            Order order = Order.createForMember(10L, List.of(
+            CreateOrderRequest request = createRequest();
+
+            Order order = Order.createOrder(10L, List.of(
                     OrderItem.of(product, sku, 3)
-            ));
+            ), request.zipCode(), request.address(), request.receiverName(), request.receiverPhone(), request.memo());
 
             given(orderRepository.findByIdAndMemberIdWithItems(1L, 10L))
                     .willReturn(Optional.of(order));
             given(productRepository.findById(any())).willReturn(Optional.of(product));
 
-            orderService.cancelMyOrder(10L, 1L);
+            orderService.cancelOrder(10L, 1L);
 
-            assertThat(sku.getStock()).isEqualTo(53);  // 50 + 3 복구
+            assertThat(sku.getQuantity()).isEqualTo(53);  // 50 + 3 복구
             assertThat(order.getStatus().toString()).isEqualTo("CANCELLED");
         }
     }

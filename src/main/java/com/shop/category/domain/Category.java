@@ -1,10 +1,14 @@
 package com.shop.category.domain;
 
+import com.shop.product.domain.Product;
+import com.shop.product.domain.Sku;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -28,7 +32,11 @@ public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "category_id")
     private Long id;
+
+//    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true) // 조회만, 여기서는 변경 X!!
+//    private List<Product> products = new ArrayList<>();
 
     @Column(nullable = false, length = MAX_NAME_LENGTH)
     private String name;

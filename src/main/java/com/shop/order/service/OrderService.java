@@ -1,35 +1,26 @@
 package com.shop.order.service;
 
-import com.shop.order.delivery.domain.Address;
-import com.shop.order.delivery.domain.Delivery;
-import com.shop.order.delivery.domain.Receiver;
-import com.shop.order.delivery.repository.DeliveryRepository;
+import com.shop.cart.exception.ProductNotPurchasableException;
 import com.shop.order.domain.Order;
 import com.shop.order.domain.OrderItem;
 import com.shop.order.dto.CreateOrderRequest;
 import com.shop.order.dto.OrderDetailResponse;
-import com.shop.order.exception.InsufficientStockException;
 import com.shop.order.exception.OrderNotFoundException;
 import com.shop.order.repository.OrderRepository;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.Sku;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
-import com.shop.admin.stock.domain.StockType;
-import com.shop.product.repository.SkuRepository;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -37,9 +28,7 @@ import java.util.Optional;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final DeliveryRepository deliveryRepository;
     private final ProductRepository productRepository;
-    private final SkuRepository skuRepository;
 
     // ─────────────────────────────────────
     // 주문 생성
@@ -49,25 +38,40 @@ public class OrderService {
             description = "회원 주문 생성 처리 시간"
     )
     @Transactional
-    public OrderDetailResponse createMemberOrder(
+    public OrderDetailResponse createOrder(
             Long memberId,
             CreateOrderRequest request
     ) {
-        // 재고 차감이 끝난 주문 상품과 이후 이벤트 발행에 필요한 스냅샷을 임시로 담아두는 객체
-        List<PreparedOrderItem> prepared = prepareItemsAndDecreaseStock(request.items());
+        // 재고 차감이 끝난 주문 상품들을 임시로 담아두는 객체
+        List<OrderItem> items = new ArrayList<>();
 
-        List<OrderItem> items = prepared.stream()
-                .map(PreparedOrderItem::orderItem)
-                .toList();
+        for (CreateOrderRequest.OrderItemRequest req : request.items()) {
+            Product product = productRepository.findByIdWithSkusForUpdate(req.productId())
+                    .orElseThrow(() -> new ProductNotFoundException(req.productId()));
 
-        Order order = Order.createForMember(memberId, items);
+            if (!product.isPurchasable()) { // 상품 상태가 ACTIVE이면 통과
+                throw new ProductNotPurchasableException(product.getId());
+            }
+
+            Sku sku = product.findSkuById(req.skuId());
+
+            product.decreaseSkuStock(req.skuId(), req.quantity());
+
+            items.add(OrderItem.of(product, sku, req.quantity()));
+        }
+
+        Order order = Order.createOrder(
+                memberId,
+                items,
+                request.zipCode(),
+                request.address(),
+                request.receiverName(),
+                request.receiverPhone(),
+                request.memo()
+        );
         orderRepository.save(order);
 
-        createDelivery(order.getId(), request.delivery());
-
-        Delivery delivery = findDeliveryByOrderId(order.getId());
-
-        return OrderDetailResponse.from(order, delivery);
+        return OrderDetailResponse.from(order);
     }
 
     // ─────────────────────────────────────
@@ -79,7 +83,7 @@ public class OrderService {
             description = "회원 주문 목록 조회 처리 시간"
     )
     @Transactional(readOnly = true)
-    public Page<Order> findMyOrders(Long memberId, Pageable pageable) {
+    public Page<Order> findOrders(Long memberId, Pageable pageable) {
         return orderRepository.findByMemberId(memberId, pageable);
     }
 
@@ -88,16 +92,9 @@ public class OrderService {
             description = "회원 주문 상세 조회 처리 시간"
     )
     @Transactional(readOnly = true)
-    public Order findMyOrder(Long memberId, Long orderId) {
+    public Order findOrder(Long memberId, Long orderId) {
         return orderRepository.findByIdAndMemberIdWithItems(orderId, memberId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
-    }
-
-    @Transactional(readOnly = true)
-    public Delivery findDeliveryByOrderId(Long orderId) {
-        return deliveryRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Delivery not found for order: " + orderId));
     }
 
     // ─────────────────────────────────────
@@ -109,7 +106,7 @@ public class OrderService {
             description = "회원 주문 취소 처리 시간"
     )
     @Transactional
-    public Order cancelMyOrder(Long memberId, Long orderId) {
+    public Order cancelOrder(Long memberId, Long orderId) {
         Order order = orderRepository.findByIdAndMemberIdWithItems(orderId, memberId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
@@ -125,83 +122,4 @@ public class OrderService {
         log.info("Order cancelled: orderId={}, memberId={}", orderId, memberId);
         return order;
     }
-
-    // ─────────────────────────────────────
-    // 헬퍼
-    // ─────────────────────────────────────
-
-    /**
-     * 재고 차감 + 변동 정보 수집.
-     * orderId가 아직 없어서 이벤트 발행은 하지 않음.
-     */
-    private List<PreparedOrderItem> prepareItemsAndDecreaseStock(
-            List<CreateOrderRequest.OrderItemRequest> requests
-    ) {
-        List<PreparedOrderItem> prepared = new ArrayList<>();
-
-        for (CreateOrderRequest.OrderItemRequest req : requests) {
-//            Product product = productRepository.findById(req.productId())
-//                    .orElseThrow(() -> new ProductNotFoundException(req.productId()));
-
-//            Sku sku = product.findSkuById(req.skuId())
-//                    .orElseThrow(() -> new OrderNotFoundException(req.skuId()));
-
-            Sku sku = skuRepository.findByIdAndProductIdForUpdate(req.skuId(), req.productId())
-                    .orElseThrow(() -> new OrderNotFoundException(req.skuId()));
-            Product product = sku.getProduct();
-
-            int stockBefore = sku.getStock();  // ★ 차감 전 재고 기록
-
-            try {
-                sku.decreaseStock(req.quantity());
-            } catch (IllegalStateException e) {
-                log.warn("Stock decrease failed: productId={}, skuId={}, quantity={}",
-                        req.productId(), req.skuId(), req.quantity());
-                throw new InsufficientStockException();
-            }
-
-            prepared.add(new PreparedOrderItem(
-                    OrderItem.of(product, sku, req.quantity()),
-                    product,
-                    sku,
-                    stockBefore,
-                    sku.getStock(),  // stockAfter
-                    req.quantity()
-            ));
-        }
-
-        return prepared;
-    }
-
-    private void createDelivery(Long orderId, CreateOrderRequest.DeliveryInfoRequest request) {
-        Address address = new Address(
-                request.zipCode(),
-                request.addressLine1(),
-                request.addressLine2()
-        );
-        Receiver receiver = new Receiver(
-                request.receiverName(),
-                request.receiverPhone()
-        );
-
-        Delivery delivery = Delivery.prepare(orderId, address, receiver, request.memo());
-        deliveryRepository.save(delivery);
-    }
-
-    // ─────────────────────────────────────
-    // 내부 record
-    // ─────────────────────────────────────
-
-    /**
-     * 재고 차감 정보를 OrderItem과 함께 보관.
-     * 주문 저장 후 이벤트 발행에 사용.
-     */
-    private record PreparedOrderItem(
-            OrderItem orderItem,
-            Product product,
-            Sku sku,
-            int stockBefore,
-            int stockAfter,
-            int quantity
-    ) {}
 }

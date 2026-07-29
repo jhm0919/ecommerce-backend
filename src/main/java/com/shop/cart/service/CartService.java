@@ -57,9 +57,7 @@ public class CartService {
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
         // ★ SKU 조회 + 검증 (이 Product의 SKU인지 — Aggregate 경계 보호)
-        Sku sku = product.findSkuById(skuId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "SKU not found in product: productId=" + productId + ", skuId=" + skuId));
+        Sku sku = product.findSkuById(skuId);
 
         // 단종 상품은 추가 불가
         if (!product.isPurchasable()) {

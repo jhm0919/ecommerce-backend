@@ -3,6 +3,9 @@ package com.shop.product.domain;
 import com.shop.category.domain.Category;
 import com.shop.global.exception.BusinessException;
 import com.shop.global.exception.ErrorCode;
+import com.shop.order.domain.OrderItem;
+import com.shop.order.exception.InsufficientStockException;
+import com.shop.product.exception.SkuNotFoundException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -11,7 +14,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +43,7 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "product_id")
     private Long id;
 
     @Column(nullable = false, length = MAX_NAME_LENGTH)
@@ -55,7 +58,7 @@ public class Product {
     @Column(name = "main_image_url", length = MAX_IMAGE_URL_LENGTH)
     private String mainImageUrl;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY) // 연관관계 주인, DB에 넣거나 수정할때 여기를 참조, FK
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
@@ -63,8 +66,7 @@ public class Product {
     @Column(nullable = false, length = 20)
     private ProductStatus status;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("id ASC")
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true) // 조회만, 여기서는 변경 X!!
     private List<Sku> skus = new ArrayList<>();
 
     @CreatedDate
@@ -155,6 +157,13 @@ public class Product {
         this.status = ProductStatus.DISCONTINUED;
     }
 
+    /**
+     * 외부에 노출할 항목 목록 (불변).
+     */
+    public List<Sku> getSkus() {
+        return List.copyOf(skus);
+    }
+
     // ─────────────────────────────────────
     // 질의 메서드
     // ─────────────────────────────────────
@@ -209,10 +218,13 @@ public class Product {
     }
 
     public void decreaseSkuStock(Long skuId, int quantity) {
+        if (this.status == ProductStatus.DISCONTINUED) {
+            throw new IllegalStateException("discontinued 상품은 재고를 변경할 수 없습니다.");
+        }
         Sku sku = findSku(skuId);
         sku.decreaseStock(quantity);
 
-        boolean allEmpty = skus.stream().allMatch(s -> s.getStock() == 0);
+        boolean allEmpty = skus.stream().allMatch(s -> s.getQuantity() == 0);
         if (allEmpty) {
             this.status = ProductStatus.SOLD_OUT;
         }
@@ -220,7 +232,7 @@ public class Product {
 
     public void increaseSkuStock(Long skuId, int quantity) {
         if (this.status == ProductStatus.DISCONTINUED) {
-            throw new IllegalStateException("Cannot restock discontinued product");
+            throw new IllegalStateException("discontinued 상품은 재고를 변경할 수 없습니다.");
 //            throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS) {};
         }
         Sku sku = findSku(skuId);
@@ -233,7 +245,7 @@ public class Product {
 
     public void removeSku(Long skuId) {
         Sku sku = findSku(skuId);
-        if (sku.getStock() > 0) {
+        if (sku.getQuantity() > 0) {
             throw new IllegalStateException(
                     "Cannot remove SKU with stock: skuId=" + skuId);
         }
@@ -242,7 +254,7 @@ public class Product {
 
     public int getTotalSkuStock() {
         return skus.stream()
-                .mapToInt(Sku::getStock)
+                .mapToInt(Sku::getQuantity)
                 .sum();
     }
 
@@ -250,10 +262,8 @@ public class Product {
         return List.copyOf(skus);
     }
 
-    public Optional<Sku> findSkuById(Long skuId) {
-        return skus.stream()
-                .filter(sku -> sku.getId() != null && sku.getId().equals(skuId))
-                .findFirst();
+    public Sku findSkuById(Long skuId) {
+        return findSku(skuId);
     }
 
     // ─────────────────────────────────────
@@ -301,7 +311,6 @@ public class Product {
         return skus.stream()
                 .filter(sku -> sku.getId() != null && sku.getId().equals(skuId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "SKU not found: id=" + skuId));
+                .orElseThrow(() -> new SkuNotFoundException(skuId));
     }
 }

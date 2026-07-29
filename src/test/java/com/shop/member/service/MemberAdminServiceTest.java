@@ -28,9 +28,9 @@ import static org.mockito.BDDMockito.given;
 @ExtendWith(MockitoExtension.class)
 class MemberAdminServiceTest {
 
-    @Mock private MemberRepository memberRepository;
-
     @InjectMocks private MemberAdminService memberAdminService;
+
+    @Mock private MemberRepository memberRepository;
 
     private Member activeMember;
 
