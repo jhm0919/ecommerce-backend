@@ -44,10 +44,8 @@ class AuthServiceTest {
                 AuthProvider.GOOGLE,
                 PROVIDER_SUB,
                 "test@example.com",
-                true,
                 "테스트사용자",
-                null,
-                "ko"
+                null
         );
     }
 

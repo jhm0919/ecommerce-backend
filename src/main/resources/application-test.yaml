@@ -6,7 +6,7 @@ spring:
     # driver-class-name 생략 → 자동 감지 (H2)
 
 #    url: ${DB_URL}
-#    username: ${DB_USERNAME}
+#    email: ${DB_USERNAME}
 #    password: ${DB_PASSWORD}
 #    driver-class-name: com.mysql.cj.jdbc.Driver
 

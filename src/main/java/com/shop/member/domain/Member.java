@@ -25,10 +25,6 @@ import java.util.Objects;
                 name = "uk_member_provider_sub",
                 columnNames = {"auth_provider", "provider_sub"}
         )
-}, indexes = {
-        @Index(name = "idx_member_email", columnList = "email"),
-        @Index(name = "idx_member_provider_sub", columnList = "auth_provider, provider_sub"),
-        @Index(name = "idx_member_status", columnList = "status")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -52,17 +48,14 @@ public class Member {
     @Column(nullable = false, length = MAX_EMAIL_LENGTH)
     private String email;
 
-    @Column(name = "email_verified", nullable = false)
-    private boolean emailVerified;
+    @Column
+    private String password;               // BCrypt 암호화
 
     @Column(length = MAX_NAME_LENGTH)
     private String name;
 
     @Column(length = 500)
     private String picture;
-
-    @Column(length = 10)
-    private String locale;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -93,10 +86,8 @@ public class Member {
             AuthProvider provider,
             String providerSub,
             String email,
-            boolean emailVerified,
             String name,
-            String picture,
-            String locale
+            String picture
     ) {
         validateProvider(provider);
         validateProviderSub(providerSub);
@@ -107,10 +98,8 @@ public class Member {
         member.authProvider = provider;
         member.providerSub = providerSub.trim();
         member.email = email.trim();
-        member.emailVerified = emailVerified;
         member.name = (name == null) ? null : name.trim();
         member.picture = picture;
-        member.locale = locale;
         member.status = MemberStatus.ACTIVE;
         member.role = MemberRole.USER;
         return member;
@@ -129,16 +118,14 @@ public class Member {
             this.name = name.trim();
         }
         this.picture = picture;
-        this.locale = locale;
     }
 
     /**
      * 이메일 변경. OAuth provider에서 이메일이 변경되었을 때 호출.
      */
-    public void changeEmail(String newEmail, boolean emailVerified) {
+    public void changeEmail(String newEmail) {
         validateEmail(newEmail);
         this.email = newEmail.trim();
-        this.emailVerified = emailVerified;
     }
 
     /**

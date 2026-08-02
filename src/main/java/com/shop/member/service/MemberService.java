@@ -41,10 +41,8 @@ public class MemberService {
                 info.provider(),
                 info.providerSub(),
                 info.email(),
-                info.emailVerified(),
                 info.name(),
-                info.picture(),
-                null  // locale은 없으면 null
+                info.picture()
         );
         return memberRepository.save(newMember);
     }
@@ -52,7 +50,7 @@ public class MemberService {
     private Member updateProfile(Member existing, OAuthUserInfo info) {
         existing.updateProfile(info.name(), info.picture(), null);
         if (!existing.getEmail().equals(info.email())) {
-            existing.changeEmail(info.email(), info.emailVerified());
+            existing.changeEmail(info.email());
         }
         return existing;
     }

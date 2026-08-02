@@ -9,12 +9,12 @@ import lombok.Getter;
  * 민감정보(내부 식별자 등)를 detail로 전달해도 안전합니다.
  */
 @Getter
-public abstract class BusinessException extends RuntimeException {
+public class BusinessException extends RuntimeException {
 
     private final ErrorCode errorCode;
     private final String detail;
 
-    protected BusinessException(ErrorCode errorCode) {
+    public BusinessException(ErrorCode errorCode) {
         super(errorCode.getMessage());
         this.errorCode = errorCode;
         this.detail = null;

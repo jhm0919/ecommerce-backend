@@ -40,10 +40,8 @@ class MemberAdminServiceTest {
                 AuthProvider.GOOGLE,
                 "google-sub-123",
                 "test@example.com",
-                true,
                 "홍길동",
-                "https://picture.url",
-                "ko"
+                "https://picture.url"
         );
     }
 

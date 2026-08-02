@@ -17,7 +17,6 @@ public record MemberAdminResponse(
         String picture,
         MemberStatus status,
         MemberRole role,
-        boolean emailVerified,
         LocalDateTime createdAt
 ) {
     public static MemberAdminResponse from(Member member) {
@@ -28,7 +27,6 @@ public record MemberAdminResponse(
                 member.getPicture(),
                 member.getStatus(),
                 member.getRole(),
-                member.isEmailVerified(),
                 member.getCreatedAt()
         );
     }

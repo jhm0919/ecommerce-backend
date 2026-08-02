@@ -189,8 +189,7 @@ public class Product {
 
     public Sku addSku(List<SkuOption> options, int initialStock) {
         if (this.id == null) {
-            throw new IllegalStateException(
-                    "Product must be persisted before adding SKUs");
+            throw new IllegalStateException("Product must be persisted before adding SKUs");
         }
         if (this.status == ProductStatus.DISCONTINUED) {
             throw new IllegalStateException("Cannot add SKU to discontinued product");
@@ -200,11 +199,10 @@ public class Product {
             throw new IllegalArgumentException("options must not be empty");
         }
 
-        boolean duplicate = skus.stream()
-                .anyMatch(existing -> existing.hasSameOptions(options));
+        boolean duplicate = skus.stream().anyMatch(existing -> existing.hasSameOptions(options));
+
         if (duplicate) {
-            throw new IllegalArgumentException(
-                    "SKU with same options already exists: " + options);
+            throw new IllegalArgumentException("SKU with same options already exists: " + options);
         }
 
         int sequence = skus.size() + 1;

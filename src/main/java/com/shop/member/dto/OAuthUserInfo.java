@@ -17,7 +17,6 @@ public record OAuthUserInfo(
         AuthProvider provider,
         String providerSub,
         String email,
-        boolean emailVerified,
         String name,
         String picture
 ) {

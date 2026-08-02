@@ -30,8 +30,7 @@ public class OrderConcurrencyTest {
     @Autowired ProductRepository productRepository;
     @Autowired CategoryRepository categoryRepository;
     @Autowired OrderRepository orderRepository;
-    @Autowired
-    EntityManager entityManager;
+    @Autowired EntityManager entityManager;
 
     Long productId;
     Long skuId;
@@ -125,5 +124,8 @@ public class OrderConcurrencyTest {
         assertThat(successCount).isEqualTo(1);
         assertThat(orderRepository.count()).isEqualTo(1L);
     }
+
+
+    // todo: 주문 취소시 동시성 문제 테스트
 
 }

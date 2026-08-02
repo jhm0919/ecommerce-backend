@@ -61,10 +61,8 @@ class ProductQuestionServiceTest {
                 AuthProvider.GOOGLE,
                 "google-sub-001",
                 "test@example.com",
-                true,
                 "홍길동",
-                null,
-                "ko"
+                null
         );
         testQuestion = ProductQuestion.create(
                 1L, "티셔츠", 100L, "홍길동", "사이즈 문의드립니다.", false

@@ -42,8 +42,7 @@ public class SkuOption {
         }
         String trimmedName = name.trim();
         if (trimmedName.length() > MAX_NAME_LENGTH) {
-            throw new IllegalArgumentException(
-                    "optionName must not exceed " + MAX_NAME_LENGTH + " chars");
+            throw new IllegalArgumentException("optionName must not exceed " + MAX_NAME_LENGTH + " chars");
         }
         return trimmedName;
     }
@@ -55,8 +54,7 @@ public class SkuOption {
         }
         String trimmedValue = value.trim();
         if (trimmedValue.length() > MAX_VALUE_LENGTH) {
-            throw new IllegalArgumentException(
-                    "optionValue must not exceed " + MAX_VALUE_LENGTH + " chars");
+            throw new IllegalArgumentException("optionValue must not exceed " + MAX_VALUE_LENGTH + " chars");
         }
         return trimmedValue;
     }

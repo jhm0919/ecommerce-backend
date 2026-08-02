@@ -1,6 +1,6 @@
 package com.shop.admin.auth.dto;
 
-public record SellerLoginResponse(
+public record AdminLoginResponse(
         String accessToken
 //        boolean isTemporaryPassword
 ) {

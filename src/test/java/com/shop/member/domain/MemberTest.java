@@ -14,10 +14,8 @@ class MemberTest {
                 AuthProvider.GOOGLE,
                 "google-sub-123",
                 "test@example.com",
-                true,
                 "홍길동",
-                "https://example.com/picture.jpg",
-                "ko"
+                "https://example.com/picture.jpg"
         );
     }
 
@@ -33,7 +31,6 @@ class MemberTest {
             assertThat(member.getAuthProvider()).isEqualTo(AuthProvider.GOOGLE);
             assertThat(member.getProviderSub()).isEqualTo("google-sub-123");
             assertThat(member.getEmail()).isEqualTo("test@example.com");
-            assertThat(member.isEmailVerified()).isTrue();
             assertThat(member.getName()).isEqualTo("홍길동");
         }
 
@@ -59,7 +56,7 @@ class MemberTest {
         @DisplayName("provider가 null이면 예외")
         void rejectNullProvider() {
             assertThatThrownBy(() -> Member.registerFromOAuth(
-                    null, "sub", "test@test.com", true, "홍길동", null, "ko"
+                    null, "sub", "test@test.com", "홍길동", null
             )).isInstanceOf(NullPointerException.class);
         }
 
@@ -67,11 +64,11 @@ class MemberTest {
         @DisplayName("providerSub이 null/빈 문자열이면 예외")
         void rejectInvalidProviderSub() {
             assertThatThrownBy(() -> Member.registerFromOAuth(
-                    AuthProvider.GOOGLE, null, "test@test.com", true, "홍길동", null, "ko"
+                    AuthProvider.GOOGLE, null, "test@test.com", "홍길동", null
             )).isInstanceOf(NullPointerException.class);
 
             assertThatThrownBy(() -> Member.registerFromOAuth(
-                    AuthProvider.GOOGLE, "", "test@test.com", true, "홍길동", null, "ko"
+                    AuthProvider.GOOGLE, "", "test@test.com", "홍길동", null
             )).isInstanceOf(IllegalArgumentException.class);
         }
 
@@ -79,11 +76,11 @@ class MemberTest {
         @DisplayName("email이 null/빈 문자열이면 예외")
         void rejectInvalidEmail() {
             assertThatThrownBy(() -> Member.registerFromOAuth(
-                    AuthProvider.GOOGLE, "sub", null, true, "홍길동", null, "ko"
+                    AuthProvider.GOOGLE, "sub", null, "홍길동", null
             )).isInstanceOf(NullPointerException.class);
 
             assertThatThrownBy(() -> Member.registerFromOAuth(
-                    AuthProvider.GOOGLE, "sub", "", true, "홍길동", null, "ko"
+                    AuthProvider.GOOGLE, "sub", "", "홍길동", null
             )).isInstanceOf(IllegalArgumentException.class);
         }
 
@@ -91,7 +88,7 @@ class MemberTest {
         @DisplayName("name이 null이어도 가입 가능 (선택 정보)")
         void allowNullName() {
             Member member = Member.registerFromOAuth(
-                    AuthProvider.GOOGLE, "sub", "test@test.com", true, null, null, null
+                    AuthProvider.GOOGLE, "sub", "test@test.com", null, null
             );
 
             assertThat(member.getName()).isNull();
@@ -111,7 +108,6 @@ class MemberTest {
 
             assertThat(member.getName()).isEqualTo("김철수");
             assertThat(member.getPicture()).isEqualTo("https://new-pic.jpg");
-            assertThat(member.getLocale()).isEqualTo("en");
         }
 
         @Test
@@ -135,10 +131,9 @@ class MemberTest {
         void changeEmail() {
             Member member = createActiveMember();
 
-            member.changeEmail("new@example.com", true);
+            member.changeEmail("new@example.com");
 
             assertThat(member.getEmail()).isEqualTo("new@example.com");
-            assertThat(member.isEmailVerified()).isTrue();
         }
 
         @Test
@@ -146,9 +141,7 @@ class MemberTest {
         void changeToUnverifiedEmail() {
             Member member = createActiveMember();
 
-            member.changeEmail("new@example.com", false);
-
-            assertThat(member.isEmailVerified()).isFalse();
+            member.changeEmail("new@example.com");
         }
 
         @Test
@@ -156,7 +149,7 @@ class MemberTest {
         void rejectNullEmail() {
             Member member = createActiveMember();
 
-            assertThatThrownBy(() -> member.changeEmail(null, true))
+            assertThatThrownBy(() -> member.changeEmail(null))
                     .isInstanceOf(NullPointerException.class);
         }
     }

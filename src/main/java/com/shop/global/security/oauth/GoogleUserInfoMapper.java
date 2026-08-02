@@ -14,7 +14,6 @@ public class GoogleUserInfoMapper {
                 AuthProvider.GOOGLE,
                 oidcUser.getSubject(),
                 oidcUser.getEmail(),
-                Boolean.TRUE.equals(oidcUser.getEmailVerified()),
                 oidcUser.getFullName(),
                 oidcUser.getPicture()
         );

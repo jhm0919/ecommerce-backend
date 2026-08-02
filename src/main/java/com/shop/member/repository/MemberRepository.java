@@ -2,6 +2,7 @@ package com.shop.member.repository;
 
 import com.shop.member.domain.AuthProvider;
 import com.shop.member.domain.Member;
+import com.shop.member.domain.MemberRole;
 import com.shop.member.domain.MemberStatus;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
@@ -35,6 +36,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
             @Param("keyword") String keyword,
             Pageable pageable
     );
+
+    Optional<Member> findByEmailAndRole(String email, MemberRole role);
 
     boolean existsByAuthProviderAndProviderSub(
             AuthProvider provider,
