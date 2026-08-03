@@ -40,7 +40,7 @@ public class Order {
     @Column(name = "member_id", updatable = false)
     private Long memberId;
 
-    @Column(nullable = false)
+    @Column(name = "total_price", nullable = false)
     private int totalPrice;
 
     @Enumerated(EnumType.STRING)
