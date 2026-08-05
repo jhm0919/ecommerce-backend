@@ -8,7 +8,6 @@ import com.shop.product.repository.ProductRepository;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,7 +23,6 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final ApplicationEventPublisher eventPublisher; // 이벤트 발행기 주입
     private static final List<ProductStatus> CUSTOMER_VISIBLE = List.of(
             ProductStatus.ACTIVE,
             ProductStatus.SOLD_OUT
@@ -59,7 +57,8 @@ public class ProductService {
     )
     @Transactional(readOnly = true)
     public Product findById(Long id) {
-        Product product = productRepository.findByIdWithCategory(id).orElseThrow(() -> new ProductNotFoundException(id));
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
 
         // DISCONTINUED 상품은 사용자에게 "없는 것처럼" 응답
         if (!product.isVisibleToCustomer()) {

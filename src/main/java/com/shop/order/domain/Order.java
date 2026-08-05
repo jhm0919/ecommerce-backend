@@ -82,7 +82,6 @@ public class Order {
 
     /**
      * 회원 주문을 생성한다.
-     * 배송 정보는 별도 Delivery Aggregate에서 처리한다.
      */
     public static Order createOrder(
             Long memberId,

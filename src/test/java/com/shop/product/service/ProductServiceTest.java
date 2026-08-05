@@ -5,11 +5,9 @@ import com.shop.product.domain.Product;
 import com.shop.product.domain.ProductStatus;
 import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
-import com.shop.product.dto.ProductSummaryProjection;
 import com.shop.product.dto.ProductListResponse;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -64,7 +61,7 @@ class ProductServiceTest {
         @DisplayName("필터 없이 전체 조회")
         void allProducts() {
             Pageable pageable = PageRequest.of(0, 20);
-            Page<ProductSummaryProjection> mockPage = new PageImpl<>(List.of(createSummary()));
+            Page<Product> mockPage = new PageImpl<>(List.of(createProduct()));
 
             given(productRepository.findProductList(
                     eq(null), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
@@ -85,7 +82,7 @@ class ProductServiceTest {
 
             given(productRepository.findProductList(
                     eq(categoryId), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
-                    .willReturn(new PageImpl<>(List.of(createSummary())));
+                    .willReturn(new PageImpl<>(List.of(createProduct())));
 
             Page<ProductListResponse> result = productService.findProductList(categoryId, null, pageable);
 
@@ -101,7 +98,7 @@ class ProductServiceTest {
 
             given(productRepository.findProductList(
                     eq(null), eq("티셔츠"), eq(ProductStatus.DISCONTINUED), eq(pageable)))
-                    .willReturn(new PageImpl<>(List.of(createSummary())));
+                    .willReturn(new PageImpl<>(List.of(createProduct())));
 
             Page<ProductListResponse> result = productService.findProductList(null, "티셔츠", pageable);
 
@@ -118,7 +115,7 @@ class ProductServiceTest {
 
             given(productRepository.findProductList(
                     eq(categoryId), eq("티셔츠"), eq(ProductStatus.DISCONTINUED), eq(pageable)))
-                    .willReturn(new PageImpl<>(List.of(createSummary())));
+                    .willReturn(new PageImpl<>(List.of(createProduct())));
 
             Page<ProductListResponse> result = productService.findProductList(categoryId, "티셔츠", pageable);
 
@@ -164,7 +161,7 @@ class ProductServiceTest {
 
             given(productRepository.findProductList(
                     eq(null), eq(null), eq(ProductStatus.DISCONTINUED), eq(pageable)))
-                    .willReturn(new PageImpl<>(List.of(createSummary())));
+                    .willReturn(new PageImpl<>(List.of(createProduct())));
 
             Page<ProductListResponse> result = productService.findProductList(null, null, pageable);
 
@@ -183,113 +180,77 @@ class ProductServiceTest {
                     .hasMessageContaining("Unsupported product sort field");
         }
 
-        @Test
-        @DisplayName("재고 합계가 int 범위를 초과하면 최대값으로 응답")
-        void totalStockOverflowUsesMaxInteger() {
-            ProductListResponse response = ProductListResponse.from(
-                    createSummaryWithTotalStock((long) Integer.MAX_VALUE + 1)
-            );
 
-            assertThat(response.totalStock()).isEqualTo(Integer.MAX_VALUE);
-            assertThat(response.inStock()).isTrue();
+        @Nested
+        @DisplayName("상품 상세 조회 (findById)")
+        class FindById {
+
+            @Test
+            @DisplayName("ACTIVE 상품을 조회할 수 있다")
+            void findActiveProduct() {
+                Product product = createProduct();
+
+                given(productRepository.findById(1L))
+                        .willReturn(Optional.of(product));
+
+                Product result = productService.findById(1L);
+
+                assertThat(result).isEqualTo(product);
+            }
+
+            @Test
+            @DisplayName("SOLD_OUT 상품도 조회 가능 (사용자에게 노출됨)")
+            void findSoldOutProduct() {
+                Product product = createProduct();
+                setId(product, 1L);
+                Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 1);
+                setId(sku, 100L);
+                product.decreaseSkuStock(100L, 1);  // 모든 SKU 재고 0 → SOLD_OUT
+                assertThat(product.getStatus()).isEqualTo(ProductStatus.SOLD_OUT);
+
+                given(productRepository.findById(1L))
+                        .willReturn(Optional.of(product));
+
+                Product result = productService.findById(1L);
+
+                assertThat(result.getStatus()).isEqualTo(ProductStatus.SOLD_OUT);
+            }
+
+            @Test
+            @DisplayName("DISCONTINUED 상품은 NotFound로 응답")
+            void rejectDiscontinuedAsNotFound() {
+                Product product = createProduct();
+                product.discontinue();
+
+                given(productRepository.findById(1L))
+                        .willReturn(Optional.of(product));
+
+                assertThatThrownBy(() -> productService.findById(1L))
+                        .isInstanceOf(ProductNotFoundException.class);
+            }
+
+            @Test
+            @DisplayName("존재하지 않는 ID는 ProductNotFoundException")
+            void rejectUnknownId() {
+                given(productRepository.findById(999L))
+                        .willReturn(Optional.empty());
+
+                assertThatThrownBy(() -> productService.findById(999L))
+                        .isInstanceOf(ProductNotFoundException.class);
+            }
         }
 
-        @Test
-        @DisplayName("재고 합계가 null이면 0으로 응답")
-        void totalStockNullBecomesZero() {
-            ProductListResponse response = ProductListResponse.from(
-                    createSummaryWithTotalStock(null)
-            );
+        // ─── 테스트 헬퍼 ───
 
-            assertThat(response.totalStock()).isZero();
-            assertThat(response.inStock()).isFalse();
-        }
-    }
-
-    @Nested
-    @DisplayName("상품 상세 조회 (findById)")
-    class FindById {
-
-        @Test
-        @DisplayName("ACTIVE 상품을 조회할 수 있다")
-        void findActiveProduct() {
-            Product product = createProduct();
-
-            given(productRepository.findByIdWithCategory(1L))
-                    .willReturn(Optional.of(product));
-
-            Product result = productService.findById(1L);
-
-            assertThat(result).isEqualTo(product);
+        private static void setId(Object entity, Long id) {
+            try {
+                Field idField = entity.getClass().getDeclaredField("id");
+                idField.setAccessible(true);
+                idField.set(entity, id);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
 
-        @Test
-        @DisplayName("SOLD_OUT 상품도 조회 가능 (사용자에게 노출됨)")
-        void findSoldOutProduct() {
-            Product product = createProduct();
-            setId(product, 1L);
-            Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 1);
-            setId(sku, 100L);
-            product.decreaseSkuStock(100L, 1);  // 모든 SKU 재고 0 → SOLD_OUT
-            assertThat(product.getStatus()).isEqualTo(ProductStatus.SOLD_OUT);
-
-            given(productRepository.findByIdWithCategory(1L))
-                    .willReturn(Optional.of(product));
-
-            Product result = productService.findById(1L);
-
-            assertThat(result.getStatus()).isEqualTo(ProductStatus.SOLD_OUT);
-        }
-
-        @Test
-        @DisplayName("DISCONTINUED 상품은 NotFound로 응답")
-        void rejectDiscontinuedAsNotFound() {
-            Product product = createProduct();
-            product.discontinue();
-
-            given(productRepository.findByIdWithCategory(1L))
-                    .willReturn(Optional.of(product));
-
-            assertThatThrownBy(() -> productService.findById(1L))
-                    .isInstanceOf(ProductNotFoundException.class);
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 ID는 ProductNotFoundException")
-        void rejectUnknownId() {
-            given(productRepository.findByIdWithCategory(999L))
-                    .willReturn(Optional.empty());
-
-            assertThatThrownBy(() -> productService.findById(999L))
-                    .isInstanceOf(ProductNotFoundException.class);
-        }
-    }
-
-    // ─── 테스트 헬퍼 ───
-
-    private static void setId(Object entity, Long id) {
-        try {
-            Field idField = entity.getClass().getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(entity, id);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private ProductSummaryProjection createSummary() {
-        return createSummaryWithTotalStock(10L);
-    }
-
-    private ProductSummaryProjection createSummaryWithTotalStock(Long totalStock) {
-        return new ProductSummaryProjection(
-                1L,
-                "베이직 티셔츠",
-                29900,
-                "https://example.com/image.jpg",
-                "남성 상의",
-                ProductStatus.ACTIVE,
-                totalStock
-        );
     }
 }

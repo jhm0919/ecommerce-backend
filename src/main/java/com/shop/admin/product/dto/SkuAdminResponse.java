@@ -1,11 +1,11 @@
-package com.shop.product.dto;
+package com.shop.admin.product.dto;
 
 import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
 
 import java.util.List;
 
-public record SkuResponse(
+public record SkuAdminResponse(
         Long skuId,
         String skuCode,
         List<SkuOptionResponse> options,
@@ -20,8 +20,8 @@ public record SkuResponse(
         }
     }
 
-    public static SkuResponse from(Sku sku) {
-        return new SkuResponse(
+    public static SkuAdminResponse from(Sku sku) {
+        return new SkuAdminResponse(
                 sku.getId(),
                 sku.getSkuCode(),
                 sku.getOptions().stream()

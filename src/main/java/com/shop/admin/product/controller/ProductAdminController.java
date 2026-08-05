@@ -9,7 +9,7 @@ import com.shop.product.domain.Product;
 import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
 import com.shop.product.dto.ProductDetailResponse;
-import com.shop.product.dto.SkuResponse;
+import com.shop.admin.product.dto.SkuAdminResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -81,7 +81,7 @@ public class ProductAdminController {
             @ApiResponse(responseCode = "404", description = "상품 없음")
     })
     @PostMapping("/{productId}/skus")
-    public ResponseEntity<CommonResponse<SkuResponse>> addSku(
+    public ResponseEntity<CommonResponse<SkuAdminResponse>> addSku(
             @PathVariable Long productId,
             @Valid @RequestBody SkuAdminAddRequest request
     ) {
@@ -91,7 +91,7 @@ public class ProductAdminController {
 
         Sku sku = productAdminService.addSku(productId, options, request.initialStock());
         return ResponseEntity.status(201)
-                .body(CommonResponse.createSuccess(SkuResponse.from(sku)));
+                .body(CommonResponse.createSuccess(SkuAdminResponse.from(sku)));
     }
 
     @Operation(summary = "SKU 제거", description = "재고가 0인 SKU만 제거 가능.")
