@@ -121,7 +121,7 @@ Spring Boot 기반 이커머스 백엔드 프로젝트
                 FROM Product p
                 LEFT JOIN FETCH p.skus s
                 WHERE p.id = :productId
-            """)
+    """)
     Optional<Product> findByIdWithPessimistic(@Param("productId") Long productId);
 ```
 - 락이 걸린 Product에 직접 재고 차감을 수행한다.
@@ -151,7 +151,6 @@ Spring Boot 기반 이커머스 백엔드 프로젝트
         ...
 ```
 
-- 검증 결과, 동시 주문 테스트에서 재고 1개 SKU에 대해 주문 2건이 동시에 성공하던 문제가 사라졌고
-최종 주문 수와 재고 상태가 기대값과 일치하는 것을 확인
+- 검증 결과, 동시 주문 테스트에서 재고 100개 SKU에 대해 주문 100건이 전부 성공하여 최종 주문 수와 재고 상태가 기대값과 일치하는 것을 확인
 
 ![img_4.png](img_4.png)

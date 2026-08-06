@@ -48,7 +48,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                 FROM Product p
                 LEFT JOIN FETCH p.skus s
                 WHERE p.id = :productId
-            """)
+    """)
     Optional<Product> findByIdWithPessimistic(@Param("productId") Long productId);
 
     @Query("""
