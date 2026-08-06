@@ -69,7 +69,7 @@ class OrderServiceTest {
         void createOrder() {
             given(orderRepository.save(any(Order.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
-            given(productRepository.findByIdWithSkusForUpdate(1L))
+            given(productRepository.findByIdWithPessimistic(1L))
                     .willReturn(Optional.of(product));
 
 
@@ -86,7 +86,7 @@ class OrderServiceTest {
         @Test
         @DisplayName("재고 부족 시 InsufficientStockException")
         void rejectInsufficientStock() {
-            given(productRepository.findByIdWithSkusForUpdate(1L)).willReturn(Optional.of(product));
+            given(productRepository.findByIdWithPessimistic(1L)).willReturn(Optional.of(product));
 
             CreateOrderRequest request = new CreateOrderRequest(List.of(new CreateOrderRequest.OrderItemRequest(product.getId(), sku.getId(), 51)),
                     "12345", "서울시 강남구",

@@ -42,12 +42,14 @@ public class OrderService {
             Long memberId,
             CreateOrderRequest request
     ) {
-        // 재고 차감이 끝난 주문 상품들을 임시로 담아두는 객체
         List<OrderItem> items = new ArrayList<>();
 
         for (CreateOrderRequest.OrderItemRequest req : request.items()) {
-            Product product = productRepository.findByIdWithSkusForUpdate(req.productId())
+            Product product = productRepository.findByIdWithPessimistic(req.productId())
                     .orElseThrow(() -> new ProductNotFoundException(req.productId()));
+
+//            Product product = productRepository.findById(req.productId())
+//                    .orElseThrow(() -> new ProductNotFoundException(req.productId()));
 
             if (!product.isPurchasable()) { // 상품 상태가 ACTIVE이면 통과
                 throw new ProductNotPurchasableException(product.getId());
