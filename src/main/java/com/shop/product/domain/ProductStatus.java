@@ -14,7 +14,7 @@ package com.shop.product.domain;
  * <pre>
  *   ACTIVE ←──→ SOLD_OUT
  *      │           │
- *      └───────────┴──→ DISCONTINUED (영구)
+ *      └───────────┴──→ DISCONTINUED (삭제)
  * </pre>
  */
 public enum ProductStatus {

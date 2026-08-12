@@ -37,9 +37,8 @@ public class CartController {
     public ResponseEntity<CommonResponse<CartResponse>> getMyCart(
             @AuthenticationPrincipal AuthPrincipal principal
     ) {
-        CartService.CartView view = cartService.getMyCart(principal.memberId());
         return ResponseEntity.ok(
-                CommonResponse.createSuccess(CartResponse.from(view.cart(), view.productMap()))
+                CommonResponse.createSuccess(cartService.getMyCart(principal.memberId()))
         );
     }
 
@@ -56,14 +55,14 @@ public class CartController {
             @Valid @RequestBody AddCartItemRequest request,
             @CookieValue(name = "session-id", required = false) String sessionId
     ) {
-        CartService.CartView view = cartService.addItem(
+        CartResponse cartResponse = cartService.addItem(
                 principal.memberId(),
                 request.productId(),
                 request.skuId(),
                 request.quantity()
         );
         return ResponseEntity.ok(
-                CommonResponse.createSuccess(CartResponse.from(view.cart(), view.productMap()))
+                CommonResponse.createSuccess(cartResponse)
         );
     }
 
@@ -80,13 +79,13 @@ public class CartController {
             @PathVariable Long itemId,
             @Valid @RequestBody UpdateCartItemRequest request
     ) {
-        CartService.CartView view = cartService.changeItemQuantity(
+        CartResponse cartResponse = cartService.changeItemQuantity(
                 principal.memberId(),
                 itemId,
                 request.quantity()
         );
         return ResponseEntity.ok(
-                CommonResponse.createSuccess(CartResponse.from(view.cart(), view.productMap()))
+                CommonResponse.createSuccess(cartResponse)
         );
     }
 
@@ -101,9 +100,8 @@ public class CartController {
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long itemId
     ) {
-        CartService.CartView view = cartService.removeItem(principal.memberId(), itemId);
         return ResponseEntity.ok(
-                CommonResponse.createSuccess(CartResponse.from(view.cart(), view.productMap()))
+                CommonResponse.createSuccess(cartService.removeItem(principal.memberId(), itemId))
         );
     }
 

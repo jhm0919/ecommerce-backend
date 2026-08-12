@@ -1,10 +1,15 @@
 package com.shop.cart.service;
 
 import com.shop.cart.domain.Cart;
+import com.shop.cart.dto.CartResponse;
 import com.shop.cart.exception.CartItemNotFoundException;
 import com.shop.cart.exception.ProductNotPurchasableException;
 import com.shop.cart.repository.CartRepository;
 import com.shop.category.domain.Category;
+import com.shop.category.repository.CategoryRepository;
+import com.shop.member.domain.AuthProvider;
+import com.shop.member.domain.Member;
+import com.shop.member.repository.MemberRepository;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
@@ -14,48 +19,57 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
 class CartServiceTest {
 
-    @InjectMocks private CartService cartService;
+    @Autowired
+    private CartService cartService;
 
-    @Mock private CartRepository cartRepository;
-    @Mock private ProductRepository productRepository;
+    @Autowired
+    private CartRepository cartRepository;
 
-    private static final Long MEMBER_ID = 1L;
-    private static final Long PRODUCT_ID = 100L;
-    private static final Long SKU_ID = 200L;
+    @Autowired
+    private ProductRepository productRepository;
 
-    private Product product;
-    private Sku sku;
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
+    private MemberRepository memberRepository;
+
+    Long memberId;
+    Long productId;
+    Long skuId;
 
     @BeforeEach
     void setUp() {
-        // 테스트 시작 전에 서비스 객체를 수동으로 생성하고 모든 Mock을 주입
-        cartService = new CartService(cartRepository, productRepository);
+        cartRepository.deleteAll();
+        memberRepository.deleteAll();
+        productRepository.deleteAll();
+        categoryRepository.deleteAll();
 
-        Category category = Category.create("의류", "clothing");
-        product = Product.register(
+        Member member = Member.registerFromOAuth(AuthProvider.GOOGLE, "google", "jhm0919@naver.com", "장해민", "pic_url");
+        memberRepository.saveAndFlush(member);
+        memberId = member.getId();
+
+        Category category = categoryRepository.saveAndFlush(Category.create("의류", "clothing"));
+        
+        Product product = productRepository.saveAndFlush(Product.register(
                 "티셔츠", 29900, "설명", "img", category
-        );
-        setId(product, PRODUCT_ID);
-        sku = product.addSku(List.of(new SkuOption("색상", "검정")), 50);
-        setId(sku, SKU_ID);
+        ));
+        productId = product.getId();
+
+        product.addSku(List.of(new SkuOption("색상", "검정")), 50);
+        Product savedSkuProduct = productRepository.saveAndFlush(product);
+        skuId = savedSkuProduct.getSkuses().get(0).getId();
     }
 
     @Nested
@@ -65,29 +79,23 @@ class CartServiceTest {
         @Test
         @DisplayName("기존 카트가 있으면 그대로 반환")
         void returnsExistingCart() {
-            Cart existingCart = Cart.createFor(MEMBER_ID);
-            given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
-                    .willReturn(Optional.of(existingCart));
+            Cart existingCart = Cart.createFor(memberId);
+            cartRepository.saveAndFlush(existingCart);
 
-            CartService.CartView view = cartService.getMyCart(MEMBER_ID);
+            CartResponse response = cartService.getMyCart(memberId);
 
-            assertThat(view.cart()).isEqualTo(existingCart);
-            verify(cartRepository, never()).save(any());
+            assertThat(response.cartId()).isEqualTo(existingCart.getId());
         }
 
         @Test
         @DisplayName("카트가 없으면 새로 생성")
         void createsNewCart() {
-            given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
-                    .willReturn(Optional.empty());
-            given(cartRepository.save(any(Cart.class)))
-                    .willAnswer(inv -> inv.getArgument(0));
+            CartResponse response = cartService.getMyCart(memberId);
 
-            CartService.CartView view = cartService.getMyCart(MEMBER_ID);
+            Cart cart = cartRepository.findByIdWithItems(response.cartId()).orElseThrow();
 
-            assertThat(view.cart().getMemberId()).isEqualTo(MEMBER_ID);
-            assertThat(view.cart().isEmpty()).isTrue();
-            verify(cartRepository).save(any(Cart.class));
+            assertThat(cart.getMemberId()).isEqualTo(memberId);
+            assertThat(cart.isEmpty()).isTrue();
         }
     }
 
@@ -98,70 +106,49 @@ class CartServiceTest {
         @Test
         @DisplayName("정상적으로 상품 추가")
         void addNormal() {
-            Cart cart = Cart.createFor(MEMBER_ID);
+            CartResponse response = cartService.addItem(memberId, productId, skuId, 2);
 
-            given(productRepository.findByIdWithSkus(PRODUCT_ID)).willReturn(Optional.of(product));
-            given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
-                    .willReturn(Optional.of(cart));
-            given(productRepository.findAllById(any())).willReturn(List.of(product));
-
-            CartService.CartView view = cartService.addItem(MEMBER_ID, PRODUCT_ID, SKU_ID, 2);
-
-            assertThat(view.cart().getItemCount()).isEqualTo(1);
-            assertThat(view.cart().getTotalQuantity()).isEqualTo(2);
+            assertThat(response.itemCount()).isEqualTo(1);
+            assertThat(response.totalQuantity()).isEqualTo(2);
         }
 
         @Test
         @DisplayName("같은 SKU 다시 추가 시 합산")
         void mergeSameSku() {
-            Cart cart = Cart.createFor(MEMBER_ID);
-            cart.addItem(product, sku, 2);  // 미리 2개 담음
+            cartService.addItem(memberId, productId, skuId, 2); // 미리 2개 담음
 
-            given(productRepository.findByIdWithSkus(PRODUCT_ID)).willReturn(Optional.of(product));
-            given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
-                    .willReturn(Optional.of(cart));
-            given(productRepository.findAllById(any())).willReturn(List.of(product));
+            CartResponse response = cartService.addItem(memberId, productId, skuId, 3);
 
-            CartService.CartView view = cartService.addItem(MEMBER_ID, PRODUCT_ID, SKU_ID, 3);
-
-            assertThat(view.cart().getItemCount()).isEqualTo(1);
-            assertThat(view.cart().getTotalQuantity()).isEqualTo(5);  // 2 + 3
+            assertThat(response.itemCount()).isEqualTo(1);
+            assertThat(response.totalQuantity()).isEqualTo(5);  // 2 + 3
         }
 
         @Test
         @DisplayName("존재하지 않는 상품은 ProductNotFoundException")
         void rejectUnknownProduct() {
-            given(productRepository.findByIdWithSkus(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, 999L, SKU_ID, 1))
+            assertThatThrownBy(() -> cartService.addItem(memberId, 999L, skuId, 1))
                     .isInstanceOf(ProductNotFoundException.class);
         }
 
         @Test
         @DisplayName("단종 상품은 ProductNotPurchasableException")
         void rejectDiscontinued() {
+            Product product = productRepository.findById(productId).orElseThrow();
+
             product.discontinue();
+            productRepository.save(product);
 
-            given(productRepository.findByIdWithSkus(PRODUCT_ID)).willReturn(Optional.of(product));
-
-            assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, PRODUCT_ID, SKU_ID, 1))
+            assertThatThrownBy(() -> cartService.addItem(memberId, productId, skuId, 1))
                     .isInstanceOf(ProductNotPurchasableException.class);
         }
 
         @Test
         @DisplayName("카트가 없으면 자동 생성 후 추가")
         void createsCartIfMissing() {
-            given(productRepository.findByIdWithSkus(PRODUCT_ID)).willReturn(Optional.of(product));
-            given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
-                    .willReturn(Optional.empty());
-            given(cartRepository.save(any(Cart.class)))
-                    .willAnswer(inv -> inv.getArgument(0));
-            given(productRepository.findAllById(any())).willReturn(List.of(product));
+            CartResponse response = cartService.addItem(memberId, productId, skuId, 1);
 
-            CartService.CartView view = cartService.addItem(MEMBER_ID, PRODUCT_ID, SKU_ID, 1);
-
-            assertThat(view.cart().getItemCount()).isEqualTo(1);
-            verify(cartRepository).save(any(Cart.class));
+            assertThat(response.itemCount()).isEqualTo(1);
         }
     }
 
@@ -172,28 +159,19 @@ class CartServiceTest {
         @Test
         @DisplayName("정상적으로 수량 변경")
         void changeNormal() {
-            Cart cart = Cart.createFor(MEMBER_ID);
-            cart.addItem(product, sku, 2);
-            setItemId(cart.getItems().get(0), 10L);
+            CartResponse addedCart = cartService.addItem(memberId, productId, skuId, 2);
 
-            given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
-                    .willReturn(Optional.of(cart));
-            given(productRepository.findAllById(any())).willReturn(List.of(product));
+            Long itemId = addedCart.items().get(0).itemId();
 
-            CartService.CartView view = cartService.changeItemQuantity(MEMBER_ID, 10L, 5);
+            CartResponse response = cartService.changeItemQuantity(memberId, itemId, 5);
 
-            assertThat(view.cart().getTotalQuantity()).isEqualTo(5);
+            assertThat(response.totalQuantity()).isEqualTo(5);
         }
 
         @Test
         @DisplayName("존재하지 않는 항목은 CartItemNotFoundException")
         void rejectUnknownItem() {
-            Cart cart = Cart.createFor(MEMBER_ID);
-
-            given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
-                    .willReturn(Optional.of(cart));
-
-            assertThatThrownBy(() -> cartService.changeItemQuantity(MEMBER_ID, 999L, 5))
+            assertThatThrownBy(() -> cartService.changeItemQuantity(memberId, 999L, 5))
                     .isInstanceOf(CartItemNotFoundException.class);
         }
     }
@@ -205,16 +183,16 @@ class CartServiceTest {
         @Test
         @DisplayName("정상적으로 항목 삭제")
         void removeNormal() {
-            Cart cart = Cart.createFor(MEMBER_ID);
-            cart.addItem(product, sku, 2);
-            setItemId(cart.getItems().get(0), 10L);
+            CartResponse addedCart = cartService.addItem(memberId, productId, skuId, 2);
 
-            given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
-                    .willReturn(Optional.of(cart));
+            Long itemId = addedCart.items().get(0).itemId();
 
-            CartService.CartView view = cartService.removeItem(MEMBER_ID, 10L);
+            CartResponse response = cartService.removeItem(memberId, itemId);
 
-            assertThat(view.cart().isEmpty()).isTrue();
+            Cart cart = cartRepository.findByIdWithItems(response.cartId()).orElseThrow();
+
+            assertThat(cart.getMemberId()).isEqualTo(memberId);
+            assertThat(cart.isEmpty()).isTrue();
         }
     }
 
@@ -225,13 +203,11 @@ class CartServiceTest {
         @Test
         @DisplayName("카트가 있으면 비움")
         void clearExisting() {
-            Cart cart = Cart.createFor(MEMBER_ID);
-            cart.addItem(product, sku, 2);
+            cartService.addItem(memberId, productId, skuId, 2);
 
-            given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
-                    .willReturn(Optional.of(cart));
+            cartService.clearMyCart(memberId);
 
-            cartService.clearMyCart(MEMBER_ID);
+            Cart cart = cartRepository.findByMemberIdWithItems(memberId).orElseThrow();
 
             assertThat(cart.isEmpty()).isTrue();
         }
@@ -239,35 +215,9 @@ class CartServiceTest {
         @Test
         @DisplayName("카트가 없어도 에러 없음 (멱등성)")
         void clearMissingIsSilent() {
-            given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
-                    .willReturn(Optional.empty());
-
-            assertThatCode(() -> cartService.clearMyCart(MEMBER_ID))
+            assertThatCode(() -> cartService.clearMyCart(memberId))
                     .doesNotThrowAnyException();
         }
     }
 
-    // ─────────────────────────────────────
-    // 테스트 헬퍼
-    // ─────────────────────────────────────
-
-    private static void setId(Object entity, Long id) {
-        try {
-            Field idField = entity.getClass().getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(entity, id);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static void setItemId(Object item, Long id) {
-        try {
-            Field idField = item.getClass().getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(item, id);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

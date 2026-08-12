@@ -34,23 +34,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-//@ExtendWith(MockitoExtension.class)
 @SpringBootTest
 class ProductAdminServiceTest {
     @Autowired
     private ProductAdminService productAdminService;
 
     @Autowired
-    private ProductService productService;
+    private ProductRepository productRepository;
 
     @Autowired
-    private ProductRepository productRepository;
-//    @Mock
-    @Autowired
     private CategoryRepository categoryRepository;
-//    @Mock
-    @Autowired
-    private CartRepository cartRepository; // 1. CartRepository Mock 객체 추가
 
     @BeforeEach
     void setUp() {

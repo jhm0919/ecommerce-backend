@@ -1,6 +1,7 @@
 package com.shop.cart.service;
 
 import com.shop.cart.domain.Cart;
+import com.shop.cart.dto.CartResponse;
 import com.shop.cart.exception.CartItemNotFoundException;
 import com.shop.cart.exception.ProductNotPurchasableException;
 import com.shop.cart.repository.CartRepository;
@@ -25,7 +26,6 @@ public class CartService {
 
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
-//    private final ApplicationEventPublisher eventPublisher; // 이벤트 발행기 주입
 
     // ─────────────────────────────────────
     // 조회 (변경 없음)
@@ -33,12 +33,14 @@ public class CartService {
 
     @Timed(value = "cart.get.time", description = "장바구니 조회 처리 시간")
     @Transactional
-    public CartView getMyCart(Long memberId) {
+    public CartResponse getMyCart(Long memberId) {
         Cart cart = cartRepository.findByMemberIdWithItems(memberId)
                 .orElseGet(() -> cartRepository.save(Cart.createFor(memberId)));
 
         Map<Long, Product> productMap = loadProductsForCart(cart);
-        return new CartView(cart, productMap);
+        return CartResponse.from(cart, productMap);
+
+//        return new CartView(cart, productMap);
     }
 
     // ─────────────────────────────────────
@@ -52,7 +54,7 @@ public class CartService {
      */
     @Timed(value = "cart.add.time", description = "장바구니 상품 추가 처리 시간")
     @Transactional
-    public CartView addItem(Long memberId, Long productId, Long skuId, int quantity) {  // ★ skuId 추가
+    public CartResponse addItem(Long memberId, Long productId, Long skuId, int quantity) {  // ★ skuId 추가
         Product product = productRepository.findByIdWithSkus(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
@@ -64,18 +66,15 @@ public class CartService {
             throw new ProductNotPurchasableException(productId);
         }
 
-
         Cart cart = cartRepository.findByMemberIdWithItems(memberId)
                 .orElseGet(() -> cartRepository.save(Cart.createFor(memberId)));
 
         cart.addItem(product, sku, quantity);  // ★ SKU 전달
 
-        log.info("Item added to cart: memberId={}, productId={}, skuId={}, quantity={}",
-                memberId, productId, skuId, quantity);
-
         Map<Long, Product> productMap = loadProductsForCart(cart);
 
-        return new CartView(cart, productMap);
+        return CartResponse.from(cart, productMap);
+//        return new CartView(cart, productMap);
     }
 
     // ─────────────────────────────────────
@@ -84,7 +83,7 @@ public class CartService {
 
     @Timed(value = "cart.change_quantity.time", description = "장바구니 수량 변경 처리 시간")
     @Transactional
-    public CartView changeItemQuantity(Long memberId, Long itemId, int quantity) {
+    public CartResponse changeItemQuantity(Long memberId, Long itemId, int quantity) {
         Cart cart = cartRepository.findByMemberIdWithItems(memberId)
                 .orElseThrow(() -> new CartItemNotFoundException(itemId));
 
@@ -99,7 +98,8 @@ public class CartService {
                 memberId, itemId, quantity);
 
         Map<Long, Product> productMap = loadProductsForCart(cart);
-        return new CartView(cart, productMap);
+        return CartResponse.from(cart, productMap);
+//        return new CartView(cart, productMap);
     }
 
     // ─────────────────────────────────────
@@ -108,7 +108,7 @@ public class CartService {
 
     @Timed(value = "cart.remove.time", description = "장바구니 상품 삭제 처리 시간")
     @Transactional
-    public CartView removeItem(Long memberId, Long itemId) {
+    public CartResponse removeItem(Long memberId, Long itemId) {
         Cart cart = cartRepository.findByMemberIdWithItems(memberId)
                 .orElseThrow(() -> new CartItemNotFoundException(itemId));
 
@@ -121,7 +121,8 @@ public class CartService {
         log.info("Item removed from cart: memberId={}, itemId={}", memberId, itemId);
 
         Map<Long, Product> productMap = loadProductsForCart(cart);
-        return new CartView(cart, productMap);
+        return CartResponse.from(cart, productMap);
+//        return new CartView(cart, productMap);
     }
 
     // ─────────────────────────────────────
@@ -156,5 +157,5 @@ public class CartService {
                 .collect(Collectors.toMap(Product::getId, p -> p));
     }
 
-    public record CartView(Cart cart, Map<Long, Product> productMap) {}
+//    public record CartView(Cart cart, Map<Long, Product> productMap) {}
 }
