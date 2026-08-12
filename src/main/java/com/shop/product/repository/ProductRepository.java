@@ -26,14 +26,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      */
     @Query(
             """
-                    SELECT DISTINCT p
-                    FROM Product p
-                    JOIN p.category c
-                    WHERE p.status <> :excludedStatus
-                      AND (:categoryId IS NULL OR c.id = :categoryId)
-                      AND (:keyword IS NULL OR
-                           LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
-                    """
+                SELECT DISTINCT p
+                FROM Product p
+                JOIN p.category c
+                WHERE p.status <> :excludedStatus
+                  AND (:categoryId IS NULL OR c.id = :categoryId)
+                  AND (:keyword IS NULL OR
+                       LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                """
     )
     Page<Product> findProductList(
             @Param("categoryId") Long categoryId,
@@ -46,18 +46,18 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("""
                 SELECT p
                 FROM Product p
-                LEFT JOIN FETCH p.skus s
+                JOIN FETCH p.skus
                 WHERE p.id = :productId
     """)
     Optional<Product> findByIdWithPessimistic(@Param("productId") Long productId);
 
     @Query("""
-                SELECT p
+                SELECT DISTINCT p
                 FROM Product p
-                LEFT JOIN FETCH p.skus s
+                JOIN FETCH p.skus
                 WHERE p.id = :productId
             """)
-    Optional<Product> findById(Long productId);
+    Optional<Product> findByIdWithSkus(@Param("productId") Long productId);
 
 
     boolean existsByCategoryId(Long categoryId);

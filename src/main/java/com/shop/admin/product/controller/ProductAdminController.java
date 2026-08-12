@@ -40,9 +40,8 @@ public class ProductAdminController {
     public ResponseEntity<CommonResponse<ProductDetailResponse>> register(
             @Valid @RequestBody ProductAdminCreateRequest request
     ) {
-        Product product = productAdminService.register(request);
         return ResponseEntity.status(201)
-                .body(CommonResponse.createSuccess(ProductDetailResponse.from(product)));
+                .body(CommonResponse.createSuccess(productAdminService.register(request)));
     }
 
     @Operation(summary = "상품 정보 수정", description = "상품 정보를 부분 수정한다 (PATCH 의미).")
@@ -56,10 +55,9 @@ public class ProductAdminController {
             @PathVariable Long id,
             @Valid @RequestBody ProductAdminUpdateRequest request
     ) {
-        // 1. 서비스로부터 DTO를 직접 받습니다.
         ProductDetailResponse responseDto = productAdminService.update(id, request);
         return ResponseEntity.ok(
-                CommonResponse.createSuccess(responseDto) // 2. 받은 DTO를 그대로 응답으로 보냅니다.
+                CommonResponse.createSuccess(responseDto)
         );
     }
 
@@ -85,13 +83,8 @@ public class ProductAdminController {
             @PathVariable Long productId,
             @Valid @RequestBody SkuAdminAddRequest request
     ) {
-        List<SkuOption> options = request.options().stream()
-                .map(opt -> new SkuOption(opt.name(), opt.value()))
-                .toList();
-
-        Sku sku = productAdminService.addSku(productId, options, request.initialStock());
         return ResponseEntity.status(201)
-                .body(CommonResponse.createSuccess(SkuAdminResponse.from(sku)));
+                .body(CommonResponse.createSuccess(productAdminService.addSku(productId, request)));
     }
 
     @Operation(summary = "SKU 제거", description = "재고가 0인 SKU만 제거 가능.")

@@ -18,7 +18,7 @@ public class StockService {
      */
     @Transactional
     public void increaseStock(Long productId, Long skuId, int quantity) {
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdWithSkus(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
         product.increaseSkuStock(skuId, quantity);
     }
@@ -28,7 +28,7 @@ public class StockService {
      */
     @Transactional
     public void decreaseStock(Long productId, Long skuId, int quantity) {
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdWithSkus(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
         product.decreaseSkuStock(skuId, quantity);
     }

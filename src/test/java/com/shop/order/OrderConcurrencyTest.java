@@ -10,14 +10,12 @@ import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.concurrent.*;
@@ -55,6 +53,7 @@ public class OrderConcurrencyTest {
         productId = savedProduct.getId();
         skuId = savedProduct.getSkuses().get(0).getId();
 
+        System.out.println("=============초기 데이터 생성=============");
     }
 
     private CreateOrderRequest createRequest() {
@@ -63,6 +62,8 @@ public class OrderConcurrencyTest {
                 "12345", "010-1234-5678",
                 "홍길동", "01012345789", "문 앞에"
         );
+
+
     }
 
     @Test
@@ -84,7 +85,7 @@ public class OrderConcurrencyTest {
 
         latch.await();
 
-        Product product = productRepository.findById(productId).orElseThrow(() -> new ProductNotFoundException(productId));
+        Product product = productRepository.findByIdWithSkus(productId).orElseThrow(() -> new ProductNotFoundException(productId));
 
         List<Sku> skus = product.getSkus();
 
@@ -95,6 +96,25 @@ public class OrderConcurrencyTest {
         }
 
         assertThat(quantity).isEqualTo(0);
+    }
+
+    @Test
+    void 한개_주문() {
+        orderService.createOrder(1L, createRequest());
+        System.out.println("=============주문=============");
+
+
+        Product product = productRepository.findByIdWithSkus(productId).orElseThrow(() -> new ProductNotFoundException(productId));
+
+        List<Sku> skus = product.getSkus();
+
+        int quantity = 0;
+
+        for (Sku sku : skus) {
+            quantity += sku.getQuantity();
+        }
+
+        assertThat(quantity).isEqualTo(99);
     }
 
 }

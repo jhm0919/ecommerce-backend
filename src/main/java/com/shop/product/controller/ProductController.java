@@ -67,11 +67,8 @@ public class ProductController {
     public ResponseEntity<CommonResponse<ProductDetailResponse>> getDetail(
             @PathVariable Long id
     ) {
-
-        Product product = productService.findById(id);
-
         return ResponseEntity.ok(
-                CommonResponse.createSuccess(ProductDetailResponse.from(product))
+                CommonResponse.createSuccess(productService.findById(id))
         );
     }
 }

@@ -2,6 +2,7 @@ package com.shop.product.service;
 
 import com.shop.product.domain.Product;
 import com.shop.product.domain.ProductStatus;
+import com.shop.product.dto.ProductDetailResponse;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.dto.ProductListResponse;
 import com.shop.product.repository.ProductRepository;
@@ -56,8 +57,8 @@ public class ProductService {
             description = "상품 상세 조회 처리 시간"
     )
     @Transactional(readOnly = true)
-    public Product findById(Long id) {
-        Product product = productRepository.findById(id)
+    public ProductDetailResponse findById(Long id) {
+        Product product = productRepository.findByIdWithSkus(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
 
         // DISCONTINUED 상품은 사용자에게 "없는 것처럼" 응답
@@ -65,7 +66,7 @@ public class ProductService {
             throw new ProductNotFoundException(id);
         }
 
-        return product;
+        return ProductDetailResponse.from(product);
     }
 
     /**

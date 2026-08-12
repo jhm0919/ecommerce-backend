@@ -26,9 +26,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * 주문번호로 조회 (OrderItem 함께).
      */
     @Query("""
-            SELECT o FROM Order o
-            LEFT JOIN FETCH o.items
-            WHERE o.orderNumber = :orderNumber
+            SELECT DISTINCT o
+            FROM Order o
+            JOIN FETCH o.items
             """)
     Optional<Order> findByOrderNumberWithItems(@Param("orderNumber") String orderNumber);
 
@@ -43,9 +43,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * OrderItem 함께 fetch.
      */
     @Query("""
-            SELECT o FROM Order o
-            LEFT JOIN FETCH o.items
-            WHERE o.id = :orderId AND o.memberId = :memberId
+            SELECT DISTINCT o
+            FROM Order o
+            JOIN FETCH o.items
             """)
     Optional<Order> findByIdAndMemberIdWithItems(
             @Param("orderId") Long orderId,
@@ -95,6 +95,20 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("from") LocalDateTime from,
             @Param("toExclusive") LocalDateTime toExclusive,
             @Param("statuses") List<OrderStatus> statuses
+    );
+
+    @Query("""
+        SELECT o FROM Order o
+        WHERE (:status IS NULL OR o.status = :status)
+        AND (:from IS NULL OR o.createdAt >= :from)
+        AND (:to IS NULL OR o.createdAt <= :to)
+        ORDER BY o.createdAt DESC
+    """)
+    Page<Order> search(
+            @Param("status") OrderStatus status,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            Pageable pageable
     );
 
     List<Order> findTop5ByMemberIdOrderByCreatedAtDesc(Long memberId);

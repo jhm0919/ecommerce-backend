@@ -1,10 +1,6 @@
 package com.shop.product.domain;
 
 import com.shop.category.domain.Category;
-import com.shop.global.exception.BusinessException;
-import com.shop.global.exception.ErrorCode;
-import com.shop.order.domain.OrderItem;
-import com.shop.order.exception.InsufficientStockException;
 import com.shop.product.exception.SkuNotFoundException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -18,16 +14,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * 이커머스의 상품을 표현하는 Aggregate Root.
- *
  * 상태({@link ProductStatus})는 ACTIVE → SOLD_OUT → DISCONTINUED 순서로 전이된다.
  *
- * <p>재고는 SKU 단위로 관리된다. Product의 총 재고 = 모든 SKU 재고의 합계.
+ * 재고는 SKU 단위로 관리된다. Product의 총 재고 = 모든 SKU 재고의 합계.
  *
- * <p>"삭제"는 Soft Delete 방식으로, status를 DISCONTINUED로 변경하여 처리한다.
+ * "삭제"는 Soft Delete 방식으로, status를 DISCONTINUED로 변경하여 처리한다.
  * 주문 이력 보존 등을 위해 물리적 삭제는 하지 않는다.
  */
 @Entity
@@ -174,6 +168,7 @@ public class Product {
 
     public boolean isVisibleToCustomer() {
         return this.status.isVisibleToCustomer();
+//        return this.status != ProductStatus.DISCONTINUED;
     }
 
     /**

@@ -100,7 +100,7 @@ class CartServiceTest {
         void addNormal() {
             Cart cart = Cart.createFor(MEMBER_ID);
 
-            given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
+            given(productRepository.findByIdWithSkus(PRODUCT_ID)).willReturn(Optional.of(product));
             given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
                     .willReturn(Optional.of(cart));
             given(productRepository.findAllById(any())).willReturn(List.of(product));
@@ -117,7 +117,7 @@ class CartServiceTest {
             Cart cart = Cart.createFor(MEMBER_ID);
             cart.addItem(product, sku, 2);  // 미리 2개 담음
 
-            given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
+            given(productRepository.findByIdWithSkus(PRODUCT_ID)).willReturn(Optional.of(product));
             given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
                     .willReturn(Optional.of(cart));
             given(productRepository.findAllById(any())).willReturn(List.of(product));
@@ -131,7 +131,7 @@ class CartServiceTest {
         @Test
         @DisplayName("존재하지 않는 상품은 ProductNotFoundException")
         void rejectUnknownProduct() {
-            given(productRepository.findById(999L)).willReturn(Optional.empty());
+            given(productRepository.findByIdWithSkus(999L)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, 999L, SKU_ID, 1))
                     .isInstanceOf(ProductNotFoundException.class);
@@ -142,7 +142,7 @@ class CartServiceTest {
         void rejectDiscontinued() {
             product.discontinue();
 
-            given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
+            given(productRepository.findByIdWithSkus(PRODUCT_ID)).willReturn(Optional.of(product));
 
             assertThatThrownBy(() -> cartService.addItem(MEMBER_ID, PRODUCT_ID, SKU_ID, 1))
                     .isInstanceOf(ProductNotPurchasableException.class);
@@ -151,7 +151,7 @@ class CartServiceTest {
         @Test
         @DisplayName("카트가 없으면 자동 생성 후 추가")
         void createsCartIfMissing() {
-            given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
+            given(productRepository.findByIdWithSkus(PRODUCT_ID)).willReturn(Optional.of(product));
             given(cartRepository.findByMemberIdWithItems(MEMBER_ID))
                     .willReturn(Optional.empty());
             given(cartRepository.save(any(Cart.class)))

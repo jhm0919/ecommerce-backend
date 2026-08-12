@@ -66,7 +66,7 @@ class StockServiceTest {
             Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
             setId(sku, 100L);
 
-            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+            given(productRepository.findByIdWithSkus(1L)).willReturn(Optional.of(product));
 
             stockService.increaseStock(1L, 100L, 5);
 
@@ -76,7 +76,7 @@ class StockServiceTest {
         @Test
         @DisplayName("존재하지 않는 상품 ID면 예외")
         void rejectUnknownProduct() {
-            given(productRepository.findById(999L)).willReturn(Optional.empty());
+            given(productRepository.findByIdWithSkus(999L)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> stockService.increaseStock(999L, 100L, 5))
                     .isInstanceOf(ProductNotFoundException.class);
@@ -93,7 +93,7 @@ class StockServiceTest {
         Sku sku = product.addSku(List.of(new SkuOption("색상", "검정")), 10);
         setId(sku, 100L);
 
-        given(productRepository.findById(1L)).willReturn(Optional.of(product));
+        given(productRepository.findByIdWithSkus(1L)).willReturn(Optional.of(product));
 
         stockService.decreaseStock(1L, 100L, 3);
 

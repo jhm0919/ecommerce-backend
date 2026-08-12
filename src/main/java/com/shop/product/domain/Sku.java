@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -39,7 +40,8 @@ public class Sku {
     @Column(name = "sku_code", nullable = false, unique = true, length = 50, updatable = false)
     private String skuCode;
 
-    @ElementCollection
+    @BatchSize(size = 100)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
             name = "sku_options", // 테이블 이름
             joinColumns = @JoinColumn(name = "sku_id")

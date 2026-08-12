@@ -8,7 +8,7 @@ import com.shop.order.domain.OrderStatus;
 import com.shop.admin.order.dto.OrderAdminCancelResponse;
 import com.shop.admin.order.dto.OrderAdminConfirmResponse;
 import com.shop.admin.order.dto.OrderAdminListResponse;
-import com.shop.admin.order.repository.OrderAdminRepository;
+import com.shop.order.repository.OrderRepository;
 import com.shop.product.domain.Product;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
@@ -29,7 +29,7 @@ import java.util.List;
 @Transactional
 @Slf4j
 public class OrderAdminService {
-    private final OrderAdminRepository orderAdminRepository;
+    private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
 
     @Timed(
@@ -46,7 +46,7 @@ public class OrderAdminService {
         LocalDateTime fromDt = (from != null) ? from.atStartOfDay() : null;
         LocalDateTime toDt   = (to != null) ? to.atTime(23, 59, 59) : null;
 
-        return orderAdminRepository
+        return orderRepository
                 .search(status, fromDt, toDt, pageable)
                 .map(OrderAdminListResponse::from);
     }
@@ -58,7 +58,7 @@ public class OrderAdminService {
     public OrderAdminConfirmResponse confirm(List<Long> orderIds) {
 
         List<Order> orders = orderIds.stream()
-                .map(id -> orderAdminRepository.findById(id)
+                .map(id -> orderRepository.findById(id)
                         .orElseThrow(() -> new BusinessException(
                                 ErrorCode.ORDER_NOT_FOUND) {}))
                 .toList();
@@ -94,7 +94,7 @@ public class OrderAdminService {
             String cancelReasonCode
     ) {
         // 1. 주문 조회
-        Order order = orderAdminRepository.findById(orderId)
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.ORDER_NOT_FOUND) {});
 
@@ -104,7 +104,7 @@ public class OrderAdminService {
 
         // 3. 재고 복구 — 팀원 패턴 그대로
         for (OrderItem item : order.getItems()) {
-            Product product = productRepository.findById(item.getProductId())
+            Product product = productRepository.findByIdWithSkus(item.getProductId())
                     .orElseThrow(() -> new ProductNotFoundException(item.getProductId()));
             product.increaseSkuStock(item.getSkuId(), item.getQuantity());
         }

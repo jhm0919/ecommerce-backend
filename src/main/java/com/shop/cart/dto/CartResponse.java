@@ -35,7 +35,7 @@ public record CartResponse(
          * Product 정보가 있으면 가격 포함, 없으면 (단종/삭제) 없이 응답.
          */
         public static CartItemResponse from(CartItem item, Product product) {
-            if (product == null || !product.isVisibleToCustomer()) {
+            if (product == null || product.isVisibleToCustomer()) {
                 // 상품이 단종되었거나 삭제됨
                 return new CartItemResponse(
                         item.getId(),

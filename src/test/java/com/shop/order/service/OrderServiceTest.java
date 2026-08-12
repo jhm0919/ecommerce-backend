@@ -49,8 +49,23 @@ class OrderServiceTest {
         Category category = Category.create("의류", "clothing");
         product = Product.register("티셔츠", 29900, "설명", "img", category);
         setId(product, 1L);
-        sku = product.addSku(List.of(new SkuOption("색상", "검정")), 50);
+        sku = product.addSku(
+                List.of(
+                        new SkuOption("색상", "검정"),
+                        new SkuOption("사이즈", "L")
+                ),
+                100
+        );
         setId(sku, 10L);
+        sku = product.addSku(
+                List.of(
+                        new SkuOption("색상", "빨강"),
+                        new SkuOption("사이즈", "S")
+                ),
+                100
+        );
+        setId(sku, 11L);
+
     }
 
     private CreateOrderRequest createRequest() {
@@ -147,7 +162,7 @@ class OrderServiceTest {
 
             given(orderRepository.findByIdAndMemberIdWithItems(1L, 10L))
                     .willReturn(Optional.of(order));
-            given(productRepository.findById(any())).willReturn(Optional.of(product));
+            given(productRepository.findByIdWithSkus(any())).willReturn(Optional.of(product));
 
             orderService.cancelOrder(10L, 1L);
 

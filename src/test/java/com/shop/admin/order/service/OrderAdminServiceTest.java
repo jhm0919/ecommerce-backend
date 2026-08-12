@@ -7,8 +7,8 @@ import com.shop.order.domain.OrderItem;
 import com.shop.order.domain.OrderStatus;
 import com.shop.admin.order.dto.OrderAdminConfirmResponse;
 import com.shop.admin.order.dto.OrderAdminListResponse;
-import com.shop.admin.order.repository.OrderAdminRepository;
 import com.shop.category.repository.CategoryRepository;
+import com.shop.order.repository.OrderRepository;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
@@ -44,7 +44,7 @@ class OrderAdminServiceTest {
     @Autowired
     OrderAdminService orderAdminService;
     @Autowired
-    OrderAdminRepository orderAdminRepository;
+    OrderRepository orderRepository;
     @Autowired CategoryRepository categoryRepository;
     @Autowired ProductRepository productRepository;
     @Autowired EntityManager entityManager;  // ★ 추가
@@ -58,7 +58,7 @@ class OrderAdminServiceTest {
     void setUp() {
         productRepository.deleteAll();
         categoryRepository.deleteAll();
-        orderAdminRepository.deleteAll();
+        orderRepository.deleteAll();
 
         Category category = categoryRepository.save(
                 Category.create("신발", "shoe-order"));
@@ -79,9 +79,9 @@ class OrderAdminServiceTest {
     @AfterEach
     void cleanUp() {
         createdOrderIds.forEach(orderId ->
-                orderAdminRepository.findById(orderId)
-                        .ifPresent(orderAdminRepository::delete));
-        productRepository.findById(testProduct.getId())
+                orderRepository.findById(orderId)
+                        .ifPresent(orderRepository::delete));
+        productRepository.findByIdWithSkus(testProduct.getId())
                 .ifPresent(productRepository::delete);
         categoryRepository.findById(testCategory.getId())
                 .ifPresent(categoryRepository::delete);
@@ -92,7 +92,7 @@ class OrderAdminServiceTest {
         OrderItem item = OrderItem.of(testProduct, testSku, 1);
         Order order = Order.createOrder(1L, List.of(item), "12345", "010-1234-5678",
                 "홍길동", "01012345789", "문 앞에");
-        Order saved = orderAdminRepository.saveAndFlush(order);
+        Order saved = orderRepository.saveAndFlush(order);
         createdOrderIds.add(saved.getId());
         return saved;
     }
@@ -100,7 +100,7 @@ class OrderAdminServiceTest {
     private Order createCancelledOrder() {
         Order order = createPendingOrder();
         order.cancel();
-        return orderAdminRepository.saveAndFlush(order);
+        return orderRepository.saveAndFlush(order);
     }
 
     @Test
@@ -184,7 +184,7 @@ class OrderAdminServiceTest {
         assertThat(response.confirmedOrderIds())
                 .containsExactlyInAnyOrder(o1.getId(), o2.getId());
 
-        Order confirmed = orderAdminRepository.findById(o1.getId()).orElseThrow();
+        Order confirmed = orderRepository.findById(o1.getId()).orElseThrow();
         assertThat(confirmed.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
     }
 
@@ -199,7 +199,7 @@ class OrderAdminServiceTest {
         ).isInstanceOf(BusinessException.class);
 
         // ★ 새 트랜잭션으로 조회 → rollback 여부 확인
-        Order notChanged = orderAdminRepository.findById(o1.getId()).orElseThrow();
+        Order notChanged = orderRepository.findById(o1.getId()).orElseThrow();
         assertThat(notChanged.getStatus()).isEqualTo(OrderStatus.PENDING);
     }
 
@@ -209,13 +209,13 @@ class OrderAdminServiceTest {
         Order pending = createPendingOrder();
         Order cancelled = createPendingOrder();
         cancelled.cancel();
-        orderAdminRepository.saveAndFlush(cancelled);
+        orderRepository.saveAndFlush(cancelled);
 
         assertThatThrownBy(() ->
                 orderAdminService.confirm(List.of(pending.getId(), cancelled.getId()))
         ).isInstanceOf(BusinessException.class);
 
-        Order notChanged = orderAdminRepository.findById(pending.getId()).orElseThrow();
+        Order notChanged = orderRepository.findById(pending.getId()).orElseThrow();
         assertThat(notChanged.getStatus()).isEqualTo(OrderStatus.PENDING);
     }
 
@@ -236,24 +236,24 @@ class OrderAdminServiceTest {
     void cancelOrderChangesStatusAndRestoresStock() {
         int orderQuantity = 2;
 
-        Product freshProduct = productRepository.findById(testProduct.getId()).orElseThrow();
+        Product freshProduct = productRepository.findByIdWithSkus(testProduct.getId()).orElseThrow();
         Sku freshSku = freshProduct.getSkuses().get(0);
         int stockBefore = freshSku.getQuantity();
 
         OrderItem item = OrderItem.of(freshProduct, freshSku, orderQuantity);
         Order order = Order.createOrder(1L, List.of(item), "12345", "010-1234-5678",
                 "홍길동", "01012345789", "문 앞에");
-        order = orderAdminRepository.saveAndFlush(order);
+        order = orderRepository.saveAndFlush(order);
         createdOrderIds.add(order.getId());
 
         orderAdminService.cancel(order.getId(), "재고 부족", "OUT_OF_STOCK");
 
-        Order cancelled = orderAdminRepository.findById(order.getId()).orElseThrow();
+        Order cancelled = orderRepository.findById(order.getId()).orElseThrow();
         assertThat(cancelled.getStatus()).isEqualTo(OrderStatus.CANCELLED);
 
         entityManager.flush();  // ★ dirty 변경사항 DB에 반영
         entityManager.clear();  // ★ 그 다음 캐시 제거
-        Product updated = productRepository.findById(testProduct.getId()).orElseThrow();
+        Product updated = productRepository.findByIdWithSkus(testProduct.getId()).orElseThrow();
         Sku updatedSku = updated.getSkuses().get(0);
         assertThat(updatedSku.getQuantity()).isEqualTo(stockBefore + orderQuantity);
     }

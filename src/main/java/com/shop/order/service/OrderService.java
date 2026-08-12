@@ -51,7 +51,7 @@ public class OrderService {
 //            Product product = productRepository.findById(req.productId())
 //                    .orElseThrow(() -> new ProductNotFoundException(req.productId()));
 
-            if (!product.isPurchasable()) { // 상품 상태가 ACTIVE이면 통과
+            if (product.isPurchasable()) { // 상품 상태가 ACTIVE이면 통과
                 throw new ProductNotPurchasableException(product.getId());
             }
 
@@ -113,7 +113,7 @@ public class OrderService {
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
         for (OrderItem item : order.getItems()) {
-            Product product = productRepository.findById(item.getProductId())
+            Product product = productRepository.findByIdWithSkus(item.getProductId())
                     .orElseThrow(() -> new ProductNotFoundException(item.getProductId()));
 
             product.increaseSkuStock(item.getSkuId(), item.getQuantity());

@@ -53,7 +53,7 @@ public class CartService {
     @Timed(value = "cart.add.time", description = "장바구니 상품 추가 처리 시간")
     @Transactional
     public CartView addItem(Long memberId, Long productId, Long skuId, int quantity) {  // ★ skuId 추가
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdWithSkus(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
         // ★ SKU 조회 + 검증 (이 Product의 SKU인지 — Aggregate 경계 보호)
