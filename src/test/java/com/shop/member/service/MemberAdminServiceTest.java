@@ -1,5 +1,6 @@
 package com.shop.member.service;
 
+import com.shop.admin.member.service.MemberAdminService;
 import com.shop.member.domain.AuthProvider;
 import com.shop.member.domain.Member;
 import com.shop.member.domain.MemberStatus;

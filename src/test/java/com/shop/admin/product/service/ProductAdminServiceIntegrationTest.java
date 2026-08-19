@@ -2,40 +2,30 @@ package com.shop.admin.product.service;
 
 import com.shop.admin.product.dto.ProductAdminCreateRequest;
 import com.shop.admin.product.dto.ProductAdminUpdateRequest;
-import com.shop.cart.repository.CartRepository;
 import com.shop.category.domain.Category;
 import com.shop.category.exception.CategoryNotFoundException;
 import com.shop.category.repository.CategoryRepository;
-import com.shop.category.service.CategoryService;
 import com.shop.product.domain.Product;
 import com.shop.product.domain.SkuOption;
 import com.shop.product.dto.ProductDetailResponse;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
-import com.shop.product.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest
-class ProductAdminServiceTest {
+class ProductAdminServiceIntegrationTest {
     @Autowired
     private ProductAdminService productAdminService;
 

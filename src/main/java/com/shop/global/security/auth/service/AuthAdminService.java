@@ -1,7 +1,6 @@
-package com.shop.admin.auth.service;
+package com.shop.global.security.auth.service;
 
 import com.shop.global.security.auth.dto.TokenPair;
-import com.shop.global.security.auth.service.AuthService;
 import com.shop.global.exception.BusinessException;
 import com.shop.global.exception.ErrorCode;
 import com.shop.member.domain.Member;
@@ -15,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class AdminAuthService {
+public class AuthAdminService {
 
     private final MemberRepository memberRepository;
     private final AuthService authService;           // 재사용

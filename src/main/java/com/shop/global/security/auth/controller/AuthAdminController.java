@@ -1,12 +1,12 @@
-package com.shop.admin.auth.controller;
+package com.shop.global.security.auth.controller;
 
 import com.shop.global.security.auth.dto.TokenPair;
 import com.shop.global.response.CommonResponse;
 import com.shop.global.security.auth.service.AuthService;
 import com.shop.global.security.jwt.CookieIssuer;
-import com.shop.admin.auth.dto.AdminLoginRequest;
-import com.shop.admin.auth.dto.AdminLoginResponse;
-import com.shop.admin.auth.service.AdminAuthService;
+import com.shop.global.security.auth.dto.AuthAdminLoginRequest;
+import com.shop.global.security.auth.dto.AuthAdminLoginResponse;
+import com.shop.global.security.auth.service.AuthAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -21,9 +21,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/admin/auth")
 @RequiredArgsConstructor
-public class AdminAuthController {
+public class AuthAdminController {
 
-    private final AdminAuthService adminAuthService;
+    private final AuthAdminService authAdminService;
     private final CookieIssuer cookieIssuer;        // 재사용
     private final AuthService authService;
 
@@ -33,18 +33,18 @@ public class AdminAuthController {
             description = "아이디/비밀번호로 로그인. RT는 HttpOnly 쿠키, AT는 body 반환."
     )
     @PostMapping("/login")
-    public ResponseEntity<CommonResponse<AdminLoginResponse>> login(
-            @Valid @RequestBody AdminLoginRequest request,
+    public ResponseEntity<CommonResponse<AuthAdminLoginResponse>> login(
+            @Valid @RequestBody AuthAdminLoginRequest request,
             HttpServletResponse response
     ) {
-        TokenPair tokens = adminAuthService.login(request.email(), request.password());
+        TokenPair tokens = authAdminService.login(request.email(), request.password());
 
         // RT → HttpOnly 쿠키 (CookieIssuer 재사용)
         cookieIssuer.addRefreshTokenCookie(response, tokens.refreshToken());
 
         return ResponseEntity.ok(
                 CommonResponse.createSuccess(
-                        new AdminLoginResponse(tokens.accessToken())
+                        new AuthAdminLoginResponse(tokens.accessToken())
                 )
         );
     }

@@ -1,6 +1,7 @@
 package com.shop.category.service;
 
 import com.shop.category.domain.Category;
+import com.shop.category.dto.CategoryResponse;
 import com.shop.category.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,9 @@ public class CategoryService {
      * 모든 카테고리를 조회한다.
      */
     @Transactional(readOnly = true)
-    public List<Category> findAll() {
-        return categoryRepository.findAll();
+    public List<CategoryResponse> findAll() {
+        return categoryRepository.findAll().stream()
+                .map(CategoryResponse::from)
+                .toList();
     }
 }

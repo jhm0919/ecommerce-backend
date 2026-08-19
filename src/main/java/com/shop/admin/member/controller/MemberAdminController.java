@@ -1,10 +1,10 @@
-package com.shop.member.controller;
+package com.shop.admin.member.controller;
 
 import com.shop.global.response.CommonResponse;
 import com.shop.member.domain.Member;
 import com.shop.member.domain.MemberStatus;
-import com.shop.member.dto.MemberAdminResponse;
-import com.shop.member.service.MemberAdminService;
+import com.shop.admin.member.dto.MemberAdminResponse;
+import com.shop.admin.member.service.MemberAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

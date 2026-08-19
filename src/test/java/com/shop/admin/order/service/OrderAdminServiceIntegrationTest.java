@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestPropertySource(locations = "classpath:application-test.yaml")
 //@Transactional
-class OrderAdminServiceTest {
+class OrderAdminServiceIntegrationTest {
 
     @Autowired
     OrderAdminService orderAdminService;

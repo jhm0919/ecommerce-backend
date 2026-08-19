@@ -40,7 +40,6 @@ public class CartService {
         Map<Long, Product> productMap = loadProductsForCart(cart);
         return CartResponse.from(cart, productMap);
 
-//        return new CartView(cart, productMap);
     }
 
     // ─────────────────────────────────────
@@ -74,7 +73,6 @@ public class CartService {
         Map<Long, Product> productMap = loadProductsForCart(cart);
 
         return CartResponse.from(cart, productMap);
-//        return new CartView(cart, productMap);
     }
 
     // ─────────────────────────────────────
@@ -99,7 +97,6 @@ public class CartService {
 
         Map<Long, Product> productMap = loadProductsForCart(cart);
         return CartResponse.from(cart, productMap);
-//        return new CartView(cart, productMap);
     }
 
     // ─────────────────────────────────────
@@ -122,7 +119,6 @@ public class CartService {
 
         Map<Long, Product> productMap = loadProductsForCart(cart);
         return CartResponse.from(cart, productMap);
-//        return new CartView(cart, productMap);
     }
 
     // ─────────────────────────────────────
@@ -157,5 +153,4 @@ public class CartService {
                 .collect(Collectors.toMap(Product::getId, p -> p));
     }
 
-//    public record CartView(Cart cart, Map<Long, Product> productMap) {}
 }

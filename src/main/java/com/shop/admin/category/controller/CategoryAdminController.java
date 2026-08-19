@@ -31,9 +31,8 @@ public class CategoryAdminController {
     public ResponseEntity<CommonResponse<CategoryResponse>> create(
             @Valid @RequestBody CategoryAdminCreateRequest request
     ) {
-        Category category = categoryAdminService.create(request);
         return ResponseEntity.status(201)
-                .body(CommonResponse.createSuccess(CategoryResponse.from(category)));
+                .body(CommonResponse.createSuccess(categoryAdminService.create(request)));
     }
 
     @Operation(summary = "카테고리 수정", description = "카테고리 정보를 수정한다.")
@@ -47,9 +46,8 @@ public class CategoryAdminController {
             @PathVariable Long id,
             @Valid @RequestBody CategoryAdminUpdateRequest request
     ) {
-        Category category = categoryAdminService.update(id, request);
         return ResponseEntity.ok(
-                CommonResponse.createSuccess(CategoryResponse.from(category))
+                CommonResponse.createSuccess(categoryAdminService.update(id, request))
         );
     }
 

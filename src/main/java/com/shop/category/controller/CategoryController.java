@@ -26,9 +26,6 @@ public class CategoryController {
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping
     public ResponseEntity<CommonResponse<List<CategoryResponse>>> list() {
-        List<CategoryResponse> response = categoryService.findAll().stream()
-                .map(CategoryResponse::from)
-                .toList();
-        return ResponseEntity.ok(CommonResponse.createSuccess(response));
+        return ResponseEntity.ok(CommonResponse.createSuccess(categoryService.findAll()));
     }
 }

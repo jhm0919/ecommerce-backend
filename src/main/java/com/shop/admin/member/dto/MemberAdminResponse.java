@@ -1,4 +1,4 @@
-package com.shop.member.dto;
+package com.shop.admin.member.dto;
 
 import com.shop.member.domain.Member;
 import com.shop.member.domain.MemberRole;

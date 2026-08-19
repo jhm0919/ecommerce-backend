@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.*;
 
 
 @SpringBootTest
-class ProductServiceTest {
+class ProductServiceIntegrationTest {
 
     @Autowired
     private ProductService productService;

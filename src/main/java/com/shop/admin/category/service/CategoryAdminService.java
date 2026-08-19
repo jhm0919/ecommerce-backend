@@ -3,6 +3,7 @@ package com.shop.admin.category.service;
 import com.shop.admin.category.dto.CategoryAdminCreateRequest;
 import com.shop.admin.category.dto.CategoryAdminUpdateRequest;
 import com.shop.category.domain.Category;
+import com.shop.category.dto.CategoryResponse;
 import com.shop.category.exception.CategoryNotFoundException;
 import com.shop.category.exception.DuplicateCategoryException;
 import com.shop.category.repository.CategoryRepository;
@@ -26,7 +27,7 @@ public class CategoryAdminService {
      * 새 카테고리를 등록한다.
      */
     @Transactional
-    public Category create(CategoryAdminCreateRequest request) {
+    public CategoryResponse create(CategoryAdminCreateRequest request) {
         // 중복 체크
         if (categoryRepository.existsByName(request.name())) {
             throw new DuplicateCategoryException("name", request.name());
@@ -38,23 +39,17 @@ public class CategoryAdminService {
         Category category = Category.create(request.name(), request.slug());
         Category savedCategory = categoryRepository.save(category);
         log.info("Category created: id={}, slug={}", savedCategory.getId(), savedCategory.getSlug());
-        return savedCategory;
+
+        return CategoryResponse.from(savedCategory);
     }
 
     /**
      * 카테고리 정보를 수정한다 (PATCH 의미).
      */
     @Transactional
-    public Category update(Long categoryId, CategoryAdminUpdateRequest request) {
-        // 엔티티를 조회
-        // 그 엔티티는 @Transactional 안에서 영속 상태가 됨
-        // rename() / changeSlug()로 필드 값만 바꿈
-        // 메서드 끝날 때 트랜잭션이 커밋됨
-        // JPA가 변경된 필드를 감지해서 update SQL을 자동으로 날림
-        // 이걸 보통 dirty checking이라고 합니다.
+    public CategoryResponse update(Long categoryId, CategoryAdminUpdateRequest request) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CategoryNotFoundException(categoryId));
-
 
         // patch이기 때문에 null을 걸러야함
         if (request.name() != null) {
@@ -65,7 +60,7 @@ public class CategoryAdminService {
         }
 
         log.info("Category updated: id={}", categoryId);
-        return category;
+        return CategoryResponse.from(category);
     }
 
     @Transactional
