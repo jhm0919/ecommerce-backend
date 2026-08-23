@@ -71,7 +71,6 @@ public class OrderAdminService {
         });
 
         // 전부 통과 시 일괄 확정
-//        orders.forEach(OrderAdmin::confirm);
 //        for (Order order : orders) {
 //            order.confirm();
 //        }
@@ -89,16 +88,19 @@ public class OrderAdminService {
             description = "판매자 주문 강제 취소 처리 시간"
     )
     public OrderAdminCancelResponse cancel(
-            Long orderId,
-            String cancelReason,
-            String cancelReasonCode
+            Long orderId, String cancelReason
     ) {
         // 1. 주문 조회
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.ORDER_NOT_FOUND) {});
 
-        // 2. 강제 취소
+        // 2. 취소된 주문일 때 예외
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS) {};
+        }
+
+        // 3. 강제 취소
 //        OrderAdmin.forceCancel(order);
         order.forceCancel();
 
@@ -108,8 +110,6 @@ public class OrderAdminService {
                     .orElseThrow(() -> new ProductNotFoundException(item.getProductId()));
             product.increaseSkuStock(item.getSkuId(), item.getQuantity());
         }
-
-        log.info("판매자 강제 취소: orderId={}, reason={}", orderId, cancelReason);
 
         return OrderAdminCancelResponse.from(order, cancelReason);
     }

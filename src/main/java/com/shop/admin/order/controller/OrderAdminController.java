@@ -91,9 +91,8 @@ public class OrderAdminController {
                 CommonResponse.createSuccess(
                         orderAdminService.cancel(
                         orderId,
-                        request.cancelReason(),
-                        request.cancelReasonCode())
+                        request.cancelReason()
                 )
-        );
+        ));
     }
 }

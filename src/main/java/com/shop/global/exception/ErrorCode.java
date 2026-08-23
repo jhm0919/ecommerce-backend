@@ -24,6 +24,7 @@ public enum ErrorCode {
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORD001", "주문을 찾을 수 없습니다"),
     INSUFFICIENT_STOCK(HttpStatus.BAD_REQUEST, "ORD002", "재고가 부족합니다"),
     ORDER_ACCESS_DENIED(HttpStatus.NOT_FOUND, "ORD003", "주문을 찾을 수 없습니다"),  // 의도적 NOT_FOUND
+    ORDER_(HttpStatus.NOT_FOUND, "ORD003", "주문을 찾을 수 없습니다"),  // 의도적 NOT_FOUND
 
     // Cart
     CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "C001", "장바구니 항목을 찾을 수 없습니다"),

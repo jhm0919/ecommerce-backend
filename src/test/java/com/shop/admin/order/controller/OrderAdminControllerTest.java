@@ -178,7 +178,7 @@ class OrderAdminControllerTest {
     void cancelOrderReturns200() throws Exception {
         OrderAdminCancelRequest request =
                 new OrderAdminCancelRequest("재고 부족", "OUT_OF_STOCK");
-        when(orderAdminService.cancel(1L, "재고 부족", "OUT_OF_STOCK"))
+        when(orderAdminService.cancel(1L, "재고 부족"))
                 .thenReturn(new OrderAdminCancelResponse(
                         1L, "ORD-001", OrderStatus.CANCELLED, "재고 부족"));
 
@@ -196,7 +196,7 @@ class OrderAdminControllerTest {
     void cancelNotFoundOrderReturns404() throws Exception {
         OrderAdminCancelRequest request =
                 new OrderAdminCancelRequest("사유", "CODE");
-        when(orderAdminService.cancel(99999L, "사유", "CODE"))
+        when(orderAdminService.cancel(99999L, "사유"))
                 .thenThrow(new BusinessException(ErrorCode.ORDER_NOT_FOUND) {});
 
         mockMvc.perform(post("/api/admin/orders/99999/cancel")
@@ -218,7 +218,7 @@ class OrderAdminControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("fail"));
 
-        verify(orderAdminService, never()).cancel(any(), any(), any());
+        verify(orderAdminService, never()).cancel(any(), any());
     }
 
     @Test
@@ -226,7 +226,7 @@ class OrderAdminControllerTest {
     void cancelAlreadyCancelledOrderReturns400() throws Exception {
         OrderAdminCancelRequest request =
                 new OrderAdminCancelRequest("사유", "CODE");
-        when(orderAdminService.cancel(1L, "사유", "CODE"))
+        when(orderAdminService.cancel(1L, "사유"))
                 .thenThrow(new BusinessException(ErrorCode.ALREADY_CANCELLED_ORDER) {});
 
         mockMvc.perform(post("/api/admin/orders/1/cancel")

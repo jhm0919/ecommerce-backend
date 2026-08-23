@@ -44,12 +44,6 @@ class CartServiceTest {
     @Mock
     private ProductRepository productRepository;
 
-    @Mock
-    private CategoryRepository categoryRepository;
-
-    @Mock
-    private MemberRepository memberRepository;
-
     private final Long productId = 1L;
     private final Long memberId = 1L;
     private final Long skuId = 2L;

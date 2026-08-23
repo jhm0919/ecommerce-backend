@@ -2,61 +2,69 @@ package com.shop.admin.product.service;
 
 import com.shop.admin.product.dto.ProductAdminCreateRequest;
 import com.shop.admin.product.dto.ProductAdminUpdateRequest;
+import com.shop.admin.product.dto.SkuAdminAddRequest;
+import com.shop.admin.product.dto.SkuAdminResponse;
+import com.shop.cart.repository.CartRepository;
 import com.shop.category.domain.Category;
 import com.shop.category.exception.CategoryNotFoundException;
 import com.shop.category.repository.CategoryRepository;
 import com.shop.product.domain.Product;
+import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
 import com.shop.product.dto.ProductDetailResponse;
 import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.BDDMockito;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.*;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.util.ReflectionTestUtils.*;
 
-@SpringBootTest
-class ProductAdminServiceIntegrationTest {
-    @Autowired
+@ExtendWith(MockitoExtension.class)
+class ProductAdminServiceTest {
+
+    @InjectMocks
     private ProductAdminService productAdminService;
 
-    @Autowired
+    @Mock
     private ProductRepository productRepository;
 
-    @Autowired
+    @Mock
     private CategoryRepository categoryRepository;
 
-    @BeforeEach
-    void setUp() {
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-    }
+    @Mock
+    private CartRepository cartRepository;
 
-        private Category createCategory() {
-        Category category = Category.create("남성 상의", "men-tops");
-        categoryRepository.saveAndFlush(category);
-        return category;
+    private final Long productId = 1L;
+    private final Long categoryId = 1L;
+
+
+    private Category createCategory() {
+        return Category.create("남성 상의", "men-tops");
     }
 
     private Product createProduct() {
-        Product product = Product.register(
+        return Product.register(
                 "베이직 티셔츠",
                 29900,
                 "100% 면 소재",
                 "https://example.com/image.jpg",
                 createCategory()
         );
-        productRepository.saveAndFlush(product);
-        return product;
     }
 
     @Nested
@@ -67,21 +75,26 @@ class ProductAdminServiceIntegrationTest {
         @DisplayName("정상적으로 상품을 등록할 수 있다")
         void registerNormal() {
             Category category = createCategory();
-            System.out.println("category.getId() = " + category.getId());
 
             ProductAdminCreateRequest request = new ProductAdminCreateRequest(
                     "베이직 티셔츠",
                     29900,
                     "100% 면 소재",
                     "https://example.com/image.jpg",
-                    category.getId()
+                    categoryId
             );
+
+            given(categoryRepository.findById(categoryId)).willReturn(Optional.of(category));
+            given(productRepository.save(any(Product.class)))
+                    .willAnswer(inv -> inv.getArgument(0));
 
             ProductDetailResponse result = productAdminService.register(request);
 
             assertThat(result.name()).isEqualTo("베이직 티셔츠");
             assertThat(result.status().name()).isEqualTo("ACTIVE");
             assertThat(result.category().name()).isEqualTo(category.getName());
+
+            verify(productRepository).save(any(Product.class));
         }
 
         @Test
@@ -111,9 +124,12 @@ class ProductAdminServiceIntegrationTest {
 
             ProductAdminUpdateRequest request = new ProductAdminUpdateRequest("새 이름", 0, null, null, null);
 
-            ProductDetailResponse result = productAdminService.update(product.getId(), request);
+            given(productRepository.findById(productId)).willReturn(Optional.of(product));
+
+            ProductDetailResponse result = productAdminService.update(productId, request);
 
             assertThat(result.name()).isEqualTo("새 이름");
+            verify(productRepository).findById(productId);
         }
 
         @Test
@@ -136,14 +152,17 @@ class ProductAdminServiceIntegrationTest {
         void discontinueNormal() {
             // given
             Product product = createProduct();
+            given(productRepository.findById(productId)).willReturn(Optional.of(product));
 
             // when
-            productAdminService.discontinue(product.getId());
+            productAdminService.discontinue(productId);
 
             // then
-            Product updatedProduct = productRepository.findById(product.getId())
+            Product updatedProduct = productRepository.findById(productId)
                     .orElseThrow();
+
             assertThat(updatedProduct.getStatus().name()).isEqualTo("DISCONTINUED");
+            verify(cartRepository).deleteAllItemsByProductId(productId);
         }
     }
 
@@ -152,21 +171,27 @@ class ProductAdminServiceIntegrationTest {
     void addSku() {
         // given & when
         Product product = createProduct();
+        setField(product, "id", productId);
 
-        product.addSku(
+        given(productRepository.findById(productId))
+                .willReturn(Optional.of(product));
+
+        SkuAdminAddRequest request = new SkuAdminAddRequest(
                 List.of(
-                        new SkuOption("색상", "검정"),
-                        new SkuOption("사이즈", "L")
+                        new SkuAdminAddRequest.SkuOptionRequest("색상", "검정"),
+                        new SkuAdminAddRequest.SkuOptionRequest("사이즈", "L")
                 ),
                 100
         );
 
-        Product savedSkuProduct = productRepository.save(product);
+        SkuAdminResponse response = productAdminService.addSku(productId, request);
 
         // then
-        assertThat(savedSkuProduct.getSkus().get(0).getOptions().get(0).getOptionName()).isEqualTo("색상");
-        assertThat(savedSkuProduct.getSkus().get(0).getOptions().get(0).getOptionValue()).isEqualTo("검정");
-        assertThat(savedSkuProduct.getSkus().get(0).getOptions().get(1).getOptionName()).isEqualTo("사이즈");
-        assertThat(savedSkuProduct.getSkus().get(0).getOptions().get(1).getOptionValue()).isEqualTo("L");
+        assertThat(response.options().get(0).name()).isEqualTo("색상");
+        assertThat(response.options().get(0).value()).isEqualTo("검정");
+        assertThat(response.options().get(1).name()).isEqualTo("사이즈");
+        assertThat(response.options().get(1).value()).isEqualTo("L");
+
+        verify(productRepository).save(product);
     }
 }

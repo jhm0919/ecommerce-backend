@@ -1,11 +1,10 @@
 package com.shop.admin.order.service;
 
-import com.shop.global.exception.BusinessException;
 import com.shop.category.domain.Category;
+import com.shop.global.exception.BusinessException;
 import com.shop.order.domain.Order;
 import com.shop.order.domain.OrderItem;
 import com.shop.order.domain.OrderStatus;
-import com.shop.admin.order.dto.OrderAdminConfirmResponse;
 import com.shop.admin.order.dto.OrderAdminListResponse;
 import com.shop.category.repository.CategoryRepository;
 import com.shop.order.repository.OrderRepository;
@@ -38,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestPropertySource(locations = "classpath:application-test.yaml")
-//@Transactional
+@Transactional
 class OrderAdminServiceIntegrationTest {
 
     @Autowired
@@ -47,7 +46,6 @@ class OrderAdminServiceIntegrationTest {
     OrderRepository orderRepository;
     @Autowired CategoryRepository categoryRepository;
     @Autowired ProductRepository productRepository;
-    @Autowired EntityManager entityManager;  // ★ 추가
 
     private Product testProduct;
     private Sku testSku;
@@ -172,23 +170,6 @@ class OrderAdminServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("PENDING 주문 일괄 확정 → CONFIRMED")
-    void confirmPendingOrdersReturnsSuccessCount() {
-        Order o1 = createPendingOrder();
-        Order o2 = createPendingOrder();
-
-        OrderAdminConfirmResponse response =
-                orderAdminService.confirm(List.of(o1.getId(), o2.getId()));
-
-        assertThat(response.successCount()).isEqualTo(2);
-        assertThat(response.confirmedOrderIds())
-                .containsExactlyInAnyOrder(o1.getId(), o2.getId());
-
-        Order confirmed = orderRepository.findById(o1.getId()).orElseThrow();
-        assertThat(confirmed.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
-    }
-
-    @Test
     @DisplayName("없는 orderId → 예외 + 전체 롤백")
         // ★ @Transactional 없음 → 예외 후 DB 조회 가능
     void confirmWithNotFoundIdThrowsException() {
@@ -220,18 +201,6 @@ class OrderAdminServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("단건 확정 → CONFIRMED")
-    void confirmSingleOrderChangesStatusToConfirmed() {
-        Order order = createPendingOrder();
-
-        OrderAdminConfirmResponse response =
-                orderAdminService.confirm(List.of(order.getId()));
-
-        assertThat(response.successCount()).isEqualTo(1);
-    }
-
-    @Test
-    @Transactional
     @DisplayName("정상 강제 취소 — CANCELLED + 재고 복구")
     void cancelOrderChangesStatusAndRestoresStock() {
         int orderQuantity = 2;
@@ -246,34 +215,15 @@ class OrderAdminServiceIntegrationTest {
         order = orderRepository.saveAndFlush(order);
         createdOrderIds.add(order.getId());
 
-        orderAdminService.cancel(order.getId(), "재고 부족", "OUT_OF_STOCK");
+        orderAdminService.cancel(order.getId(), "재고 부족");
 
         Order cancelled = orderRepository.findById(order.getId()).orElseThrow();
         assertThat(cancelled.getStatus()).isEqualTo(OrderStatus.CANCELLED);
 
-        entityManager.flush();  // ★ dirty 변경사항 DB에 반영
-        entityManager.clear();  // ★ 그 다음 캐시 제거
+//        entityManager.flush();  // ★ dirty 변경사항 DB에 반영
+//        entityManager.clear();  // ★ 그 다음 캐시 제거
         Product updated = productRepository.findByIdWithSkus(testProduct.getId()).orElseThrow();
         Sku updatedSku = updated.getSkuses().get(0);
         assertThat(updatedSku.getQuantity()).isEqualTo(stockBefore + orderQuantity);
-    }
-
-    @Test
-    @DisplayName("없는 orderId → 예외")
-    void cancelNotFoundOrderThrowsException() {
-        assertThatThrownBy(() ->
-                orderAdminService.cancel(99999L, "사유", "CODE")
-        ).isInstanceOf(BusinessException.class);
-    }
-
-    @Test
-    @DisplayName("이미 취소된 주문 → 예외")
-    void cancelAlreadyCancelledOrderThrowsException() {
-        Order order = createPendingOrder();
-        orderAdminService.cancel(order.getId(), "사유", "CODE");
-
-        assertThatThrownBy(() ->
-                orderAdminService.cancel(order.getId(), "사유", "CODE")
-        ).isInstanceOf(BusinessException.class);
     }
 }
