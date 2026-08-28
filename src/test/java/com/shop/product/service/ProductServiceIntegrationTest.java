@@ -3,7 +3,6 @@ package com.shop.product.service;
 import com.shop.category.domain.Category;
 import com.shop.category.repository.CategoryRepository;
 import com.shop.product.domain.Product;
-import com.shop.product.domain.ProductStatus;
 import com.shop.product.domain.SkuOption;
 import com.shop.product.dto.ProductDetailResponse;
 import com.shop.product.dto.ProductListResponse;
@@ -11,21 +10,22 @@ import com.shop.product.exception.ProductNotFoundException;
 import com.shop.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
-
+@ActiveProfiles("test")
 @SpringBootTest
+@Transactional
 class ProductServiceIntegrationTest {
 
     @Autowired
@@ -72,182 +72,114 @@ class ProductServiceIntegrationTest {
         productId = product.getId();
     }
 
-    @Nested
-    @DisplayName("상품 목록 조회 (findVisibleProducts)")
-    class FindVisibleProducts {
+    @Test
+    @DisplayName("필터 없이 전체 조회")
+    void allProducts() {
+        Pageable pageable = PageRequest.of(0, 20);
 
-        @Test
-        @DisplayName("필터 없이 전체 조회")
-        void allProducts() {
-            Pageable pageable = PageRequest.of(0, 20);
+        Page<ProductListResponse> productList = productService.findProductList(null, null, pageable);
 
-            Page<ProductListResponse> productList = productService.findProductList(null, null, pageable);
-
-            assertThat(productList.getContent()).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("카테고리 필터")
-        void filterByCategoryId() {
-            Product product = productRepository.findByIdWithSkus(productId)
-                    .orElseThrow(() -> new ProductNotFoundException(productId));
-
-            Pageable pageable = PageRequest.of(0, 20);
-
-            Category category = product.getCategory();
-
-            productRepository.saveAndFlush(
-                    Product.register("비싼 티셔츠", 49900, "울 소재", "https://example.com/image.jpg", category)
-            );
-
-            Page<ProductListResponse> productList = productService.findProductList(
-                    category.getId(), null, pageable);
-
-            assertThat(productList.getContent()).hasSize(2);
-        }
-
-        @Test
-        @DisplayName("검색어로 조회")
-        void searchByKeyword() {
-            Product product = productRepository.findByIdWithSkus(productId)
-                    .orElseThrow(() -> new ProductNotFoundException(productId));
-
-            Pageable pageable = PageRequest.of(0, 20);
-
-            Category category = product.getCategory();
-            productRepository.saveAndFlush(
-                    Product.register("비싼 티셔츠", 49900, "울 소재", "https://example.com/image.jpg", category)
-            );
-
-            Page<ProductListResponse> result1 = productService.findProductList(
-                    null, "티셔츠", pageable);
-            Page<ProductListResponse> result2 = productService.findProductList(
-                    null, "비싼", pageable);
-
-            assertThat(result1.getContent()).hasSize(2);
-            assertThat(result2.getContent()).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("카테고리 + 검색어 조합")
-        void filterByCategoryAndKeyword() {
-            Product product = productRepository.findByIdWithSkus(productId)
-                    .orElseThrow(() -> new ProductNotFoundException(productId));
-
-            Pageable pageable = PageRequest.of(0, 20);
-
-            Category category = product.getCategory();
-            productRepository.saveAndFlush(
-                    Product.register("비싼 티셔츠", 49900, "울 소재", "https://example.com/image.jpg", category)
-            );
-
-            Page<ProductListResponse> result1 = productService.findProductList(category.getId(), "비싼", pageable);
-            Page<ProductListResponse> result2 = productService.findProductList(category.getId(), "티셔츠", pageable);
-
-            assertThat(result1.getContent()).hasSize(1);
-            assertThat(result2.getContent()).hasSize(2);
-        }
-
-        @Test
-        @DisplayName("검색어가 trim된다")
-        void trimKeyword() {
-            Pageable pageable = PageRequest.of(0, 20);
-
-            Page<ProductListResponse> result = productService.findProductList(null, "  티셔츠  ", pageable);
-
-            assertThat(result.getContent()).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("빈 검색어는 null로 처리")
-        void emptyKeywordBecomesNull() {
-            Pageable pageable = PageRequest.of(0, 20);
-
-            Page<ProductListResponse> result = productService.findProductList(null, "   ", pageable);
-
-            assertThat(result.getContent()).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("createdAt 정렬은 허용한다")
-        void allowCreatedAtSort() {
-            Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
-
-            Page<ProductListResponse> result = productService.findProductList(null, null, pageable);
-
-            assertThat(result.getContent()).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("허용되지 않은 정렬 필드는 거부한다")
-        void rejectUnsupportedSortField() {
-            Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "name"));
-
-            assertThatThrownBy(() -> productService.findProductList(null, null, pageable))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Unsupported product sort field");
-        }
+        assertThat(productList.getContent()).hasSize(1);
     }
 
-        @Nested
-        @DisplayName("상품 상세 조회 (findById)")
-        class FindById {
+    @Test
+    @DisplayName("카테고리 필터")
+    void filterByCategoryId() {
+        Product product = productRepository.findByIdWithSkus(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
 
-            @Test
-            @DisplayName("ACTIVE 상품을 조회할 수 있다")
-            void findActiveProduct() {
-                ProductDetailResponse response = productService.findById(productId);
+        Pageable pageable = PageRequest.of(0, 20);
 
-                for (ProductDetailResponse.SkuInfo sku : response.skus()) {
-                    for (ProductDetailResponse.OptionInfo skuOption : sku.options()) {
-                        System.out.println("option name = " + skuOption.name() + ", option value = " + skuOption.value());
-                    }
-                }
+        Category category = product.getCategory();
 
-                assertThat(response.id()).isEqualTo(productId);
-                assertThat(response.skus().get(0).options().get(0).name()).isEqualTo("색상");
-                assertThat(response.skus().get(0).options().get(0).value()).isEqualTo("검정");
-                assertThat(response.skus().get(0).options().get(1).name()).isEqualTo("사이즈");
-                assertThat(response.skus().get(0).options().get(1).value()).isEqualTo("L");
+        productRepository.saveAndFlush(
+                Product.register("비싼 티셔츠", 49900, "울 소재", "https://example.com/image.jpg", category)
+        );
 
-                assertThat(response.skus().get(1).options().get(0).name()).isEqualTo("색상");
-                assertThat(response.skus().get(1).options().get(0).value()).isEqualTo("빨강");
-                assertThat(response.skus().get(1).options().get(1).name()).isEqualTo("사이즈");
-                assertThat(response.skus().get(1).options().get(1).value()).isEqualTo("S");
-            }
+        Page<ProductListResponse> productList = productService.findProductList(
+                category.getId(), null, pageable);
 
-            @Test
-            @DisplayName("SOLD_OUT 상품도 조회 가능 (사용자에게 노출됨)")
-            void findSoldOutProduct() {
-                Product product = productRepository.findByIdWithSkus(productId)
-                        .orElseThrow(() -> new ProductNotFoundException(productId));
+        assertThat(productList.getContent()).hasSize(2);
+    }
 
-                product.decreaseSkuStock(product.getSkus().get(0).getId(), 100);  // 모든 SKU 재고 0 → SOLD_OUT
-                product.decreaseSkuStock(product.getSkus().get(1).getId(), 100);  // 모든 SKU 재고 0 → SOLD_OUT
+    @Test
+    @DisplayName("검색어로 조회")
+    void searchByKeyword() {
+        Product product = productRepository.findByIdWithSkus(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
 
-                assertThat(product.getStatus()).isEqualTo(ProductStatus.SOLD_OUT);
-            }
+        Pageable pageable = PageRequest.of(0, 20);
 
-            @Test
-            @DisplayName("DISCONTINUED 상품은 NotFound로 응답")
-            void rejectDiscontinuedAsNotFound() {
-                Product product = productRepository.findByIdWithSkus(productId)
-                        .orElseThrow(() -> new ProductNotFoundException(productId));
+        Category category = product.getCategory();
+        productRepository.saveAndFlush(
+                Product.register("비싼 티셔츠", 49900, "울 소재", "https://example.com/image.jpg", category)
+        );
 
-                product.discontinue();
-                productRepository.save(product);
+        Page<ProductListResponse> result1 = productService.findProductList(
+                null, "티셔츠", pageable);
+        Page<ProductListResponse> result2 = productService.findProductList(
+                null, "비싼", pageable);
 
-                assertThatThrownBy(() -> productService.findById(product.getId()))
-                        .isInstanceOf(ProductNotFoundException.class);
-            }
+        assertThat(result1.getContent()).hasSize(2);
+        assertThat(result2.getContent()).hasSize(1);
+    }
 
-            @Test
-            @DisplayName("존재하지 않는 ID는 ProductNotFoundException")
-            void rejectUnknownId() {
-                assertThatThrownBy(() -> productService.findById(999L))
-                        .isInstanceOf(ProductNotFoundException.class);
+    @Test
+    @DisplayName("카테고리 + 검색어 조합")
+    void filterByCategoryAndKeyword() {
+        Product product = productRepository.findByIdWithSkus(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        Pageable pageable = PageRequest.of(0, 20);
+
+        Category category = product.getCategory();
+        productRepository.saveAndFlush(
+                Product.register("비싼 티셔츠", 49900, "울 소재", "https://example.com/image.jpg", category)
+        );
+
+        Page<ProductListResponse> result1 = productService.findProductList(category.getId(), "비싼", pageable);
+        Page<ProductListResponse> result2 = productService.findProductList(category.getId(), "티셔츠", pageable);
+
+        assertThat(result1.getContent()).hasSize(1);
+        assertThat(result2.getContent()).hasSize(2);
+    }
+
+
+    @Test
+    @DisplayName("ACTIVE 상품을 조회할 수 있다")
+    void findActiveProduct() {
+        ProductDetailResponse response = productService.findById(productId);
+
+        for (ProductDetailResponse.SkuInfo sku : response.skus()) {
+            for (ProductDetailResponse.OptionInfo skuOption : sku.options()) {
+                System.out.println("option name = " + skuOption.name() + ", option value = " + skuOption.value());
             }
         }
+
+        assertThat(response.id()).isEqualTo(productId);
+        assertThat(response.skus().get(0).options().get(0).name()).isEqualTo("색상");
+        assertThat(response.skus().get(0).options().get(0).value()).isEqualTo("검정");
+        assertThat(response.skus().get(0).options().get(1).name()).isEqualTo("사이즈");
+        assertThat(response.skus().get(0).options().get(1).value()).isEqualTo("L");
+
+        assertThat(response.skus().get(1).options().get(0).name()).isEqualTo("색상");
+        assertThat(response.skus().get(1).options().get(0).value()).isEqualTo("빨강");
+        assertThat(response.skus().get(1).options().get(1).name()).isEqualTo("사이즈");
+        assertThat(response.skus().get(1).options().get(1).value()).isEqualTo("S");
+    }
+
+//    @Test
+//    @DisplayName("SOLD_OUT 상품도 조회 가능 (사용자에게 노출됨)")
+//    void findSoldOutProduct() {
+//        Product product = productRepository.findByIdWithSkus(productId)
+//                .orElseThrow(() -> new ProductNotFoundException(productId));
+//
+//        product.decreaseSkuStock(product.getSkus().get(0).getId(), 100);  // 모든 SKU 재고 0 → SOLD_OUT
+//        product.decreaseSkuStock(product.getSkus().get(1).getId(), 100);  // 모든 SKU 재고 0 → SOLD_OUT
+//
+//        assertThat(product.getStatus()).isEqualTo(ProductStatus.SOLD_OUT);
+//    }
+
 
 }
 

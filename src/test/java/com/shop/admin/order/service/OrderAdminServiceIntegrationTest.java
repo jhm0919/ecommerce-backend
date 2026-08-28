@@ -12,7 +12,6 @@ import com.shop.product.domain.Product;
 import com.shop.product.domain.Sku;
 import com.shop.product.domain.SkuOption;
 import com.shop.product.repository.ProductRepository;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -220,8 +219,6 @@ class OrderAdminServiceIntegrationTest {
         Order cancelled = orderRepository.findById(order.getId()).orElseThrow();
         assertThat(cancelled.getStatus()).isEqualTo(OrderStatus.CANCELLED);
 
-//        entityManager.flush();  // ★ dirty 변경사항 DB에 반영
-//        entityManager.clear();  // ★ 그 다음 캐시 제거
         Product updated = productRepository.findByIdWithSkus(testProduct.getId()).orElseThrow();
         Sku updatedSku = updated.getSkuses().get(0);
         assertThat(updatedSku.getQuantity()).isEqualTo(stockBefore + orderQuantity);

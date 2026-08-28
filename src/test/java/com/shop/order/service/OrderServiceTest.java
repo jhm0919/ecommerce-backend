@@ -54,7 +54,7 @@ class OrderServiceTest {
                         new SkuOption("색상", "검정"),
                         new SkuOption("사이즈", "L")
                 ),
-                100
+                50
         );
         setId(sku, 10L);
         sku = product.addSku(
@@ -62,7 +62,7 @@ class OrderServiceTest {
                         new SkuOption("색상", "빨강"),
                         new SkuOption("사이즈", "S")
                 ),
-                100
+                50
         );
         setId(sku, 11L);
 

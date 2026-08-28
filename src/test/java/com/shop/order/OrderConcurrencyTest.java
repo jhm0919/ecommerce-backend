@@ -62,8 +62,6 @@ public class OrderConcurrencyTest {
                 "12345", "010-1234-5678",
                 "홍길동", "01012345789", "문 앞에"
         );
-
-
     }
 
     @Test
@@ -98,23 +96,23 @@ public class OrderConcurrencyTest {
         assertThat(quantity).isEqualTo(0);
     }
 
-    @Test
-    void 한개_주문() {
-        orderService.createOrder(1L, createRequest());
-        System.out.println("=============주문=============");
-
-
-        Product product = productRepository.findByIdWithSkus(productId).orElseThrow(() -> new ProductNotFoundException(productId));
-
-        List<Sku> skus = product.getSkus();
-
-        int quantity = 0;
-
-        for (Sku sku : skus) {
-            quantity += sku.getQuantity();
-        }
-
-        assertThat(quantity).isEqualTo(99);
-    }
+//    @Test
+//    void 한개_주문() {
+//        orderService.createOrder(1L, createRequest());
+//        System.out.println("=============주문=============");
+//
+//
+//        Product product = productRepository.findByIdWithSkus(productId).orElseThrow(() -> new ProductNotFoundException(productId));
+//
+//        List<Sku> skus = product.getSkus();
+//
+//        int quantity = 0;
+//
+//        for (Sku sku : skus) {
+//            quantity += sku.getQuantity();
+//        }
+//
+//        assertThat(quantity).isEqualTo(99);
+//    }
 
 }

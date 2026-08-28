@@ -51,7 +51,7 @@ public class OrderService {
 //            Product product = productRepository.findById(req.productId())
 //                    .orElseThrow(() -> new ProductNotFoundException(req.productId()));
 
-            if (product.isPurchasable()) { // 상품 상태가 ACTIVE이면 통과
+            if (!product.isPurchasable()) { // 상품 상태가 ACTIVE이면 통과
                 throw new ProductNotPurchasableException(product.getId());
             }
 
