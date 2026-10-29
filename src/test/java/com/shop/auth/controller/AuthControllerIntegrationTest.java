@@ -4,7 +4,6 @@ import com.shop.global.security.auth.repository.RefreshTokenRepository;
 import com.shop.global.security.auth.domain.TokenHasher;
 import com.shop.global.security.auth.dto.TokenPair;
 import com.shop.global.security.auth.service.AuthService;
-import com.shop.member.domain.AuthProvider;
 import com.shop.member.domain.Member;
 import com.shop.member.repository.MemberRepository;
 import jakarta.servlet.http.Cookie;
@@ -42,17 +41,15 @@ class AuthControllerIntegrationTest {
     @BeforeEach
     void setUp() {
         testMember = memberRepository.save(
-                Member.registerFromOAuth(
-                        AuthProvider.GOOGLE,
-                        "test-sub-" + System.currentTimeMillis(),
+                Member.register(
                         "test@example.com",
                         "테스트사용자",
+                        "password",
                         null
                 )
         );
         initialTokens = authService.createToken(
                 testMember.getId(),
-                testMember.getProviderSub(),
                 testMember.getRole().name()
         );
     }

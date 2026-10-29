@@ -33,15 +33,13 @@ public class JwtAuthenticationProvider {
      * Access Token 발급.
      *
      * @param memberId 내부 회원 ID (DB PK)
-     * @param providerSub OAuth provider의 사용자 식별자 (sub claim에 사용)
      * @param role 회원의 권한 (USER/ADMIN)
      */
-    public String createAccessToken(Long memberId, String providerSub, String role) {
+    public String createAccessToken(Long memberId, String role) {
         Instant now = Instant.now();
         Instant expiry = now.plus(accessTokenValidity);
 
         return Jwts.builder()
-                .subject(providerSub)
                 .claim("memberId", memberId)
                 .claim("type", "access")
                 .claim("role", role)

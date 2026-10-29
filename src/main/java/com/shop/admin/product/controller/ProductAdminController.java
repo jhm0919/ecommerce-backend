@@ -44,6 +44,7 @@ public class ProductAdminController {
                 .body(CommonResponse.createSuccess(productAdminService.register(request)));
     }
 
+
     @Operation(summary = "상품 정보 수정", description = "상품 정보를 부분 수정한다 (PATCH 의미).")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "수정 성공"),

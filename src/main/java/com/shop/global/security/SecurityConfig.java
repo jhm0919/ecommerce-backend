@@ -2,7 +2,6 @@ package com.shop.global.security;
 
 import com.shop.global.config.CorsProperties;
 import com.shop.global.security.jwt.JwtAuthenticationFilter;
-import com.shop.global.security.oauth.OAuth2LoginSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,8 +26,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomOidcUserService customOidcUserService;
-    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CorsProperties corsProperties;
 
@@ -46,13 +43,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .authorizeHttpRequests(a -> a.anyRequest().permitAll())
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .oidcUserService(customOidcUserService)        // ★ 구글
-                        )
-                        .successHandler(oAuth2LoginSuccessHandler)
-                );
+                .authorizeHttpRequests(a -> a.anyRequest().permitAll());
         return http.build();
     }
 

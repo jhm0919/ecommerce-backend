@@ -14,18 +14,10 @@ import java.util.Objects;
 /**
  * 회원을 표현하는 Aggregate Root.
  *
- * <p>OAuth Provider(Google, Kakao, Naver 등)를 통한 가입 및 로그인을 지원한다.
- * Provider별 식별자는 {@code (authProvider, providerSub)} 조합으로 유니크하게 관리된다.
- *
  * <p>회원 상태는 PENDING → ACTIVE → SUSPENDED/WITHDRAWN 순서로 전이된다.
  */
 @Entity
-@Table(name = "members", uniqueConstraints = {
-        @UniqueConstraint(
-                name = "uk_member_provider_sub",
-                columnNames = {"auth_provider", "provider_sub"}
-        )
-})
+@Table(name = "members")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
@@ -38,14 +30,7 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "auth_provider", nullable = false, updatable = false, length = 20)
-    private AuthProvider authProvider;
-
-    @Column(name = "provider_sub", nullable = false, updatable = false, length = 100)
-    private String providerSub;
-
-    @Column(nullable = false, length = MAX_EMAIL_LENGTH)
+    @Column(nullable = false)
     private String email;
 
     @Column
@@ -78,27 +63,21 @@ public class Member {
     // ─────────────────────────────────────
 
     /**
-     * OAuth Provider를 통한 신규 회원 가입.
-     *
      * <p>가입 직후 상태는 ACTIVE이며, 권한은 USER이다.
      */
-    public static Member registerFromOAuth(
-            AuthProvider provider,
-            String providerSub,
+    public static Member register(
             String email,
             String name,
+            String password,
             String picture
     ) {
-        validateProvider(provider);
-        validateProviderSub(providerSub);
         validateEmail(email);
         validateName(name);
 
         Member member = new Member();
-        member.authProvider = provider;
-        member.providerSub = providerSub.trim();
         member.email = email.trim();
         member.name = (name == null) ? null : name.trim();
+        member.password = password;
         member.picture = picture;
         member.status = MemberStatus.ACTIVE;
         member.role = MemberRole.USER;
@@ -109,24 +88,24 @@ public class Member {
     // 비즈니스 메서드
     // ─────────────────────────────────────
 
-    /**
-     * 프로필 정보 갱신 (OAuth 로그인 시마다 호출).
-     */
-    public void updateProfile(String name, String picture, String locale) {
-        if (name != null) {
-            validateName(name);
-            this.name = name.trim();
-        }
-        this.picture = picture;
-    }
-
-    /**
-     * 이메일 변경. OAuth provider에서 이메일이 변경되었을 때 호출.
-     */
-    public void changeEmail(String newEmail) {
-        validateEmail(newEmail);
-        this.email = newEmail.trim();
-    }
+//    /**
+//     * 프로필 정보 갱신 (OAuth 로그인 시마다 호출).
+//     */
+//    public void updateProfile(String name, String picture, String locale) {
+//        if (name != null) {
+//            validateName(name);
+//            this.name = name.trim();
+//        }
+//        this.picture = picture;
+//    }
+//
+//    /**
+//     * 이메일 변경. OAuth provider에서 이메일이 변경되었을 때 호출.
+//     */
+//    public void changeEmail(String newEmail) {
+//        validateEmail(newEmail);
+//        this.email = newEmail.trim();
+//    }
 
     /**
      * 회원을 일시 정지한다 (관리자 액션).
@@ -169,9 +148,9 @@ public class Member {
      */
     public void deleteByAdmin() {
         if (this.status == MemberStatus.ACTIVE) {
-            throw new IllegalStateException(
-                    "Cannot delete ACTIVE member. Suspend first.");
+            throw new IllegalStateException("Cannot delete ACTIVE member. Suspend first.");
         }
+
         if (this.status == MemberStatus.WITHDRAWN) {
             return;  // 이미 삭제됨 — 멱등
         }
@@ -207,17 +186,6 @@ public class Member {
     // ─────────────────────────────────────
     // 검증 메서드
     // ─────────────────────────────────────
-
-    private static void validateProvider(AuthProvider provider) {
-        Objects.requireNonNull(provider, "authProvider must not be null");
-    }
-
-    private static void validateProviderSub(String providerSub) {
-        Objects.requireNonNull(providerSub, "providerSub must not be null");
-        if (providerSub.isBlank()) {
-            throw new IllegalArgumentException("providerSub must not be blank");
-        }
-    }
 
     private static void validateEmail(String email) {
         Objects.requireNonNull(email, "email must not be null");

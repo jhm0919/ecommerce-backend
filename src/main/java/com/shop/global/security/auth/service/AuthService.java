@@ -30,8 +30,8 @@ public class AuthService {
      * OAuth 로그인 성공 시 호출된다.
      */
     @Transactional
-    public TokenPair createToken(Long memberId, String providerSub, String role) {
-        String accessToken = jwtAuthenticationProvider.createAccessToken(memberId, providerSub, role);
+    public TokenPair createToken(Long memberId, String role) {
+        String accessToken = jwtAuthenticationProvider.createAccessToken(memberId, role);
 
         String rawRefreshToken = RefreshTokenGenerator.generate();
         String tokenHash = TokenHasher.hash(rawRefreshToken);
@@ -81,7 +81,7 @@ public class AuthService {
 
         // 4. 새 토큰 쌍 발급
         log.info("Refresh tokens for memberId={}", memberId);
-        return createToken(memberId, member.getProviderSub(), member.getRole().name());
+        return createToken(memberId, member.getRole().name());
     }
 
     /**

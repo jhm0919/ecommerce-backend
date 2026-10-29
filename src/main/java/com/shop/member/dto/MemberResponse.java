@@ -1,5 +1,7 @@
 package com.shop.member.dto;
 
+import com.shop.member.domain.Member;
+
 import java.time.LocalDateTime;
 
 public record MemberResponse(
@@ -7,15 +9,15 @@ public record MemberResponse(
         String email,
         String name,
         String picture,
-        LocalDateTime joinedAt
+        LocalDateTime createdAt
 ) {
-    public static MemberResponse from(MemberInfo info) {
+    public static MemberResponse from(Member member) {
         return new MemberResponse(
-                info.id(),
-                info.email(),
-                info.name(),
-                info.picture(),
-                info.createdAt()  // 필드명만 joinedAt으로 변경
+                member.getId(),
+                member.getEmail(),
+                member.getName(),
+                member.getPicture(),
+                member.getCreatedAt()
         );
     }
 }

@@ -1,6 +1,5 @@
 package com.shop.member.repository;
 
-import com.shop.member.domain.AuthProvider;
 import com.shop.member.domain.Member;
 import com.shop.member.domain.MemberRole;
 import com.shop.member.domain.MemberStatus;
@@ -13,13 +12,6 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
-
-    // ★ 변경: googleSub만이 아니라 (provider, providerSub) 조합으로
-    Optional<Member> findByAuthProviderAndProviderSub(
-            AuthProvider provider,
-            String providerSub
-    );
-
     /**
      * 어드민용 회원 목록 조회.
      * status, keyword 모두 선택적.
@@ -39,8 +31,5 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findByEmailAndRole(String email, MemberRole role);
 
-    boolean existsByAuthProviderAndProviderSub(
-            AuthProvider provider,
-            String providerSub
-    );
+    boolean existsByEmail(String email);
 }

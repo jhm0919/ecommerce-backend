@@ -35,7 +35,6 @@ public class AuthAdminService {
         // 토큰 발급 AuthService 재사용
         return authService.createToken(
                 admin.getId(),
-                admin.getEmail(),  // providerSub 자리에 email
                 admin.getRole().name()
         );
     }

@@ -1,7 +1,6 @@
 package com.shop.member.service;
 
 import com.shop.admin.member.service.MemberAdminService;
-import com.shop.member.domain.AuthProvider;
 import com.shop.member.domain.Member;
 import com.shop.member.domain.MemberStatus;
 import com.shop.member.exception.MemberNotFoundException;
@@ -37,11 +36,10 @@ class MemberAdminServiceTest {
 
     @BeforeEach
     void setUp() {
-        activeMember = Member.registerFromOAuth(
-                AuthProvider.GOOGLE,
-                "google-sub-123",
+        activeMember = Member.register(
                 "test@example.com",
                 "홍길동",
+                "password",
                 "https://picture.url"
         );
     }

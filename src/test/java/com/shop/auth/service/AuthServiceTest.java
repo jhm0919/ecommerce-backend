@@ -6,7 +6,6 @@ import com.shop.global.security.auth.dto.TokenPair;
 import com.shop.global.security.auth.exception.InvalidRefreshTokenException;
 import com.shop.global.security.auth.repository.RefreshTokenRepository;
 import com.shop.global.security.auth.service.AuthService;
-import com.shop.member.domain.AuthProvider;
 import com.shop.member.domain.Member;
 import com.shop.member.repository.MemberRepository;
 import com.shop.global.security.jwt.JwtAuthenticationProvider;
@@ -23,7 +22,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,15 +34,13 @@ class AuthServiceTest {
     @Mock private MemberRepository memberRepository;
 
     private static final Long MEMBER_ID = 1L;
-    private static final String PROVIDER_SUB = "google-sub-123";
     private static final String USER_ROLE = "USER";
 
     private Member createTestMember() {
-        return Member.registerFromOAuth(
-                AuthProvider.GOOGLE,
-                PROVIDER_SUB,
+        return Member.register(
                 "test@example.com",
                 "테스트사용자",
+                "password",
                 null
         );
     }
@@ -56,12 +52,12 @@ class AuthServiceTest {
         @Test
         @DisplayName("AT와 RT를 발급하고 RT는 DB에 저장한다")
         void issueAndSave() {
-            given(jwtAuthenticationProvider.createAccessToken(MEMBER_ID, PROVIDER_SUB, USER_ROLE))
+            given(jwtAuthenticationProvider.createAccessToken(MEMBER_ID, USER_ROLE))
                     .willReturn("mock-access-token");
             given(jwtAuthenticationProvider.getRefreshTokenExpiresAt())
                     .willReturn(LocalDateTime.now().plusDays(14));
 
-            TokenPair result = authService.createToken(MEMBER_ID, PROVIDER_SUB, USER_ROLE);
+            TokenPair result = authService.createToken(MEMBER_ID, USER_ROLE);
 
             assertThat(result.accessToken()).isEqualTo("mock-access-token");
             assertThat(result.refreshToken()).isNotBlank();
@@ -71,12 +67,12 @@ class AuthServiceTest {
         @Test
         @DisplayName("매번 다른 RT 원본을 생성한다")
         void differentRefreshTokensEachTime() {
-            given(jwtAuthenticationProvider.createAccessToken(any(), any(), any())).willReturn("at");
+            given(jwtAuthenticationProvider.createAccessToken(any(), any())).willReturn("at");
             given(jwtAuthenticationProvider.getRefreshTokenExpiresAt())
                     .willReturn(LocalDateTime.now().plusDays(14));
 
-            TokenPair first = authService.createToken(MEMBER_ID, PROVIDER_SUB, USER_ROLE);
-            TokenPair second = authService.createToken(MEMBER_ID, PROVIDER_SUB, USER_ROLE);
+            TokenPair first = authService.createToken(MEMBER_ID, USER_ROLE);
+            TokenPair second = authService.createToken(MEMBER_ID, USER_ROLE);
 
             assertThat(first.refreshToken()).isNotEqualTo(second.refreshToken());
         }
@@ -84,15 +80,15 @@ class AuthServiceTest {
         @Test
         @DisplayName("ADMIN role도 정상 발급된다")
         void issueWithAdminRole() {
-            given(jwtAuthenticationProvider.createAccessToken(MEMBER_ID, PROVIDER_SUB, "ADMIN"))
+            given(jwtAuthenticationProvider.createAccessToken(MEMBER_ID, "ADMIN"))
                     .willReturn("admin-access-token");
             given(jwtAuthenticationProvider.getRefreshTokenExpiresAt())
                     .willReturn(LocalDateTime.now().plusDays(14));
 
-            TokenPair result = authService.createToken(MEMBER_ID, PROVIDER_SUB, "ADMIN");
+            TokenPair result = authService.createToken(MEMBER_ID, "ADMIN");
 
             assertThat(result.accessToken()).isEqualTo("admin-access-token");
-            verify(jwtAuthenticationProvider).createAccessToken(MEMBER_ID, PROVIDER_SUB, "ADMIN");
+            verify(jwtAuthenticationProvider).createAccessToken(MEMBER_ID, "ADMIN");
         }
     }
 
@@ -115,7 +111,7 @@ class AuthServiceTest {
                     .willReturn(Optional.of(existingToken));
             given(memberRepository.findById(MEMBER_ID))
                     .willReturn(Optional.of(member));
-            given(jwtAuthenticationProvider.createAccessToken(MEMBER_ID, PROVIDER_SUB, USER_ROLE))
+            given(jwtAuthenticationProvider.createAccessToken(MEMBER_ID, USER_ROLE))
                     .willReturn("new-access-token");
             given(jwtAuthenticationProvider.getRefreshTokenExpiresAt())
                     .willReturn(LocalDateTime.now().plusDays(14));
@@ -144,7 +140,7 @@ class AuthServiceTest {
                     .willReturn(Optional.of(existingToken));
             given(memberRepository.findById(MEMBER_ID))
                     .willReturn(Optional.of(member));
-            given(jwtAuthenticationProvider.createAccessToken(MEMBER_ID, PROVIDER_SUB, "ADMIN"))
+            given(jwtAuthenticationProvider.createAccessToken(MEMBER_ID, "ADMIN"))
                     .willReturn("admin-access-token");
             given(jwtAuthenticationProvider.getRefreshTokenExpiresAt())
                     .willReturn(LocalDateTime.now().plusDays(14));
@@ -152,7 +148,7 @@ class AuthServiceTest {
             TokenPair result = authService.refreshTokens(rawRefreshToken);
 
             assertThat(result.accessToken()).isEqualTo("admin-access-token");
-            verify(jwtAuthenticationProvider).createAccessToken(MEMBER_ID, PROVIDER_SUB, "ADMIN");
+            verify(jwtAuthenticationProvider).createAccessToken(MEMBER_ID, "ADMIN");
         }
 
         @Test
