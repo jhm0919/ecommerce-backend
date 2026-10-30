@@ -67,8 +67,8 @@ public class Member {
      */
     public static Member register(
             String email,
-            String name,
             String password,
+            String name,
             String picture
     ) {
         validateEmail(email);

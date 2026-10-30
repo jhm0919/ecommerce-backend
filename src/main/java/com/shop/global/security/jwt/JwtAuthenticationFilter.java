@@ -70,7 +70,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         AuthPrincipal principal = new AuthPrincipal(
                 claims.get("memberId", Long.class),
-                claims.getSubject(),
+//                claims.getSubject(),
                 role  // ★ 추가
         );
 
@@ -79,7 +79,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         principal,
                         null,
                         // ★ role 기반 권한 부여
-                        List.of(new SimpleGrantedAuthority(role.name()))
+                        List.of(new SimpleGrantedAuthority("ROLE_" + role.name()))
                 );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);

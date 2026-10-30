@@ -2,7 +2,7 @@ package com.shop.global.security.auth.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record AuthAdminLoginRequest(
+public record AuthLoginRequest(
         @NotBlank(message = "아이디는 필수입니다")
         String email,
 

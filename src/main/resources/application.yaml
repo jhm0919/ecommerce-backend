@@ -34,10 +34,10 @@ spring:
   main:
     web-application-type: servlet # MVC 유지
 
-#logging:
-#  level:
+logging:
+  level:
 #    org.hibernate.SQL: DEBUG
-#    org.hibernate.orm.jdbc.bind: TRACE
+    org.hibernate.orm.jdbc.bind: TRACE
 
 app:
   auth:

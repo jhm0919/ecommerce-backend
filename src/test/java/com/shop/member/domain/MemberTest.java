@@ -12,8 +12,8 @@ class MemberTest {
     private Member createActiveMember() {
         return Member.register(
                 "test@example.com",
-                "홍길동",
                 "password",
+                "홍길동",
                 "https://example.com/picture.jpg"
         );
     }
@@ -65,7 +65,7 @@ class MemberTest {
         @DisplayName("name이 null이어도 가입 가능 (선택 정보)")
         void allowNullName() {
             Member member = Member.register(
-                    "test@example.com", null, "password", null
+                    "test@example.com",  "password", null, null
             );
 
             assertThat(member.getName()).isNull();

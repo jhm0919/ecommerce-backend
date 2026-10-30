@@ -29,23 +29,22 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CorsProperties corsProperties;
 
-    /**
-     * Chain 1: OAuth 로그인 플로우 전용
-     * - 경로: /oauth2/**, /login/**
-     * - 세션 사용 (OAuth state 파라미터 저장 등 Spring 기본 동작에 맡김)
-     * - OAuth 성공 시 SuccessHandler가 JWT 발급 후 프론트로 리다이렉트
-     */
-    @Bean
-    @Order(1)
-    public SecurityFilterChain oauthSecurityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatcher("/oauth2/**", "/login/**")
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .authorizeHttpRequests(a -> a.anyRequest().permitAll());
-        return http.build();
-    }
+//    /**
+//     * - 경로: /login/**
+//     * - 세션 사용 (OAuth state 파라미터 저장 등 Spring 기본 동작에 맡김)
+//     * - OAuth 성공 시 SuccessHandler가 JWT 발급 후 프론트로 리다이렉트
+//     */
+//    @Bean
+//    @Order(1)
+//    public SecurityFilterChain oauthSecurityFilterChain(HttpSecurity http) throws Exception {
+//        http
+//                .securityMatcher("/login/**")
+//                .csrf(csrf -> csrf.disable())
+//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+//                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+//                .authorizeHttpRequests(a -> a.anyRequest().permitAll());
+//        return http.build();
+//    }
 
     /**
      * Chain 2: API 전용 (완전한 Stateless, JWT only)
@@ -53,7 +52,7 @@ public class SecurityConfig {
      * - 세션 절대 생성 안 함 → JWT만 유일한 인증 수단
      */
     @Bean
-    @Order(2)
+//    @Order(2)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
@@ -68,24 +67,26 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/v3/api-docs"
                         ).permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/api/public/**").permitAll()
+//                        .requestMatchers("/actuator/**").permitAll()
+//                        .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers(("/api/members/register")).permitAll()
+                        .requestMatchers(("/api/auth/login")).permitAll()
                         .requestMatchers("/api/auth/refresh", "/api/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                        .requestMatchers("/api/ai/**").permitAll()
-                        .requestMatchers("/api/seller/me/**").hasRole("SELLER")
-                        .requestMatchers("/api/seller/**").permitAll()
+//                        .requestMatchers("/api/ai/**").permitAll()
+                        .requestMatchers("/api/memebers/me/**").hasRole("USER")
+                        .requestMatchers("/api/members/**").permitAll()
                         // ───── 어드민 - 판매자 입점 신청 ─────
-                        .requestMatchers("/api/admin/seller/applications/**").permitAll()
+//                        .requestMatchers("/api/admin/members/applications/**").permitAll()
                         // ───── 어드민 - 배너 관리 (추가) ─────
-                        .requestMatchers("/api/admin/banners/**").permitAll()
+//                        .requestMatchers("/api/admin/banners/**").permitAll()
                         // ───── 어드민 - 대시보드 (추가) ─────
-                        .requestMatchers("/api/admin/dashboard/**").permitAll()
+//                        .requestMatchers("/api/admin/dashboard/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // 질문 등록/삭제 — 로그인 필요
-                        .requestMatchers("/api/questions/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/products/*/questions").authenticated()
+//                        .requestMatchers("/api/questions/**").authenticated()
+//                        .requestMatchers(HttpMethod.POST, "/api/products/*/questions").authenticated()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

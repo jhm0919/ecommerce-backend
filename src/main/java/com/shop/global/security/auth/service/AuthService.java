@@ -4,13 +4,17 @@ import com.shop.global.security.auth.domain.RefreshToken;
 import com.shop.global.security.auth.domain.RefreshTokenGenerator;
 import com.shop.global.security.auth.domain.TokenHasher;
 import com.shop.global.security.auth.dto.TokenPair;
+import com.shop.global.exception.BusinessException;
+import com.shop.global.exception.ErrorCode;
 import com.shop.global.security.auth.exception.InvalidRefreshTokenException;
 import com.shop.global.security.auth.repository.RefreshTokenRepository;
-import com.shop.member.domain.Member;
-import com.shop.member.repository.MemberRepository;
 import com.shop.global.security.jwt.JwtAuthenticationProvider;
+import com.shop.member.domain.Member;
+import com.shop.member.domain.MemberRole;
+import com.shop.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,11 +23,13 @@ import java.time.LocalDateTime;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AuthService {
 
+    private final MemberRepository memberRepository;
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final MemberRepository memberRepository;  // ★ 추가
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 새로운 토큰 쌍(access, refresh)을 발급하고 Refresh Token을 DB에 저장한다.
@@ -84,6 +90,24 @@ public class AuthService {
         return createToken(memberId, member.getRole().name());
     }
 
+    public TokenPair login(String email, String password) {
+        // 판매자 조회
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 비밀번호 검증
+        if (!passwordEncoder.matches(password, member.getPassword())) {
+            throw new BusinessException(ErrorCode.ADMIN_INVALID_PASSWORD) {
+            };
+        }
+
+        // 토큰 발급 AuthService 재사용
+        return createToken(
+                member.getId(),
+                member.getRole().name()
+        );
+    }
+
     /**
      * Refresh Token을 무효화하여 로그아웃 처리한다.
      * 멱등성: 여러 번 호출해도 안전하다.
@@ -91,7 +115,7 @@ public class AuthService {
     @Transactional
     public void logout(String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
-            log.debug("Logout called without refresh token");
+            log.info("Logout called without refresh token");
             return;
         }
 
