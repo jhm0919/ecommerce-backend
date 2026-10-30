@@ -1,4 +1,4 @@
-package com.shop.member.service;
+package com.shop.admin.member.service;
 
 import com.shop.admin.member.service.MemberAdminService;
 import com.shop.member.domain.Member;
