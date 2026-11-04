@@ -81,7 +81,7 @@ class MemberTest {
 //        void updateProfile() {
 //            Member member = createActiveMember();
 //
-//            member.updateProfile("김철수", "https://new-pic.jpg", "en");
+//            member.updateProfile("김철수", "https://new-pic.jpg");
 //
 //            assertThat(member.getName()).isEqualTo("김철수");
 //            assertThat(member.getPicture()).isEqualTo("https://new-pic.jpg");
@@ -92,7 +92,7 @@ class MemberTest {
 //        void keepNameWhenNull() {
 //            Member member = createActiveMember();
 //
-//            member.updateProfile(null, "https://new-pic.jpg", "en");
+//            member.updateProfile(null, "https://new-pic.jpg");
 //
 //            assertThat(member.getName()).isEqualTo("홍길동");  // 기존 값 유지
 //            assertThat(member.getPicture()).isEqualTo("https://new-pic.jpg");

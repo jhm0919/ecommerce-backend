@@ -88,24 +88,13 @@ public class Member {
     // 비즈니스 메서드
     // ─────────────────────────────────────
 
-//    /**
-//     * 프로필 정보 갱신 (OAuth 로그인 시마다 호출).
-//     */
-//    public void updateProfile(String name, String picture, String locale) {
-//        if (name != null) {
-//            validateName(name);
-//            this.name = name.trim();
-//        }
-//        this.picture = picture;
-//    }
-//
-//    /**
-//     * 이메일 변경. OAuth provider에서 이메일이 변경되었을 때 호출.
-//     */
-//    public void changeEmail(String newEmail) {
-//        validateEmail(newEmail);
-//        this.email = newEmail.trim();
-//    }
+    public void updateProfile(String name, String picture) {
+        if (name != null) {
+            validateName(name);
+            this.name = name.trim();
+        }
+        this.picture = picture;
+    }
 
     /**
      * 회원을 일시 정지한다 (관리자 액션).

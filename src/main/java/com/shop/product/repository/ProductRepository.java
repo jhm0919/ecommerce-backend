@@ -28,7 +28,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             """
                 SELECT DISTINCT p
                 FROM Product p
-                JOIN p.category c
+                JOIN FETCH p.category c
                 WHERE p.status <> :excludedStatus
                   AND (:categoryId IS NULL OR c.id = :categoryId)
                   AND (:keyword IS NULL OR
